@@ -24,4 +24,9 @@ export default defineConfig({
     esbuild: {
         jsx: 'automatic',
     },
+    resolve: {
+        alias: {
+            '@images': '/resources/images',
+        },
+    },
 });

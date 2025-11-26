@@ -58,10 +58,7 @@ class User extends Authenticatable implements HasMedia
 
     public function registerMediaConversions(?Media $media = null): void
     {
-        $this->addMediaConversion('300x300')
-            ->width(300)
-            ->height(300)
-            ->sharpen(10);
+        $this->addMediaConversion('300x300')->width(300)->height(300)->sharpen(10);
     }
 
     public function avatarUrl(): Attribute
@@ -70,6 +67,7 @@ class User extends Authenticatable implements HasMedia
             get: fn() => $this->getFirstMediaUrl('profile', '300x300')
         );
     }
+
     public function fullname(): Attribute
     {
         return new Attribute(
@@ -82,5 +80,15 @@ class User extends Authenticatable implements HasMedia
         return new Attribute(
             set: fn($value) => bcrypt($value)
         );
+    }
+
+    public function addresses()
+    {
+        return $this->hasMany(Address::class);
+    }
+
+    public function country()
+    {
+        return $this->belongsTo(Country::class);
     }
 }

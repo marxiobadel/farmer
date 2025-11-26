@@ -32,12 +32,53 @@ export interface SharedData {
 
 export interface User {
     id: number;
-    name: string;
+    firstname: string;
+    lastname: string;
+    fullname: string;
+    phone: string;
+    address: string;
+    role: string[];
     email: string;
-    avatar?: string;
+    avatar_url?: string;
     email_verified_at: string | null;
+    is_active: boolean;
     two_factor_enabled?: boolean;
+    country: Country | null;
     created_at: string;
     updated_at: string;
     [key: string]: unknown; // This allows for additional properties...
+}
+
+export interface Country {
+    id: number;
+    name: string;
+    iso: string;
+    iso3: string;
+    phonecode: string;
+    capital: string;
+    region: string;
+    subregion: string;
+    latitude: string;
+    longitude: string;
+    emojiU: string;
+    [key: string]: unknown;
+}
+
+export interface Address {
+    id: number;
+    alias: string;
+    address: string;
+    firstname: string;
+    lastname: string;
+    phone: string;
+    city: string;
+    street: string;
+    state: string;
+    postal_code: string;
+    country: Country;
+    user: User;
+    is_default: boolean;
+    created_at: string;
+    updated_at: string;
+    [key: string]: unknown;
 }
