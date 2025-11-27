@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import AuthLayout from '@/layouts/auth-layout';
-import { inputClassNames } from '@/lib/utils';
+import { buttonClassNames, inputClassNames } from '@/lib/utils';
 import { register } from '@/routes';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
@@ -39,9 +39,12 @@ export default function Login({
             <Form
                 {...store.form()}
                 resetOnSuccess={['password']}
+                options={{
+                    preserveScroll: 'errors'
+                }}
                 className="flex flex-col gap-6"
             >
-                {({ processing, errors }) => (
+                {({ processing, errors, clearErrors }) => (
                     <>
                         <div className="grid gap-6">
                             <div className="grid gap-2">
@@ -50,9 +53,9 @@ export default function Login({
                                     id="email"
                                     type="email"
                                     name="email"
-                                    required
                                     autoFocus
                                     tabIndex={1}
+                                    onFocus={() => clearErrors('email')}
                                     autoComplete="email"
                                     placeholder="email@example.com"
                                     className={inputClassNames('bg-white border-1 shadow-none')}
@@ -78,7 +81,7 @@ export default function Login({
                                         id="password"
                                         type={showPassword ? "text" : "password"}
                                         name="password"
-                                        required
+                                        onFocus={() => clearErrors('password')}
                                         tabIndex={2}
                                         autoComplete="current-password"
                                         placeholder="Mot de passe"
@@ -108,10 +111,10 @@ export default function Login({
 
                             <Button
                                 type="submit"
-                                className="mt-4 w-full"
                                 tabIndex={4}
                                 disabled={processing}
                                 data-test="login-button"
+                                className={buttonClassNames('mt-3 w-full')}
                             >
                                 {processing && <Spinner />}
                                 Connexion

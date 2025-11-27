@@ -27,6 +27,7 @@ export default defineConfig({
     resolve: {
         alias: {
             '@images': '/resources/images',
+            '@sounds': '/resources/sounds',
         },
     },
 });

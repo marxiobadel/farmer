@@ -1,8 +1,7 @@
-import AppLogoIcon from '@/components/app-logo-icon';
 import { home } from '@/routes';
 import { Link } from '@inertiajs/react';
 import { useEffect, useState, type PropsWithChildren } from 'react';
-import { Sun, Feather } from 'lucide-react';
+import { Sun } from 'lucide-react';
 import { motion } from 'framer-motion';
 import logo from '@images/logo.png';
 

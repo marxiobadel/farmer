@@ -1,6 +1,7 @@
 import { InertiaLinkProps } from '@inertiajs/react';
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import notify from '@sounds/notify.mp3';
 
 export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
@@ -24,6 +25,10 @@ export function resolveUrl(url: NonNullable<InertiaLinkProps['href']>): string {
 export const inputClassNames = (...arr: Array<string | false | null | undefined>): string => {
     return classNames("focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-transparent", ...arr);
 };
+
+export const buttonClassNames = (...arr: Array<string | false | null | undefined>): string => {
+    return classNames("relative overflow-hidden font-medium text-white rounded-xl bg-gradient-to-r from-amber-500 to-amber-700 hover:from-amber-600 hover:to-amber-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300", ...arr);
+}
 
 export const formatTime = (time: string): string => {
     const date = new Date(`1970-01-01T${time}`);
@@ -64,3 +69,9 @@ export function formatName(name: string): string {
 
     return `${firstWord} ${secondWord}`;
 };
+
+export function playToastSound() {
+    const audio = new Audio(notify);
+    audio.volume = 0.5;
+    audio.play();
+}

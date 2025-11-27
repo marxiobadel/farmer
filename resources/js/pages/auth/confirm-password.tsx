@@ -4,22 +4,23 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import AuthLayout from '@/layouts/auth-layout';
+import { buttonClassNames, inputClassNames } from '@/lib/utils';
 import { store } from '@/routes/password/confirm';
 import { Form, Head } from '@inertiajs/react';
 
 export default function ConfirmPassword() {
     return (
         <AuthLayout
-            title="Confirm your password"
-            description="This is a secure area of the application. Please confirm your password before continuing."
+            title="Confirmez votre mot de passe"
+            description="Ceci est une zone sécurisée de l’application. Veuillez confirmer votre mot de passe avant de continuer."
         >
-            <Head title="Confirm password" />
+            <Head title="Confirmer le mot de passe" />
 
             <Form {...store.form()} resetOnSuccess={['password']}>
                 {({ processing, errors }) => (
                     <div className="space-y-6">
                         <div className="grid gap-2">
-                            <Label htmlFor="password">Password</Label>
+                            <Label htmlFor="password">Mot de passe</Label>
                             <Input
                                 id="password"
                                 type="password"
@@ -27,6 +28,7 @@ export default function ConfirmPassword() {
                                 placeholder="Password"
                                 autoComplete="current-password"
                                 autoFocus
+                                className={inputClassNames('bg-white border-1 shadow-none')}
                             />
 
                             <InputError message={errors.password} />
@@ -34,12 +36,12 @@ export default function ConfirmPassword() {
 
                         <div className="flex items-center">
                             <Button
-                                className="w-full"
+                                className={buttonClassNames('w-full')}
                                 disabled={processing}
                                 data-test="confirm-password-button"
                             >
                                 {processing && <Spinner />}
-                                Confirm password
+                                Confirmer
                             </Button>
                         </div>
                     </div>
