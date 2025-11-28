@@ -6,7 +6,8 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     /**
      * Run the migrations.
      */
@@ -58,7 +59,7 @@ return new class extends Migration {
                         $country->save();
 
                         foreach ($countryData['timezones'] as $timezones) {
-                            $timezone = new Timezone();
+                            $timezone = new Timezone;
                             $timezone->country_id = $country->id;
                             $timezone->zone_name = $timezones['zoneName'];
                             $timezone->name = $timezones['tzName'];

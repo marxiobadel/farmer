@@ -10,6 +10,6 @@ class DashboardController extends Controller
 {
     public function dashboard(Request $request)
     {
-        return Inertia::render('dashboard');;
+        return Inertia::render('dashboard');
     }
 }

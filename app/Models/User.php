@@ -18,7 +18,7 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable implements HasMedia
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, TwoFactorAuthenticatable, HasRoles, InteractsWithMedia;
+    use HasFactory, HasRoles, InteractsWithMedia, Notifiable, TwoFactorAuthenticatable;
 
     /**
      * The attributes that are mass assignable.
@@ -66,21 +66,21 @@ class User extends Authenticatable implements HasMedia
     public function avatarUrl(): Attribute
     {
         return new Attribute(
-            get: fn() => $this->getFirstMediaUrl('profile', '300x300')
+            get: fn () => $this->getFirstMediaUrl('profile', '300x300')
         );
     }
 
     public function fullname(): Attribute
     {
         return new Attribute(
-            get: fn() => sprintf('%s %s', $this->lastname, $this->firstname)
+            get: fn () => sprintf('%s %s', $this->lastname, $this->firstname)
         );
     }
 
     public function password(): Attribute
     {
         return new Attribute(
-            set: fn($value) => bcrypt($value)
+            set: fn ($value) => bcrypt($value)
         );
     }
 
