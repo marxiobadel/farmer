@@ -27,6 +27,7 @@ export interface SharedData {
     quote: { message: string; author: string };
     auth: Auth;
     sidebarOpen: boolean;
+    defaultCurrency: string;
     [key: string]: unknown;
 }
 
@@ -37,7 +38,7 @@ export interface User {
     fullname: string;
     phone: string;
     address: string;
-    role: string[];
+    roles: string[];
     email: string;
     avatar_url?: string;
     email_verified_at: string | null;
@@ -81,4 +82,11 @@ export interface Address {
     created_at: string;
     updated_at: string;
     [key: string]: unknown;
+}
+
+export interface PaginationMeta {
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
 }

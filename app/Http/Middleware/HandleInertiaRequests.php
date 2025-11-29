@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Http\Resources\AuthUserResource;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
+use Illuminate\Support\Number;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -47,6 +48,7 @@ class HandleInertiaRequests extends Middleware
                 'user' => $request->user() ? new AuthUserResource($request->user()) : null,
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            'defaultCurrency' => Number::defaultCurrency(),
         ];
     }
 }
