@@ -88,7 +88,7 @@ class UserController extends Controller
         DB::beginTransaction();
 
         try {
-            $user->update($request->safe()->all());
+            $user->update($request->safe()->except(['password']));
 
             $user->syncRoles($request->safe()->only(['role_name']));
 

@@ -57,6 +57,9 @@ export const siteMeta = {
 };
 
 export const userRoles = [
+    { label: 'Visiteur', value: 'visitor' },
+    { label: 'Client', value: 'customer' },
+    { label: 'Admin', value: 'admin' },
     { label: 'Super Admin', value: 'superadmin' },
 ];
 

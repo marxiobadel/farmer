@@ -28,7 +28,7 @@ class UserRequest extends FormRequest
             'lastname' => 'required|string|max:255',
             'firstname' => 'required|string|max:255',
             'phone' => ['nullable', 'string', 'max:20'],
-            'role_name' => 'required|in:teacher,student,superadmin',
+            'role_name' => 'required|in:visitor,customer,admin,superadmin',
             'is_active' => 'required|boolean',
             'address' => 'nullable|string|max:255',
             'email' => [

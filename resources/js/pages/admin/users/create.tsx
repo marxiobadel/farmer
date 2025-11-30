@@ -10,8 +10,8 @@ import { FormFieldWrapper } from "@/components/form-field-wrapper";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 import { dashboard } from "@/routes";
-import { index, store } from "@/routes/users";
 import { userRoles } from "@/data";
+import admin from "@/routes/admin";
 
 // ----------- Types -------------
 
@@ -32,7 +32,7 @@ export interface UserInput {
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: "Tableau de bord", href: dashboard().url },
-    { title: "Liste des utilisateurs", href: index().url },
+    { title: "Liste des utilisateurs", href: admin.users.index().url },
     { title: "Ajouter un utilisateur", href: '#' },
 ];
 
@@ -45,7 +45,7 @@ export default function Create() {
         lastname: '',
         phone: '',
         address: '',
-        role_name: '',
+        role_name: userRoles[0].value,
         is_active: true,
         email: '',
         password: '',
@@ -65,7 +65,7 @@ export default function Create() {
     } = useInertiaForm<UserInput & passwordInput>({ ...initialInputs });
 
     const onSubmit = () => {
-        post(store().url, {
+        post(admin.users.store().url, {
             preserveState: true,
             preserveScroll: 'errors',
             onSuccess: () => emit('user.saved', `Utilisateur correctement ajouté !`, { persist: true }),
@@ -104,21 +104,21 @@ export default function Create() {
                                 <div className="grid md:grid-cols-2 gap-x-4 gap-y-4">
                                     <FormFieldWrapper
                                         control={control}
-                                        name="firstname"
-                                        label="Prénom"
-                                        placeholder="Votre prénom"
-                                        onValueChange={(value) => setData("firstname", value)}
-                                        onFocus={() => clearErrors('firstname')}
-                                        error={errors.firstname}
-                                    />
-                                    <FormFieldWrapper
-                                        control={control}
                                         name="lastname"
                                         label="Nom"
                                         placeholder="Votre nom"
                                         onValueChange={(value) => setData("lastname", value)}
                                         onFocus={() => clearErrors('lastname')}
                                         error={errors.lastname}
+                                    />
+                                    <FormFieldWrapper
+                                        control={control}
+                                        name="firstname"
+                                        label="Prénom"
+                                        placeholder="Votre prénom"
+                                        onValueChange={(value) => setData("firstname", value)}
+                                        onFocus={() => clearErrors('firstname')}
+                                        error={errors.firstname}
                                     />
                                 </div>
                                 <FormFieldWrapper

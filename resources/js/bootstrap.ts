@@ -1,4 +1,4 @@
-import.meta.glob(['../images/**']);
+import.meta.glob(['../images/**', '../sounds/**']);
 
 import { router } from '@inertiajs/react';
 import axios from 'axios';

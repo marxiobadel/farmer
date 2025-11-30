@@ -13,9 +13,9 @@ import {
 import { dashboard } from '@/routes';
 import type { NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { Headphones, LayoutGrid, User2 } from 'lucide-react';
+import { LayoutGrid, User2 } from 'lucide-react';
 import AppLogo from './app-logo';
-import { index as usersIndex } from '@/routes/users';
+import admin from '@/routes/admin';
 
 const mainNavItems: NavItem[] = [
     {
@@ -28,20 +28,14 @@ const mainNavItems: NavItem[] = [
 const manageNavItems: NavItem[] = [
     {
         title: 'Utilisateurs',
-        href: usersIndex().url,
+        href: admin.users.index().url,
         icon: User2,
     },
 ];
 
 const menuItems = { mainNavItems, manageNavItems, }
 
-const footerNavItems: NavItem[] = [
-    {
-        title: 'Aide et Centre',
-        href: '#',
-        icon: Headphones,
-    },
-];
+const footerNavItems: NavItem[] = [];
 
 export function AppSidebar() {
     return (

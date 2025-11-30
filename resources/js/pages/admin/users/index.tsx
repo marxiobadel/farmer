@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from "@/components/ui/checkbox";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
-import { ArrowUpDown, Edit, MoreHorizontal, Trash2, Plus, Download, Search } from 'lucide-react';
+import { ArrowUpDown, Edit, MoreHorizontal, Trash2, Plus, Download, Search, CheckCircle } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from 'sonner';
 import { dateTimeFormatOptions } from '@/lib/utils';
@@ -16,7 +16,9 @@ import DataTablePagination from '@/components/datatable-pagination';
 import DataTable from '@/components/datatable';
 import { useEventBus } from '@/context/event-bus-context';
 import { dashboard } from '@/routes';
-import { create, destroy, edit, index } from '@/routes/users';
+import admin from '@/routes/admin';
+import { FaTimesCircle } from 'react-icons/fa';
+import { userRoles } from '@/data';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Tableau de bord', href: dashboard().url },
@@ -59,7 +61,7 @@ export default function Index({ users, filters }: PageProps) {
     }
 
     const applyFilters = (newFilters: Partial<PageProps["filters"]> & { page?: number }) => {
-        router.get(index().url, {
+        router.get(admin.users.index().url, {
             search,
             sort,
             per_page: perPage,
@@ -86,8 +88,8 @@ export default function Index({ users, filters }: PageProps) {
             u.lastname,
             u.firstname,
             u.email,
-            u.roles[0] || '',
-            u.status,
+            userRoles.find(r => r.value === u.roles[0])?.label || u.roles[0] || 'N/A',
+            u.is_active ? 'Actif' : 'Inactif',
             u.created_at
         ]);
         const csvContent = [headers.join(';'), ...rows.map(r => r.join(';'))].join('\n');
@@ -159,9 +161,22 @@ export default function Index({ users, filters }: PageProps) {
                 if (!role) return <span className="text-muted-foreground italic">Aucun rôle</span>;
                 let colorClass = "bg-muted";
                 if (role === "superadmin") colorClass = "bg-primary/10 text-primary";
-                else if (role === "teacher") colorClass = "bg-blue-100 text-blue-800";
-                else if (role === "student") colorClass = "bg-green-100 text-green-800";
-                return <span className={`px-2 py-1 text-xs font-medium rounded-full ${colorClass}`}>{role}</span>
+                else if (role === "visitor") colorClass = "bg-blue-100 text-blue-800";
+                else if (role === "customer") colorClass = "bg-green-100 text-green-800";
+                else if (role === "admin") colorClass = "bg-amber-100 text-amber-800";
+                return <span className={`px-2 py-1 text-xs font-medium rounded-full ${colorClass}`}>
+                    {userRoles.find(r => r.value === role)?.label.toLowerCase() || role}
+                </span>
+            }
+        },
+        {
+            accessorKey: 'is_active',
+            header: "Statut",
+            cell: ({ row }) => {
+                if (row.original.is_active)
+                    return <CheckCircle size={18} className={`text-green-600`} />
+                else
+                    return <FaTimesCircle size={18} className={`text-red-600`} />
             }
         },
         {
@@ -187,7 +202,7 @@ export default function Index({ users, filters }: PageProps) {
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => router.visit(edit(row.original.id).url)}>
+                        <DropdownMenuItem onClick={() => router.visit(admin.users.edit(row.original.id).url)}>
                             <Edit className="mr-1 h-4 w-4" /> Éditer
                         </DropdownMenuItem>
                         {auth.user.id !== row.original.id &&
@@ -247,7 +262,7 @@ export default function Index({ users, filters }: PageProps) {
                         </Button>
                         <Button
                             className="ml-2"
-                            onClick={() => router.visit(create().url)}
+                            onClick={() => router.visit(admin.users.create().url)}
                         >
                             <Plus className="h-4 w-4" /> Ajouter un utilisateur
                         </Button>
@@ -315,7 +330,7 @@ export default function Index({ users, filters }: PageProps) {
                     if (ids.length === 0) return;
 
                     router.post(
-                        destroy().url,
+                        admin.users.destroy().url,
                         { ids },
                         {
                             preserveState: true,
