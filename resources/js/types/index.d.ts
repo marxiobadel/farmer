@@ -84,6 +84,24 @@ export interface Address {
     [key: string]: unknown;
 }
 
+export interface Faq {
+    id: number;
+    question: string;
+    answer: string;
+    status: boolean;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface Contact {
+    id: number;
+    name: string;
+    email: string;
+    message: string;
+    created_at: string;
+    updated_at: string;
+}
+
 export interface PaginationMeta {
     current_page: number;
     last_page: number;

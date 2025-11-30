@@ -2,6 +2,7 @@
 
 use App\Enums\CategoryType;
 use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\ContactController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\FaqController;
 use App\Http\Controllers\Admin\UserController;
@@ -26,6 +27,9 @@ Route::middleware(['auth'])->group(function () {
                     ->only(['index', 'store', 'update']);
                 Route::post('categories/destroy', [CategoryController::class, 'destroy'])->name('categories.destroy');
             });
+
+            Route::get('contacts', [ContactController::class, 'index'])->name('contacts.index');
+            Route::post('contacts/destroy', [ContactController::class, 'destroy'])->name('contacts.destroy');
 
             Route::resource('faqs', FaqController::class)->except(['show', 'edit', 'destroy']);
             Route::post('faqs/destroy', [FaqController::class, 'destroy'])->name('faqs.destroy');

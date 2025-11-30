@@ -6,6 +6,7 @@ import Can from './can';
 interface MenuItems {
     mainNavItems: NavItem[];
     manageNavItems: NavItem[];
+    otherNavItems: NavItem[];
 }
 
 interface NavMainProps {
@@ -57,6 +58,13 @@ export function NavMain({ menuItems }: NavMainProps) {
                     </SidebarMenu>
                 </SidebarGroup>
             </Can>
+
+            <SidebarGroup className="px-2 py-0">
+                <SidebarGroupLabel>AUTRES</SidebarGroupLabel>
+                <SidebarMenu>
+                    {renderMenuItems(menuItems.otherNavItems)}
+                </SidebarMenu>
+            </SidebarGroup>
         </>
     );
 }
