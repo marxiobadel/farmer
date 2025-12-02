@@ -27,6 +27,16 @@ export interface SharedData {
     quote: { message: string; author: string };
     auth: Auth;
     sidebarOpen: boolean;
+    settings: {
+        address: string;
+        email: string;
+        phone: string;
+        facebook_url: string;
+        instagram_url: string;
+        linkedin_url: string;
+        twitter_url: string;
+        youtube_url: string;
+    };
     defaultCurrency: string;
     [key: string]: unknown;
 }
@@ -101,6 +111,21 @@ export interface Contact {
     created_at: string;
     updated_at: string;
 }
+
+export interface Category {
+    id: number;
+    slug: string;
+    name: string;
+    type: string;
+    cover_url: string;
+    status: boolean;
+    products_count: number;
+    created_at: string;
+    updated_at: string;
+}
+
+export type Role = 'visitor' | 'superadmin' | 'admin' | 'customer' | string;
+export type Permission = 'access-admin' | 'manage-settings' | string;
 
 export interface PaginationMeta {
     current_page: number;

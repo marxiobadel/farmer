@@ -35,4 +35,21 @@ return [
         ],
     ],
 
+    'settings_routes' => [
+        'general',
+        'account',
+        'appearance',
+        'password',
+    ],
+
+    'app_settings' => [
+        'address',
+        'email',
+        'phone',
+        'facebook_url',
+        'instagram_url',
+        'linkedin_url',
+        'twitter_url',
+        'youtube_url',
+    ],
 ];

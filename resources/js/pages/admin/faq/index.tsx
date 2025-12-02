@@ -285,7 +285,7 @@ export default function Index({ faqs, filters }: PageProps) {
                     columns={columns}
                     rowSelection={rowSelection}
                     onRowSelectionChange={handleRowSelectionChange}
-                    emptyMessage="Aucun faq trouvé."
+                    emptyMessage="Aucune faq trouvée."
                 />
 
                 {/* Pagination */}

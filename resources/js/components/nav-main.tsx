@@ -5,6 +5,7 @@ import Can from './can';
 
 interface MenuItems {
     mainNavItems: NavItem[];
+    catalogueNavItems: NavItem[];
     manageNavItems: NavItem[];
     otherNavItems: NavItem[];
 }
@@ -47,6 +48,13 @@ export function NavMain({ menuItems }: NavMainProps) {
                 <SidebarGroupLabel>ACCUEIL</SidebarGroupLabel>
                 <SidebarMenu>
                     {renderMenuItems(menuItems.mainNavItems)}
+                </SidebarMenu>
+            </SidebarGroup>
+
+            <SidebarGroup className="px-2 py-0">
+                <SidebarGroupLabel>CATALOGUE</SidebarGroupLabel>
+                <SidebarMenu>
+                    {renderMenuItems(menuItems.catalogueNavItems)}
                 </SidebarMenu>
             </SidebarGroup>
 

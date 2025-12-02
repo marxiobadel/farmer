@@ -5,8 +5,10 @@ use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\ContactController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\FaqController;
+use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Front\IndexController;
+use App\Http\Controllers\Settings\ProfileController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [IndexController::class, 'home'])->name('home');
@@ -28,11 +30,23 @@ Route::middleware(['auth'])->group(function () {
                 Route::post('categories/destroy', [CategoryController::class, 'destroy'])->name('categories.destroy');
             });
 
+            Route::get('products', [ProductController::class, 'index'])->name('products.index');
+            Route::post('products/destroy', [ProductController::class, 'destroy'])->name('products.destroy');
+
             Route::get('contacts', [ContactController::class, 'index'])->name('contacts.index');
             Route::post('contacts/destroy', [ContactController::class, 'destroy'])->name('contacts.destroy');
 
             Route::resource('faqs', FaqController::class)->except(['show', 'edit', 'destroy']);
             Route::post('faqs/destroy', [FaqController::class, 'destroy'])->name('faqs.destroy');
+
+            Route::redirect('/settings', '/admin/settings/general', 301);
+            Route::prefix('settings')->name('settings.')
+                ->whereIn('page', config('services.settings_routes'))
+                ->controller(ProfileController::class)
+                ->group(function () {
+                    Route::get('{page}', 'settings')->name('page');
+                    Route::post('{page}', 'update')->name('update');
+                });
         });
     });
 });

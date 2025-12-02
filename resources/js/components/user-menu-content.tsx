@@ -6,11 +6,11 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { UserInfo } from '@/components/user-info';
 import { useMobileNavigation } from '@/hooks/use-mobile-navigation';
-import { logout } from '@/routes';
-import { edit } from '@/routes/profile';
-import { type User } from '@/types';
+import { home, logout } from '@/routes';
+import admin from '@/routes/admin';
+import type { User } from '@/types';
 import { Link, router } from '@inertiajs/react';
-import { LogOut, Settings } from 'lucide-react';
+import { Globe, LogOut, Settings } from 'lucide-react';
 
 interface UserMenuContentProps {
     user: User;
@@ -34,9 +34,15 @@ export function UserMenuContent({ user }: UserMenuContentProps) {
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
                 <DropdownMenuItem asChild>
+                    <Link className="block w-full" href={home()} as="button" prefetch onClick={cleanup}>
+                        <Globe className="mr-2" />
+                        Site web
+                    </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
                     <Link
                         className="block w-full"
-                        href={edit()}
+                        href={admin.settings.page({ page: 'general' }).url}
                         as="button"
                         prefetch
                         onClick={cleanup}

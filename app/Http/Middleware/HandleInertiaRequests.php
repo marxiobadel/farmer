@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Http\Resources\AuthUserResource;
+use App\Settings\GeneralSettings;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Illuminate\Support\Number;
@@ -40,6 +41,8 @@ class HandleInertiaRequests extends Middleware
     {
         [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
 
+        $settings = app(GeneralSettings::class);
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
@@ -49,6 +52,16 @@ class HandleInertiaRequests extends Middleware
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'defaultCurrency' => Number::defaultCurrency(),
+            'settings' => [
+                'address' => $settings->address,
+                'email' => $settings->email,
+                'phone' => $settings->phone,
+                'facebook_url' => $settings->facebook_url,
+                'instagram_url' => $settings->instagram_url,
+                'linkedin_url' => $settings->linkedin_url,
+                'twitter_url' => $settings->twitter_url,
+                'youtube_url' => $settings->youtube_url,
+            ],
         ];
     }
 }

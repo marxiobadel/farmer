@@ -3,7 +3,8 @@
 namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Settings\ProfileUpdateRequest;
+use App\Http\Requests\Settings\UpdateRequest;
+use App\Settings\GeneralSettings;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -16,9 +17,13 @@ class ProfileController extends Controller
     /**
      * Show the user's profile settings page.
      */
-    public function edit(Request $request): Response
+    public function settings(Request $request, string $page): Response
     {
-        return Inertia::render('settings/profile', [
+        if (!in_array($page, config('services.settings_routes'))) {
+            abort(404);
+        }
+
+        return Inertia::render("admin/settings/{$page}", [
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => $request->session()->get('status'),
         ]);
@@ -27,17 +32,31 @@ class ProfileController extends Controller
     /**
      * Update the user's profile settings.
      */
-    public function update(ProfileUpdateRequest $request): RedirectResponse
+    public function update(UpdateRequest $request, GeneralSettings $settings, string $page): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        if ($page === 'account') {
+            $request->user()->fill($request->validated());
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+            if ($request->user()->isDirty('email')) {
+                $request->user()->email_verified_at = null;
+            }
+
+            $request->user()->save();
+
+            if ($request->hasFile('image')) {
+                $request->user()->addMediaFromRequest('image')->toMediaCollection('profile');
+            }
+        } else {
+            if ($page === 'general') {
+                foreach (config('services.app_settings') as $field) {
+                    $settings->{$field} = (string) ($request->input($field) ?? '');
+                }
+            }
+
+            $settings->save();
         }
 
-        $request->user()->save();
-
-        return to_route('profile.edit');
+        return to_route('admin.settings.page', compact('page'));
     }
 
     /**
@@ -58,6 +77,6 @@ class ProfileController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        return redirect(route('home'));
     }
 }

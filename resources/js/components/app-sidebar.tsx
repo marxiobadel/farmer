@@ -13,7 +13,7 @@ import {
 import { dashboard } from '@/routes';
 import type { NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { FileQuestion, LayoutGrid, MessageCircle, User2 } from 'lucide-react';
+import { Archive, FileQuestion, LayoutGrid, MessageCircle, User2 } from 'lucide-react';
 import AppLogo from './app-logo';
 import admin from '@/routes/admin';
 
@@ -22,6 +22,14 @@ const mainNavItems: NavItem[] = [
         title: 'Tableau de bord',
         href: dashboard().url,
         icon: LayoutGrid,
+    },
+];
+
+const catalogueNavItems: NavItem[] = [
+    {
+        title: 'Catégories',
+        href: admin.categories.index({type: 'products'}).url,
+        icon: Archive,
     },
 ];
 
@@ -46,7 +54,7 @@ const otherNavItems: NavItem[] = [
     },
 ];
 
-const menuItems = { mainNavItems, manageNavItems, otherNavItems }
+const menuItems = { mainNavItems, catalogueNavItems, manageNavItems, otherNavItems }
 
 const footerNavItems: NavItem[] = [];
 

@@ -73,4 +73,9 @@ class Category extends Model implements HasMedia
     {
         return $query->where('type', '=', 'products');
     }
+
+    public function products()
+    {
+        return $this->belongsToMany(Product::class);
+    }
 }
