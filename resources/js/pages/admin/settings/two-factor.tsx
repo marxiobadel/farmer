@@ -14,7 +14,7 @@ import { disable, enable } from '@/routes/two-factor';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
-        title: 'Mot de passe',
+        title: 'Authentification à deux facteurs',
         href: admin.settings.page({ page: 'two-factor' }).url,
     },
 ];
@@ -39,7 +39,7 @@ export default function TwoFactor({ requiresConfirmation = false, twoFactorEnabl
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Mot de passe" />
+            <Head title="Authentification à deux facteurs" />
 
             <SettingsLayout>
                 <div className="flex flex-col flex-1">
