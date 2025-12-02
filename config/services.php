@@ -39,6 +39,7 @@ return [
         'general',
         'account',
         'appearance',
+        'two-factor',
         'password',
     ],
 

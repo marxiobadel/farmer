@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
+use Laravel\Fortify\Features;
 
 class ProfileController extends Controller
 {
@@ -23,10 +24,24 @@ class ProfileController extends Controller
             abort(404);
         }
 
-        return Inertia::render("admin/settings/{$page}", [
-            'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
+        $user = $request->user();
+
+        $props = [
+            'mustVerifyEmail' => $user instanceof MustVerifyEmail,
             'status' => $request->session()->get('status'),
-        ]);
+        ];
+
+        if ($page === 'two-factor') {
+            $props = array_merge($props, [
+                'twoFactorEnabled' => $user->hasEnabledTwoFactorAuthentication(),
+                'requiresConfirmation' => Features::optionEnabled(
+                    Features::twoFactorAuthentication(),
+                    'confirm'
+                ),
+            ]);
+        }
+
+        return Inertia::render("admin/settings/{$page}", $props);
     }
 
     /**
