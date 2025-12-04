@@ -1,19 +1,15 @@
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem, PaginationMeta, Category } from '@/types';
-import { Head, router, useForm } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 import { ColumnDef, getCoreRowModel, getSortedRowModel, useReactTable } from "@tanstack/react-table";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { ArrowUpDown, Edit, Trash2, Plus, Search, PlusCircle, CheckCircle } from 'lucide-react';
+import { ArrowUpDown, Trash2, Plus, Search, CheckCircle } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from 'sonner';
 import { FaTimesCircle } from 'react-icons/fa';
-import ImageUpload from '@/components/image-upload';
-import { Switch } from '@/components/ui/switch';
 import { dateTimeFormatOptions } from '@/lib/utils';
 import ConfirmDeleteDialog from '@/components/confirm-delete-dialog';
 import DataTablePagination from '@/components/datatable-pagination';
@@ -22,6 +18,7 @@ import { RowActions } from '@/components/row-actions';
 import { dashboard } from '@/routes';
 import admin from '@/routes/admin';
 import ProductsLayout from '@/layouts/products/layout';
+import CategoryForm from './form';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Tableau de bord', href: dashboard().url },
@@ -38,16 +35,11 @@ interface PageProps {
         status?: string;
         sort?: string;
         per_page?: number;
-    }
+    },
+    listCategories: Category[];
 }
 
-type CategoryFormData = {
-    name: string;
-    status: boolean;
-    image: File | null;
-}
-
-export default function Index({ categories, filters }: PageProps) {
+export default function Index({ categories, listCategories, filters }: PageProps) {
     const type = 'products';
 
     const isMobile = useIsMobile();
@@ -61,12 +53,6 @@ export default function Index({ categories, filters }: PageProps) {
 
     const [creatingCategory, setCreatingCategory] = useState(false);
     const [editingCategory, setEditingCategory] = useState<Category | null>(null);
-
-    const categoryForm = useForm<CategoryFormData>({
-        name: "",
-        status: true,
-        image: null
-    });
 
     const toggleSort = (column: keyof Category) => {
         let dir: "asc" | "desc" | "" = "asc";
@@ -87,15 +73,7 @@ export default function Index({ categories, filters }: PageProps) {
         }, { preserveState: true, replace: true });
     }
 
-    const handleEdit = (category: Category) => {
-        categoryForm.clearErrors();
-        setEditingCategory(category);
-        categoryForm.setData({
-            name: category.name,
-            status: category.status,
-            image: null,
-        });
-    };
+    const handleEdit = (category: Category) => setEditingCategory(category);
 
     const handleDelete = (category: Category) => {
         setDeleteCategory(category);
@@ -140,6 +118,13 @@ export default function Index({ categories, filters }: PageProps) {
                 </Button>
             ),
             cell: ({ row }) => row.original.name,
+        },
+        {
+            accessorKey: "parent_id",
+            header: "Parent",
+            cell: ({ row }) => (<span>
+                {row.original.parent ? row.original.parent.name : '—'}
+            </span>),
         },
         {
             accessorKey: "products_count",
@@ -212,13 +197,7 @@ export default function Index({ categories, filters }: PageProps) {
                     <div className="flex justify-end flex-wrap">
                         <Button
                             className="ml-2"
-                            onClick={() => {
-                                categoryForm.clearErrors();
-                                setCreatingCategory(true);
-                                categoryForm.setData('name', "");
-                                categoryForm.setData('status', true);
-                                categoryForm.setData('image', null);
-                            }}
+                            onClick={() => setCreatingCategory(true)}
                         >
                             <Plus className="h-4 w-4" /> Ajouter une catégorie
                         </Button>
@@ -267,144 +246,21 @@ export default function Index({ categories, filters }: PageProps) {
                         }}
                     />
                 </div>
-
-                {(creatingCategory || editingCategory) && (
-                    <Dialog
-                        open={creatingCategory || !!editingCategory}
-                        onOpenChange={() => {
-                            setCreatingCategory(false);
-                            setEditingCategory(null);
-                        }}
-                    >
-                        <DialogContent className="sm:max-w-lg" aria-describedby="category-dialog-description">
-                            <DialogHeader className="flex flex-col space-y-2">
-                                <div className="flex items-center space-x-2">
-                                    {editingCategory ? (
-                                        <Edit className="h-5 w-5 text-primary" />
-                                    ) : (
-                                        <PlusCircle className="h-5 w-5 text-primary" />
-                                    )}
-                                    <DialogTitle className="text-lg font-semibold">
-                                        {editingCategory ? "Modifier la catégorie" : "Ajouter une catégorie"}
-                                    </DialogTitle>
-                                </div>
-                                <DialogDescription
-                                    id="category-dialog-description"
-                                    className="text-sm text-muted-foreground"
-                                >
-                                    {editingCategory
-                                        ? "Modifiez les informations de la catégorie existante."
-                                        : "Remplissez le formulaire pour créer une nouvelle catégorie."}
-                                </DialogDescription>
-                            </DialogHeader>
-                            <form
-                                onSubmit={(e) => {
-                                    e.preventDefault();
-
-                                    if (editingCategory) {
-                                        categoryForm.transform((data) => ({
-                                            ...data,
-                                            _method: "PUT",
-                                        } as CategoryFormData & { _method: string }));
-                                        categoryForm.post(admin.categories.update({ type, category: editingCategory.slug }).url, {
-                                            preserveState: true,
-                                            forceFormData: true,
-                                            onSuccess: () => {
-                                                toast.success(
-                                                    <div className="flex flex-col">
-                                                        <span className="font-semibold text-foreground">Succès</span>
-                                                        <span className="text-sm text-muted-foreground">
-                                                            Catégorie mis à jour !
-                                                        </span>
-                                                    </div>);
-                                                setEditingCategory(null);
-                                            },
-                                        });
-                                    } else {
-                                        categoryForm.transform((data) => {
-                                            const { _method, ...rest } = data as CategoryFormData & { _method?: string };
-                                            return rest;
-                                        });
-                                        categoryForm.post(admin.categories.store({ type }).url, {
-                                            preserveState: true,
-                                            forceFormData: true,
-                                            onSuccess: () => {
-                                                toast.success(
-                                                    <div className="flex flex-col">
-                                                        <span className="font-semibold text-foreground">Succès</span>
-                                                        <span className="text-sm text-muted-foreground">
-                                                            Catégorie ajoutée avec succès !
-                                                        </span>
-                                                    </div>);
-                                                setCreatingCategory(false);
-                                            },
-                                        });
-                                    }
-                                }}
-                                className="space-y-4"
-                            >
-                                {/* Name Fields */}
-                                <div>
-                                    <Label htmlFor="name" className="font-medium text-sm">Nom</Label>
-                                    <Input
-                                        id="name"
-                                        value={categoryForm.data.name}
-                                        onChange={(e) => categoryForm.setData("name", e.target.value)}
-                                        onFocus={() => categoryForm.clearErrors('name')}
-                                        placeholder="Entrez le nom"
-                                        className="mt-1 focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-transparent"
-                                    />
-                                    {categoryForm.errors.name && (
-                                        <p className="mt-1 text-xs text-red-600">{categoryForm.errors.name}</p>
-                                    )}
-                                </div>
-                                <div>
-                                    <Label className="font-medium text-sm">Image</Label>
-                                    <ImageUpload
-                                        value={categoryForm.data.image}
-                                        onChange={(file) => categoryForm.setData("image", file)}
-                                        error={categoryForm.errors.image}
-                                    />
-                                    {!categoryForm.data.image && editingCategory?.cover_url && (
-                                        <div className="mt-2 relative w-32 h-32">
-                                            <img
-                                                src={editingCategory.cover_url}
-                                                alt="Current image"
-                                                className="w-32 h-32 object-cover rounded-lg border"
-                                            />
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                    <Switch
-                                        id="status"
-                                        checked={categoryForm.data.status}
-                                        onCheckedChange={(checked) => categoryForm.setData("status", checked)}
-                                    />
-                                    <Label htmlFor="status">Statut</Label>
-                                </div>
-                                {/* Actions */}
-                                <DialogFooter className="flex justify-end gap-3 mt-6">
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        className="px-6 py-2"
-                                        onClick={() => {
-                                            setCreatingCategory(false);
-                                            setEditingCategory(null);
-                                            categoryForm.reset(); // Reset fields when closing
-                                        }}
-                                    >
-                                        Annuler
-                                    </Button>
-                                    <Button type="submit" className="px-6 py-2" disabled={categoryForm.processing}>
-                                        {editingCategory ? "Mettre à jour" : "Créer"}
-                                    </Button>
-                                </DialogFooter>
-                            </form>
-                        </DialogContent>
-                    </Dialog>
-                )}
+                <CategoryForm
+                    open={creatingCategory || !!editingCategory}
+                    onClose={() => {
+                        setCreatingCategory(false);
+                        setEditingCategory(null);
+                    }}
+                    category={editingCategory}
+                    submitUrl={
+                        editingCategory
+                            ? admin.categories.update({ type, category: editingCategory.slug }).url
+                            : admin.categories.store({ type }).url
+                    }
+                    method={editingCategory ? "PUT" : "POST"}
+                    listCategories={listCategories}
+                />
 
                 {/* AlertDialog */}
                 <ConfirmDeleteDialog

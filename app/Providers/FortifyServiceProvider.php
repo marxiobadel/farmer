@@ -14,6 +14,7 @@ use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Laravel\Fortify\Contracts\LoginResponse;
 use Laravel\Fortify\Contracts\RegisterResponse;
+use Laravel\Fortify\Contracts\TwoFactorLoginResponse;
 use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
 
@@ -46,6 +47,20 @@ class FortifyServiceProvider extends ServiceProvider
             {
                 if ($request->wantsJson()) {
                     return response()->json(['two_factor' => false]);
+                }
+
+                return $this->redirectUser();
+            }
+        });
+
+        $this->app->instance(TwoFactorLoginResponse::class, new class implements TwoFactorLoginResponse
+        {
+            use RedirectsUser;
+
+            public function toResponse($request)
+            {
+                if ($request->wantsJson()) {
+                    return new JsonResponse('', 204);
                 }
 
                 return $this->redirectUser();

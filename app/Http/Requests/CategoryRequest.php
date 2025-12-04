@@ -29,6 +29,7 @@ class CategoryRequest extends FormRequest
                     ->where(fn ($query) => $query->where('type', $this->input('type')))
                     ->ignore($this->category?->id),
             ],
+            'parent_id' => ['nullable', 'exists:categories,id'],
             'status' => ['required', 'boolean'],
             'image' => ['nullable', 'image'],
         ];
