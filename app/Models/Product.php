@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\ProductStatus;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\Sluggable\HasSlug;
@@ -18,6 +19,17 @@ class Product extends Model implements HasMedia
     protected $casts = [
         'status' => ProductStatus::class,
     ];
+
+    protected static function booted(): void
+    {
+        static::saved(function ($course) {
+            Cache::forget('products_oldest');
+        });
+
+        static::deleted(function ($course) {
+            Cache::forget('products_oldest');
+        });
+    }
 
     public function getSlugOptions(): SlugOptions
     {

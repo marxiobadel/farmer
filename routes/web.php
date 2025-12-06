@@ -5,7 +5,9 @@ use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\ContactController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\FaqController;
+use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\ProductController;
+use App\Http\Controllers\Admin\TestimonialController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Front\IndexController;
 use App\Http\Controllers\Settings\ProfileController;
@@ -30,8 +32,14 @@ Route::middleware(['auth'])->group(function () {
                 Route::post('categories/destroy', [CategoryController::class, 'destroy'])->name('categories.destroy');
             });
 
-            Route::get('products', [ProductController::class, 'index'])->name('products.index');
+            Route::resource('products', ProductController::class)->except(['destroy', 'show']);
             Route::post('products/destroy', [ProductController::class, 'destroy'])->name('products.destroy');
+
+            Route::resource('orders', OrderController::class)->except(['destroy', 'show']);
+            Route::post('orders/destroy', [OrderController::class, 'destroy'])->name('orders.destroy');
+
+            Route::resource('testimonials', TestimonialController::class)->only(['index', 'store', 'update']);
+            Route::post('testimonials/destroy', [TestimonialController::class, 'destroy'])->name('testimonials.destroy');
 
             Route::get('contacts', [ContactController::class, 'index'])->name('contacts.index');
             Route::post('contacts/destroy', [ContactController::class, 'destroy'])->name('contacts.destroy');

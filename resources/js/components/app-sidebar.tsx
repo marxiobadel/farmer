@@ -13,7 +13,7 @@ import {
 import { dashboard } from '@/routes';
 import type { NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { Archive, FileQuestion, LayoutGrid, MessageCircle, User2 } from 'lucide-react';
+import { Boxes, FileQuestion, LayoutGrid, MessageCircle, ShoppingBag, User2, Star } from 'lucide-react';
 import AppLogo from './app-logo';
 import admin from '@/routes/admin';
 
@@ -27,9 +27,14 @@ const mainNavItems: NavItem[] = [
 
 const catalogueNavItems: NavItem[] = [
     {
-        title: 'Catégories',
-        href: admin.categories.index({type: 'products'}).url,
-        icon: Archive,
+        title: 'Produits',
+        href: admin.products.index().url,
+        icon: Boxes,
+    },
+    {
+        title: 'Commandes',
+        href: admin.orders.index().url,
+        icon: ShoppingBag,
     },
 ];
 
@@ -51,6 +56,11 @@ const otherNavItems: NavItem[] = [
         title: 'Contacts',
         href: admin.contacts.index().url,
         icon: MessageCircle,
+    },
+    {
+        title: 'Témoignages',
+        href: admin.testimonials.index().url,
+        icon: Star,
     },
 ];
 

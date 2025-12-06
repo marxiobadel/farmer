@@ -126,6 +126,38 @@ export interface Category {
     updated_at: string;
 }
 
+export interface Product {
+    id: number;
+    sku: string;
+    name: string;
+    slug: string;
+    description: string;
+    meta_description: string;
+    meta_keywords: string;
+    price: number;
+    quantity: number;
+    status: boolean;
+    cover_url: string;
+    categories: Category[];
+    created_at: string;
+    updated_at: string;
+}
+
+export interface Testimonial {
+    id: number;
+    name: string;
+    position: string;
+    company: string;
+    message: string;
+    is_approved: boolean;
+    user_id: number;
+    product_id: number;
+    rating: number;
+    user?: User;
+    created_at: string;
+    updated_at: string;
+}
+
 export type Role = 'visitor' | 'superadmin' | 'admin' | 'customer' | string;
 export type Permission = 'access-admin' | 'manage-settings' | string;
 

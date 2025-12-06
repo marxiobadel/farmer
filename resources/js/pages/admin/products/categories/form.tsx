@@ -18,7 +18,7 @@ type Props = {
     open: boolean;
     onClose: () => void;
     category: Category | null;
-    submitUrl: string; // admin.categories.store(...) or admin.categories.update(...)
+    submitUrl: string;
     method: "POST" | "PUT";
     listCategories: Category[];
 };
@@ -82,6 +82,7 @@ export default function CategoryForm({ open, onClose, category, submitUrl, metho
         form.post(submitUrl, {
             forceFormData: true,
             preserveState: true,
+            preserveScroll: 'errors',
             onSuccess: () => {
                 toast.success(
                     <div className="flex flex-col">
@@ -138,7 +139,7 @@ export default function CategoryForm({ open, onClose, category, submitUrl, metho
                     </div>
 
                     {/* Parent category (shadcn combobox/popover+command) */}
-                    <div className="flex flex-col gap-2">
+                    <div className="flex flex-col gap-1">
                         <Label className="font-medium text-sm">Catégorie parent</Label>
 
                         <Popover>

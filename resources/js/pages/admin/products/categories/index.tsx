@@ -32,7 +32,6 @@ interface PageProps {
     };
     filters: {
         search?: string;
-        status?: string;
         sort?: string;
         per_page?: number;
     },

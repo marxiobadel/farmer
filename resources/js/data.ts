@@ -81,3 +81,5 @@ export const productStatus = [
     { label: "Publié", value: 'published' },
     { label: "Archivé", value: 'archived' }
 ];
+
+export const fonts = ["Arial", "Georgia", "Times New Roman", "Courier New"];

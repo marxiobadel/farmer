@@ -4,9 +4,12 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ProductRequest;
+use App\Http\Resources\CategoryResource;
 use App\Http\Resources\ProductResource;
+use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 
 class ProductController extends Controller
@@ -23,7 +26,7 @@ class ProductController extends Controller
         $query = Product::query();
 
         if ($request->filled('search')) {
-            $query->whereAny(['name', 'short_description', 'description'], 'like', '%'.$request->string('search').'%');
+            $query->whereAny(['name', 'short_description', 'description'], 'like', '%' . $request->string('search') . '%');
         }
 
         $allowed = ['name', 'created_at', 'updated_at'];
@@ -49,13 +52,26 @@ class ProductController extends Controller
 
     public function create()
     {
-        return Inertia::render('admin/products/create');
+        $categories = Cache::rememberForever(
+            'products_categories_oldest',
+            fn() => Category::forProduct()->oldest('name')->get()
+        );
+
+        return Inertia::render('admin/products/create', [
+            'categories' => CategoryResource::collection($categories),
+        ]);
     }
 
     public function edit(Product $product)
     {
+        $categories = Cache::rememberForever(
+            'products_categories_oldest',
+            fn() => Category::forProduct()->oldest('name')->get()
+        );
+
         return Inertia::render('admin/products/edit', [
             'product' => new ProductResource($product),
+            'categories' => CategoryResource::collection($categories),
         ]);
     }
 
@@ -69,7 +85,7 @@ class ProductController extends Controller
             return redirect()
                 ->back()
                 ->withInput()
-                ->with('error', 'Erreur lors de la création : '.$e->getMessage());
+                ->with('error', 'Erreur lors de la création : ' . $e->getMessage());
         }
     }
 
@@ -83,7 +99,7 @@ class ProductController extends Controller
             return redirect()
                 ->back()
                 ->withInput()
-                ->with('error', 'Erreur lors de la mise à jour : '.$e->getMessage());
+                ->with('error', 'Erreur lors de la mise à jour : ' . $e->getMessage());
         }
     }
 
@@ -98,7 +114,7 @@ class ProductController extends Controller
 
             return redirect()->back()->with('success', 'Produit(s) supprimé(s) avec succès.');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Erreur : '.$e->getMessage());
+            return redirect()->back()->with('error', 'Erreur : ' . $e->getMessage());
         }
     }
 }

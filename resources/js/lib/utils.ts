@@ -2,6 +2,7 @@ import { InertiaLinkProps } from '@inertiajs/react';
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import notify from '@sounds/notify.mp3';
+import { toPng } from 'html-to-image';
 
 export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
@@ -75,3 +76,35 @@ export function playToastSound() {
     audio.volume = 0.5;
     audio.play();
 }
+
+export const generateImage = async (): Promise<void> => {
+    const element = document.getElementById("dashboard-capture");
+
+    if (!element) {
+        console.error("dashboard-capture not found");
+        return;
+    }
+
+    try {
+        // FORCE valid font family on ALL nodes (critical fix)
+        element.querySelectorAll("*").forEach((node) => {
+            (node as HTMLElement).style.fontFamily = "Inter, sans-serif";
+        });
+
+        const dataUrl = await toPng(element, {
+            filter: (node) => !(node instanceof HTMLLinkElement),
+            cacheBust: true,
+            pixelRatio: 2,
+            quality: 1,
+            fontEmbedCSS: '',
+            skipFonts: true
+        });
+
+        const link = document.createElement("a");
+        link.download = "dashboard-report.png";
+        link.href = dataUrl;
+        link.click();
+    } catch (error) {
+        console.error("Failed to generate image", error);
+    }
+};

@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Cache;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -51,6 +52,17 @@ class User extends Authenticatable implements HasMedia
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::saved(function ($user) {
+            Cache::forget('users_oldest');
+        });
+
+        static::deleted(function ($user) {
+            Cache::forget('users_oldest');
+        });
     }
 
     public function registerMediaCollections(): void

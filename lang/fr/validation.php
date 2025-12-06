@@ -214,6 +214,7 @@ return [
         'status' => 'statut',
         'title' => 'titre',
         'user_id' => 'utilisateur',
+        'product_id' => 'produit',
         'rating' => 'note',
         'category_ids' => 'catégories',
         'meta_description' => 'description seo',

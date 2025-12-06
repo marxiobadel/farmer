@@ -6,6 +6,11 @@ import { type PropsWithChildren } from 'react';
 
 const productNavItems: NavItem[] = [
     {
+        title: 'Produits',
+        href: admin.products.index().url,
+        icon: null,
+    },
+    {
         title: 'Catégories',
         href: admin.categories.index({type: 'products'}).url,
         icon: null,
