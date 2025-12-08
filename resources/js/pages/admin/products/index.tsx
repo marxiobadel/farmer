@@ -1,5 +1,5 @@
 import AppLayout from '@/layouts/app-layout';
-import { BreadcrumbItem, PaginationMeta, Product } from '@/types';
+import { BreadcrumbItem, PaginationMeta, Product, Variant } from '@/types';
 import { Head, router } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 import { ColumnDef, getCoreRowModel, getSortedRowModel, useReactTable } from "@tanstack/react-table";
@@ -18,6 +18,8 @@ import { useEventBus } from '@/context/event-bus-context';
 import { dashboard } from '@/routes';
 import admin from '@/routes/admin';
 import ProductsLayout from '@/layouts/products/layout';
+import { productStatus } from '@/data';
+import { useCurrencyFormatter } from '@/hooks/use-currency';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Tableau de bord', href: dashboard().url },
@@ -40,8 +42,10 @@ interface PageProps {
 export default function Index({ products, filters }: PageProps) {
     const { on, clearLast } = useEventBus();
 
-    const isMobile = useIsMobile();
+    const formatPrice = useCurrencyFormatter();
 
+    const isMobile = useIsMobile();
+    console.log(products);
     const [search, setSearch] = useState(filters.search ?? "");
     const [sort, setSort] = useState("");
     const [perPage, setPerPage] = useState<number>(filters.per_page ?? 10);
@@ -126,7 +130,69 @@ export default function Index({ products, filters }: PageProps) {
                     Nom <ArrowUpDown className="ml-2 h-4 w-4" />
                 </Button>
             ),
-            cell: ({ row }) => row.original.name,
+            cell: ({ row }) => {
+                const variants = row.original.variants ?? [];
+
+                if (variants.length > 0) {
+                    const defaultVariant = variants.find(v => v.is_default);
+                    const variantToUse = defaultVariant ?? variants[0];
+
+                    const variantName = variantToUse.options
+                        .map(o => `${o.attribute}: ${o.option}`)
+                        .join(" / ");
+
+                    return (
+                        <div className="flex flex-col">
+                            <span className="font-medium text-gray-900">{row.original.name}</span>
+                            <span className="text-sm text-gray-500 mt-1">{variantName}</span>
+                        </div>
+                    );
+                }
+
+                return <span className="font-medium text-gray-900">{row.original.name}</span>;
+            },
+        },
+        {
+            accessorKey: "base_price",
+            header: 'Prix',
+            cell: ({ row }) => {
+                const variants = row.original.variants ?? [];
+
+                if (variants.length > 0) {
+                    const defaultVariant = variants.find(v => v.is_default);
+
+                    const variantToUse = defaultVariant ?? variants[0];
+
+                    return formatPrice(Number(variantToUse.price));
+                }
+
+                return formatPrice(Number(row.original.base_price));
+            },
+        },
+        {
+            accessorKey: "variants",
+            header: 'Variantes',
+            cell: ({ row }) => (row.original.variants ?? []).length,
+        },
+        {
+            accessorKey: "status",
+            header: () => (
+                <Button variant="ghost" onClick={() => toggleSort("status")}>
+                    Statut <ArrowUpDown className="ml-2 h-4 w-4" />
+                </Button>
+            ),
+            cell: ({ row }) => {
+                const status = row.original.status;
+                let colorClass = "bg-muted text-muted-foreground";
+                switch (status) {
+                    case "published": colorClass = "bg-green-100 text-green-800"; break;
+                    case "archived": colorClass = "bg-red-100 text-red-800"; break;
+                    case "draft": colorClass = "bg-yellow-100 text-yellow-800"; break;
+                }
+                return <span className={`px-2 py-1 text-xs font-medium rounded-full ${colorClass}`}>
+                    {productStatus.find(s => s.value === status)?.label}
+                </span>;
+            },
         },
         {
             accessorKey: "created_at",

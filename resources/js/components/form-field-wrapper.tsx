@@ -27,8 +27,9 @@ interface BaseOption {
 
 interface FormFieldWrapperProps<T extends FieldValues> {
     control: Control<T>;
+    noLabel?: boolean;
     name: Path<T>;
-    label: string;
+    label?: string;
     placeholder?: string;
     type?: InputType;
     options?: BaseOption[];
@@ -48,6 +49,7 @@ interface FormFieldWrapperProps<T extends FieldValues> {
 
 export function FormFieldWrapper<T extends FieldValues>({
     control,
+    noLabel = false,
     name,
     label,
     placeholder,
@@ -73,7 +75,7 @@ export function FormFieldWrapper<T extends FieldValues>({
             name={name}
             render={({ field }) => (
                 <FormItem className={cn({ "flex items-center justify-between": type === "switch" })}>
-                    <FormLabel>{label}</FormLabel>
+                    {!noLabel && <FormLabel>{label}</FormLabel>}
                     <FormControl>
                         {renderCustom ? (
                             renderCustom({

@@ -9,10 +9,11 @@ use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\Sluggable\HasSlug;
 use Spatie\Sluggable\SlugOptions;
+use Spatie\Tags\HasTags;
 
 class Product extends Model implements HasMedia
 {
-    use HasSlug, InteractsWithMedia;
+    use HasSlug, HasTags, InteractsWithMedia;
 
     protected $guarded = ['id'];
 
@@ -43,7 +44,10 @@ class Product extends Model implements HasMedia
 
     public function registerMediaCollections(): void
     {
-        $this->addMediaCollection('image');
+        $this->addMediaCollection('images');
+        $this
+            ->addMediaCollection('variants')
+            ->singleFile();
     }
 
     public function categories()
@@ -54,5 +58,10 @@ class Product extends Model implements HasMedia
     public function attributes()
     {
         return $this->belongsToMany(Attribute::class, 'product_attributes')->withTimestamps();
+    }
+
+    public function variants()
+    {
+        return $this->hasMany(ProductVariant::class, 'product_id');
     }
 }

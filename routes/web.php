@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\CategoryType;
+use App\Http\Controllers\Admin\CarrierController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\ContactController;
 use App\Http\Controllers\Admin\DashboardController;
@@ -9,6 +10,7 @@ use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\TestimonialController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\ZoneController;
 use App\Http\Controllers\Front\IndexController;
 use App\Http\Controllers\Settings\ProfileController;
 use Illuminate\Support\Facades\Route;
@@ -40,6 +42,12 @@ Route::middleware(['auth'])->group(function () {
 
             Route::resource('testimonials', TestimonialController::class)->only(['index', 'store', 'update']);
             Route::post('testimonials/destroy', [TestimonialController::class, 'destroy'])->name('testimonials.destroy');
+
+            Route::resource('zones', ZoneController::class)->only(['index', 'store', 'update']);
+            Route::post('zones/destroy', [ZoneController::class, 'destroy'])->name('zones.destroy');
+
+            Route::resource('carriers', CarrierController::class)->except(['destroy', 'show']);
+            Route::post('carriers/destroy', [CarrierController::class, 'destroy'])->name('carriers.destroy');
 
             Route::get('contacts', [ContactController::class, 'index'])->name('contacts.index');
             Route::post('contacts/destroy', [ContactController::class, 'destroy'])->name('contacts.destroy');

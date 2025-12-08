@@ -6,10 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\ProductRequest;
 use App\Http\Resources\CategoryResource;
 use App\Http\Resources\ProductResource;
+use App\Models\Attribute;
+use App\Models\AttributeOption;
 use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class ProductController extends Controller
@@ -23,7 +27,7 @@ class ProductController extends Controller
             'sort' => ['nullable', 'string'],
         ]);
 
-        $query = Product::query();
+        $query = Product::with(['variants']);
 
         if ($request->filled('search')) {
             $query->whereAny(['name', 'short_description', 'description'], 'like', '%' . $request->string('search') . '%');
@@ -70,51 +74,268 @@ class ProductController extends Controller
         );
 
         return Inertia::render('admin/products/edit', [
-            'product' => new ProductResource($product),
+            'product' => new ProductResource($product->load(['variants', 'attributes.options', 'categories'])),
             'categories' => CategoryResource::collection($categories),
         ]);
     }
 
     public function store(ProductRequest $request)
     {
-        try {
-            Product::create($request->validated());
+        DB::beginTransaction();
 
-            return redirect()->back()->with('success', 'Produit créé avec succès.');
+        try {
+            $data = $request->validated();
+
+            $product = Product::create([
+                'name' => $data['name'],
+                'base_price' => $data['price'] ?? 0,
+                'quantity' => $data['quantity'] ?? 0,
+                'short_description' => $data['meta_description'] ?? null,
+                'description' => $data['description'] ?? null,
+                'weight' => $data['weight'] ?? null,
+                'height' => $data['height'] ?? null,
+                'width' => $data['width'] ?? null,
+                'length' => $data['length'] ?? null,
+                'status' => $data['status'],
+            ]);
+
+            $product->categories()->sync($data['category_ids'] ?? []);
+            $product->syncTags($data['tags'] ?? []);
+
+            if (!empty($data['images'])) {
+                foreach ($data['images'] as $index => $file) {
+                    $media = $product->addMedia($file)->toMediaCollection('images');
+
+                    if (isset($data['default_image']) && (int) $data['default_image'] === $index) {
+                        $product->update(['default_image_id' => $media->id]);
+                    }
+                }
+            }
+
+            $attributeMap = [];
+            $optionMap = [];
+
+            if (!empty($data['attributes'])) {
+                foreach ($data['attributes'] as $attributeData) {
+                    $attribute = Attribute::create([
+                        'name' => $attributeData['name'],
+                        'type' => 'radio'
+                    ]);
+
+                    $product->attributes()->syncWithoutDetaching([$attribute->id]);
+                    $attributeMap[$attributeData['name']] = $attribute->id;
+
+                    foreach ($attributeData['options'] as $optionData) {
+                        $option = AttributeOption::create([
+                            'attribute_id' => $attribute->id,
+                            'name' => $optionData['name'],
+                        ]);
+
+                        $optionMap[$attribute->id][$optionData['name']] = $option->id;
+                    }
+                }
+            }
+
+            if (!empty($data['variants'])) {
+                foreach ($data['variants'] as $variantData) {
+                    $variant = $product->variants()->create([
+                        'sku' => uniqid('SKU-'),
+                        'price' => $variantData['price'],
+                        'quantity' => $variantData['quantity'],
+                        'is_default' => !!$variantData['is_default'],
+                    ]);
+
+                    if (!empty($variantData['image'])) {
+                        $variant->addMedia($variantData['image'])->toMediaCollection('image');
+                    }
+
+                    $parts = explode(" / ", $variantData['name']);
+                    $attrIndex = 0;
+
+                    foreach ($data['attributes'] as $attr) {
+                        $attrId = $attributeMap[$attr['name']];
+                        $optionName = $parts[$attrIndex];
+                        $optionId = $optionMap[$attrId][$optionName];
+
+                        $variant->options()->create([
+                            'attribute_id' => $attrId,
+                            'attribute_option_id' => $optionId,
+                        ]);
+
+                        $attrIndex++;
+                    }
+                }
+
+                $product->update(['quantity' => $product->variants()->sum('quantity')]);
+            }
+
+            DB::commit();
+
+            return to_route('admin.products.index');
         } catch (\Exception $e) {
-            return redirect()
-                ->back()
-                ->withInput()
-                ->with('error', 'Erreur lors de la création : ' . $e->getMessage());
+            DB::rollBack();
+            return back()->withInput()->with('error', $e->getMessage());
         }
     }
 
     public function update(ProductRequest $request, Product $product)
     {
-        try {
-            $product->update($request->safe()->all());
+        DB::beginTransaction();
 
-            return redirect()->back()->with('success', 'Produit mise à jour avec succès.');
+        try {
+            $data = $request->validated();
+
+            $product->update([
+                'name' => $data['name'],
+                'base_price' => $data['price'] ?? 0,
+                'quantity' => $data['quantity'] ?? 0,
+                'short_description' => $data['meta_description'] ?? null,
+                'description' => $data['description'] ?? null,
+                'weight' => $data['weight'] ?? null,
+                'height' => $data['height'] ?? null,
+                'width' => $data['width'] ?? null,
+                'length' => $data['length'] ?? null,
+                'status' => $data['status'],
+            ]);
+
+            $product->categories()->sync($data['category_ids'] ?? []);
+            $product->syncTags($data['tags'] ?? []);
+
+            if ($request->has('image_ids')) {
+                $imageIds = $request->input('image_ids', []);
+                $product->media()
+                    ->where('collection_name', 'images')
+                    ->whereNotIn('id', $imageIds)
+                    ->get()
+                    ->each
+                    ->delete();
+            }
+
+            if (!empty($data['images'])) {
+                foreach ($data['images'] as $index => $file) {
+                    $media = $product->addMedia($file)->toMediaCollection('images');
+
+                    if (isset($data['default_image']) && (int) $data['default_image'] === $index) {
+                        $product->update(['default_image_id' => $media->id]);
+                    }
+                }
+            }
+
+            if (isset($data['default_image']) && is_numeric($data['default_image'])) {
+                $product->update(['default_image_id' => $data['default_image']]);
+            }
+
+            $attributes = $product->attributes;
+
+            $product->attributes()->detach();
+
+            AttributeOption::whereIn('attribute_id', $attributes->pluck('id'))->delete();
+
+            Attribute::whereIn('id', $attributes->pluck('id'))->delete();
+
+            foreach ($product->variants as $variant) {
+                $variant->clearMediaCollection('image');
+                $variant->options()->delete();
+            }
+
+            $product->variants()->delete();
+
+            $attributeMap = [];
+            $optionMap = [];
+
+            if (!empty($data['attributes'])) {
+                foreach ($data['attributes'] as $attributeData) {
+
+                    $attribute = Attribute::create([
+                        'name' => $attributeData['name'],
+                        'type' => 'radio',
+                    ]);
+
+                    $product->attributes()->attach($attribute->id);
+                    $attributeMap[$attributeData['name']] = $attribute->id;
+
+                    foreach ($attributeData['options'] as $optionData) {
+                        $option = AttributeOption::create([
+                            'attribute_id' => $attribute->id,
+                            'name' => $optionData['name'],
+                        ]);
+
+                        $optionMap[$attribute->id][$optionData['name']] = $option->id;
+                    }
+                }
+            }
+
+            if (!empty($data['variants'])) {
+                foreach ($data['variants'] as $variantData) {
+                    $variant = $product->variants()->create([
+                        'sku' => uniqid('SKU-'),
+                        'price' => $variantData['price'],
+                        'quantity' => $variantData['quantity'],
+                        'is_default' => !!$variantData['is_default'],
+                    ]);
+
+                    if ($variantData['image'] instanceof UploadedFile) {
+                        $variant->addMedia($variantData['image'])->toMediaCollection('image');
+                    } elseif (is_string($variantData['image'])) {
+                        $variant->addMediaFromUrl($variantData['image'])->toMediaCollection('image');
+                    }
+
+                    // assign options to variant
+                    $parts = explode(" / ", $variantData['name']);
+                    $attrIndex = 0;
+
+                    foreach ($data['attributes'] as $attr) {
+                        $attrId = $attributeMap[$attr['name']];
+                        $optionName = $parts[$attrIndex];
+                        $optionId = $optionMap[$attrId][$optionName];
+
+                        $variant->options()->create([
+                            'attribute_id' => $attrId,
+                            'attribute_option_id' => $optionId,
+                        ]);
+
+                        $attrIndex++;
+                    }
+                }
+
+                $product->update([
+                    'quantity' => $product->variants()->sum('quantity')
+                ]);
+            }
+
+            DB::commit();
+
+            return to_route('admin.products.index');
         } catch (\Exception $e) {
-            return redirect()
-                ->back()
-                ->withInput()
-                ->with('error', 'Erreur lors de la mise à jour : ' . $e->getMessage());
+            DB::rollBack();
+
+            return back()->withInput()->with('error', $e->getMessage());
         }
     }
 
     public function destroy(Request $request)
     {
-        try {
-            if ($request->has('ids')) {
-                $ids = $request->input('ids', []);
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'integer|exists:products,id',
+        ]);
 
-                Product::destroy($ids);
-            }
+        try {
+            DB::transaction(function () use ($request) {
+                $ids = $request->input('ids');
+
+                // Récupérer tous les produits à supprimer
+                $products = Product::whereIn('id', $ids)->get();
+
+                foreach ($products as $product) {
+                    $product->tags()->delete();
+                    $product->delete();
+                }
+            });
 
             return redirect()->back()->with('success', 'Produit(s) supprimé(s) avec succès.');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Erreur : ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Erreur lors de la suppression : ' . $e->getMessage());
         }
     }
 }

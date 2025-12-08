@@ -15,6 +15,7 @@ class ProductVariant extends Model implements HasMedia
         'product_id',
         'sku',
         'quantity',
+        'is_default',
         'price',
     ];
 
@@ -40,6 +41,6 @@ class ProductVariant extends Model implements HasMedia
 
     public function registerMediaCollections(): void
     {
-        $this->addMediaCollection('image');
+        $this->addMediaCollection('image')->singleFile();
     }
 }

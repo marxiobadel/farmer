@@ -126,19 +126,74 @@ export interface Category {
     updated_at: string;
 }
 
-export interface Product {
+export interface ProductImage {
+    id: number;
+    url: string;
+}
+
+export interface AttributeOption {
+    id: number;
+    name: string;
+}
+
+export interface Attribute {
+    id: number;
+    name: string;
+    type: string;
+    options: AttributeOption[];
+}
+
+export interface VariantOption {
+    attribute_id: number;
+    attribute_option_id: number;
+    attribute: string;
+    option: string;
+}
+
+export interface Variant {
     id: number;
     sku: string;
-    name: string;
-    slug: string;
-    description: string;
-    meta_description: string;
-    meta_keywords: string;
     price: number;
     quantity: number;
-    status: boolean;
-    cover_url: string;
+    is_default: boolean;
+    image: string | null;
+    options: VariantOption[];
+}
+
+export interface Product {
+    id: number;
+    name: string;
+    slug: string;
+
+    // Prices
+    base_price: number;
+    quantity: number;
+
+    weight: number;
+    height: number;
+    width: number;
+    length: number;
+
+    // Content
+    description: string | null;
+
+    // SEO
+    short_description?: string;
+    tags?: string;
+
+    // Status
+    status: 'published' | 'draft' | string;
+
+    // Images
+    default_image_id: number | string;
+    default_image: string | null;
+    images: ProductImage[];
+
+    // Relations
     categories: Category[];
+    attributes: Attribute[];
+    variants: Variant[];
+
     created_at: string;
     updated_at: string;
 }
@@ -154,6 +209,16 @@ export interface Testimonial {
     product_id: number;
     rating: number;
     user?: User;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface Zone {
+    id: number;
+    name: string;
+    latitude: string | null;
+    longitude: string | null;
+    country: Country | null;
     created_at: string;
     updated_at: string;
 }

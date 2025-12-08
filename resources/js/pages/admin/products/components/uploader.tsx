@@ -4,7 +4,7 @@ import { X, Star, StarOff, UploadCloud } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface ImagePreview {
-    file: File;
+    file: File | null;
     url: string;
     id: string;
 }
@@ -51,7 +51,7 @@ export default function ProductImagesUploader({
             <div
                 {...getRootProps()}
                 className={cn(
-                    "w-full border-2 border-dashed rounded-xl p-10 flex flex-col items-center justify-center cursor-pointer transition",
+                    "w-full border-2 border-dashed rounded-xl p-5 flex flex-col items-center justify-center cursor-pointer transition",
                     "bg-gray-50 dark:bg-gray-900",
                     isDragActive
                         ? "border-primary/60 bg-primary/10"

@@ -53,4 +53,35 @@ return [
         'twitter_url',
         'youtube_url',
     ],
+
+    'openai' => [
+        'key' => env('OPENAI_API_KEY'),
+    ],
+
+    'interconnect_sms' => [
+        'url' => env('INTERCONNECT_SMS_URL', 'https://portal.interconnect.solutions/api/json.php'),
+        'api_key' => env('INTERCONNECT_SMS_API_KEY'),
+    ],
+
+    'om' => [
+        'auth_header' => env('OM_AUTH_HEADER'),
+        'merchant_key' => env('OM_MERCHANT_KEY'),
+        'username' => env('USERNAME', '1s6misFgzvpfgYi4zvoD6CIMM88a'),
+        'password' => env('PASSWORD', 'KrUzcvPFfGTdNfDzTMBgIHjqfVka'),
+        'channel_user_msisdn' => env('CHANNEL_USER_MSISDN', '659923683'),
+        'pin' => env('PIN', 1256),
+        'x_auth_token' => env('X_AUTH_TOKEN', 'WU5PVEVIRUFEOllOT1RFSEVBRDIwMjA='),
+
+        'ynote_om_client_id' => env('YNOTE_OM_CLIENT_ID'),
+        'ynote_om_client_secret' => env('YNOTE_OM_CLIENT_SECRET'),
+        'ynote_om_customer_key' => env('YNOTE_OM_CUSTOMER_KEY'),
+        'ynote_om_customer_secret' => env('YNOTE_OM_CUSTOMER_SECRET'),
+    ],
+
+    'momo' => [
+        'access_key' => env('MOMO_ACCESS_KEY'),
+        'secret_access_key' => env('MOMO_SECRET_ACCESS_KEY'),
+        'client_id' => env('MOMO_CLIENT_ID'),
+        'client_secret' => env('MOMO_CLIENT_SECRET')
+    ],
 ];

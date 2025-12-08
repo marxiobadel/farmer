@@ -2,6 +2,10 @@
 
 namespace App\Providers;
 
+use App\Services\InterconnectSmsService;
+use App\Services\MobileMoney;
+use App\Services\OpenAi;
+use App\Services\OrangeMoney;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Gate;
@@ -15,7 +19,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(OrangeMoney::class, fn() => new OrangeMoney());
+        $this->app->singleton(MobileMoney::class, fn() => new MobileMoney());
+        $this->app->singleton(OpenAi::class, fn() => new OpenAi());
+        $this->app->singleton(InterconnectSmsService::class, fn() => new InterconnectSmsService());
     }
 
     /**
@@ -34,6 +41,6 @@ class AppServiceProvider extends ServiceProvider
 
         // Implicitly grant "Super Admin" role all permissions
         // This works in the app by using gate-related functions like auth()->user->can() and @can()
-        Gate::before(fn ($user, $ability) => $user->hasRole('superadmin') ? true : null);
+        Gate::before(fn($user, $ability) => $user->hasRole('superadmin') ? true : null);
     }
 }
