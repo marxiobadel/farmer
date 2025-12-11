@@ -43,4 +43,9 @@ class ProductVariant extends Model implements HasMedia
     {
         $this->addMediaCollection('image')->singleFile();
     }
+
+    public function getImageUrlAttribute(): string
+    {
+        return $this->getFirstMediaUrl('image');
+    }
 }

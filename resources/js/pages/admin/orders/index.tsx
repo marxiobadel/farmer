@@ -1,5 +1,5 @@
 import AppLayout from '@/layouts/app-layout';
-import { BreadcrumbItem, PaginationMeta, Carrier } from '@/types';
+import { BreadcrumbItem, Order, PaginationMeta } from '@/types';
 import { Head, router } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 import { ColumnDef, getCoreRowModel, getSortedRowModel, useReactTable } from "@tanstack/react-table";
@@ -7,27 +7,27 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from "@/components/ui/checkbox";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
-import { ArrowUpDown, Edit, MoreHorizontal, Trash2, Plus, Download, Search, CheckCircle } from 'lucide-react';
+import { ArrowUpDown, Edit, MoreHorizontal, Trash2, Plus, Download, Search, Eye } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from 'sonner';
-import { dateTimeFormatOptions } from '@/lib/utils';
+import { dateTimeFormatOptions, formatName } from '@/lib/utils';
 import ConfirmDeleteDialog from '@/components/confirm-delete-dialog';
 import DataTablePagination from '@/components/datatable-pagination';
 import DataTable from '@/components/datatable';
 import { useEventBus } from '@/context/event-bus-context';
 import { dashboard } from '@/routes';
 import admin from '@/routes/admin';
-import { FaTimesCircle } from 'react-icons/fa';
-import CarriersLayout from '@/layouts/carriers/layout';
+import { orderDeliveryStatus } from '@/data';
+import { useCurrencyFormatter } from '@/hooks/use-currency';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Tableau de bord', href: dashboard().url },
-    { title: 'Transporteurs', href: '#' },
+    { title: 'Commandes', href: '#' },
 ]
 
 interface PageProps {
-    carriers: {
-        data: Carrier[];
+    orders: {
+        data: Order[];
         meta: PaginationMeta;
     };
     filters: {
@@ -38,19 +38,21 @@ interface PageProps {
     }
 }
 
-export default function Index({ carriers, filters }: PageProps) {
+export default function Index({ orders, filters }: PageProps) {
     const { on, clearLast } = useEventBus();
+
+    const formatPrice = useCurrencyFormatter();
 
     const isMobile = useIsMobile();
 
     const [search, setSearch] = useState(filters.search ?? "");
     const [sort, setSort] = useState("");
     const [perPage, setPerPage] = useState<number>(filters.per_page ?? 10);
-    const [deleteCarrier, setDeleteCarrier] = useState<Carrier | null>(null);
+    const [deleteOrder, setDeleteOrder] = useState<Order | null>(null);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
 
-    const toggleSort = (column: keyof Carrier) => {
+    const toggleSort = (column: keyof Order) => {
         let dir: "asc" | "desc" | "" = "asc"
         if (sort === column) dir = "desc"
         else if (sort === "-" + column) dir = ""
@@ -60,31 +62,30 @@ export default function Index({ carriers, filters }: PageProps) {
     }
 
     const applyFilters = (newFilters: Partial<PageProps["filters"]> & { page?: number }) => {
-        router.get(admin.carriers.index().url, {
+        router.get(admin.orders.index().url, {
             search,
             sort,
             per_page: perPage,
-            page: carriers.meta.current_page,
+            page: orders.meta.current_page,
             ...newFilters,
         }, { preserveState: true, replace: true });
     }
 
-    const handleDelete = (carrier: Carrier) => {
-        setDeleteCarrier(carrier);
+    const handleDelete = (order: Order) => {
+        setDeleteOrder(order);
         setIsDialogOpen(true);
     };
 
     const handleBulkDelete = () => {
         if (Object.keys(rowSelection).length > 0) {
-            setDeleteCarrier(null);
+            setDeleteOrder(null);
             setIsDialogOpen(true);
         }
     };
 
     const handleExport = () => {
-        const headers = ['Nom', "Date de création"];
-        const rows = carriers.data.map(u => [
-            u.name,
+        const headers = ["Date de création"];
+        const rows = orders.data.map(u => [
             u.created_at
         ]);
         const csvContent = [headers.join(';'), ...rows.map(r => r.join(';'))].join('\n');
@@ -92,11 +93,11 @@ export default function Index({ carriers, filters }: PageProps) {
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.setAttribute("href", url);
-        link.setAttribute("download", "carriers_export.csv");
+        link.setAttribute("download", "orders_export.csv");
         link.click();
     };
 
-    const columns = useMemo<ColumnDef<Carrier>[]>(() => [
+    const columns = useMemo<ColumnDef<Order>[]>(() => [
         {
             id: "select",
             header: ({ table }) => (
@@ -121,23 +122,59 @@ export default function Index({ carriers, filters }: PageProps) {
             enableHiding: false,
         },
         {
-            accessorKey: "name",
-            header: () => (
-                <Button variant="ghost" onClick={() => toggleSort("name")}>
-                    Nom <ArrowUpDown className="ml-2 h-4 w-4" />
-                </Button>
-            ),
-            cell: ({ row }) => row.original.name,
+            accessorKey: "user_id",
+            header: () => 'Client',
+            cell: ({ row }) => {
+                return <span className="font-medium text-gray-900">{formatName(row.original.user?.fullname)}</span>;
+            },
         },
         {
-            accessorKey: 'is_active',
-            header: "Statut",
+            accessorKey: "total",
+            header: 'Total',
             cell: ({ row }) => {
-                if (row.original.is_active)
-                    return <CheckCircle size={18} className={`text-green-600`} />
-                else
-                    return <FaTimesCircle size={18} className={`text-red-600`} />
-            }
+                return formatPrice(Number(row.original.total));
+            },
+        },
+        {
+            accessorKey: "status",
+            header: () => (
+                <Button variant="ghost" onClick={() => toggleSort("status")}>
+                    Statut <ArrowUpDown className="ml-2 h-4 w-4" />
+                </Button>
+            ),
+            cell: ({ row }) => {
+                const status = row.original.status;
+
+                const colorMap: Record<string, string> = {
+                    pending: "bg-gray-200 text-gray-800",
+                    processing: "bg-blue-100 text-blue-800",
+                    packing: "bg-blue-200 text-blue-900",
+                    awaiting_pickup: "bg-orange-100 text-orange-800",
+                    picked_up: "bg-indigo-100 text-indigo-800",
+                    in_transit: "bg-purple-100 text-purple-800",
+                    at_hub: "bg-violet-100 text-violet-800",
+                    out_for_delivery: "bg-yellow-100 text-yellow-800",
+                    delivered: "bg-green-100 text-green-800",
+
+                    delivery_issue: "bg-red-100 text-red-800",
+                    wrong_address: "bg-red-200 text-red-900",
+                    recipient_absent: "bg-orange-200 text-orange-900",
+                    returned: "bg-pink-200 text-pink-900",
+
+                    completed: "bg-green-200 text-green-900",
+                    cancelled: "bg-red-300 text-red-900",
+                };
+
+                const colorClass = colorMap[status] ?? "bg-muted text-muted-foreground";
+
+                const label = orderDeliveryStatus.find(s => s.value === status)?.label ?? status;
+
+                return (
+                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${colorClass}`}>
+                        {label}
+                    </span>
+                );
+            },
         },
         {
             accessorKey: "created_at",
@@ -148,18 +185,6 @@ export default function Index({ carriers, filters }: PageProps) {
             ),
             cell: ({ row }) => {
                 const date = new Date(row.original.created_at);
-                return date.toLocaleString("fr-FR", dateTimeFormatOptions);
-            }
-        },
-         {
-            accessorKey: "updated_at",
-            header: () => (
-                <Button variant="ghost" onClick={() => toggleSort("updated_at")}>
-                    Modifié le <ArrowUpDown className="ml-2 h-4 w-4" />
-                </Button>
-            ),
-            cell: ({ row }) => {
-                const date = new Date(row.original.updated_at);
                 return date.toLocaleString("fr-FR", dateTimeFormatOptions);
             }
         },
@@ -174,8 +199,8 @@ export default function Index({ carriers, filters }: PageProps) {
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => router.visit(admin.carriers.edit(row.original.id).url)}>
-                            <Edit className="mr-1 h-4 w-4" /> Éditer
+                        <DropdownMenuItem onClick={() => router.visit(admin.orders.show(row.original.id).url)}>
+                            <Eye className="mr-1 h-4 w-4" /> Voir
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => setTimeout(() => handleDelete(row.original), 100)}>
                             <Trash2 className="mr-1 h-4 w-4" /> Supprimer
@@ -187,7 +212,7 @@ export default function Index({ carriers, filters }: PageProps) {
     ], [sort]);
 
     const table = useReactTable({
-        data: carriers.data,
+        data: orders.data,
         columns,
         getCoreRowModel: getCoreRowModel(),
         getSortedRowModel: getSortedRowModel(),
@@ -201,7 +226,7 @@ export default function Index({ carriers, filters }: PageProps) {
     };
 
     useEffect(() => {
-        const offCarrierSaved = on('carrier.saved', (message) => {
+        const offOrderSaved = on('order.saved', (message) => {
             toast.success(
                 <div className="flex flex-col">
                     <span className="font-semibold text-foreground">Succès</span>
@@ -210,16 +235,16 @@ export default function Index({ carriers, filters }: PageProps) {
         }, { replay: true, once: true });
 
         return () => {
-            offCarrierSaved();
-            clearLast?.('carrier.saved');
+            offOrderSaved();
+            clearLast?.('order.saved');
         }
     }, [on]);
 
     return (
         <AppLayout breadcrumbs={isMobile ? [] : breadcrumbs}>
-            <Head title="Transporteurs" />
-            <CarriersLayout>
-                <div className="space-y-6 md:mt-[-77px]">
+            <Head title="Commandes" />
+            <div className="p-4 sm:p-6 lg:p-8">
+                <div className="space-y-6">
                     {/* Header */}
                     <div className="flex justify-end flex-wrap">
                         <Button
@@ -227,25 +252,25 @@ export default function Index({ carriers, filters }: PageProps) {
                             className="ml-2"
                             onClick={handleExport}
                         >
-                            <Download className="h-4 w-4" /> Exporter les transporteurs
+                            <Download className="h-4 w-4" /> Exporter les commandes
                         </Button>
                         <Button
                             className="ml-2"
-                            onClick={() => router.visit(admin.carriers.create().url)}
+                            onClick={() => router.visit(admin.orders.create().url)}
                         >
-                            <Plus className="h-4 w-4" /> Ajouter un transporteur
+                            <Plus className="h-4 w-4" /> Ajouter une commande
                         </Button>
                     </div>
                     <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                         <div>
-                            <h1 className="text-2xl font-bold tracking-tight">Transporteurs</h1>
-                            <p className="text-sm text-muted-foreground">Gérez les transporteurs et leur tarification.</p>
+                            <h1 className="text-2xl font-bold tracking-tight">Commandes</h1>
+                            <p className="text-sm text-muted-foreground">Gérez les commandes et les clients.</p>
                         </div>
                         <div className="flex gap-2 w-full md:w-auto">
                             <div className='relative'>
                                 <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                 <Input
-                                    placeholder={isMobile ? "Rechercher..." : "Rechercher un transporteur..."}
+                                    placeholder={isMobile ? "Rechercher..." : "Rechercher un utilisateur..."}
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
                                     onKeyDown={(e) => e.key === "Enter" && applyFilters({ page: 1 })}
@@ -261,17 +286,17 @@ export default function Index({ carriers, filters }: PageProps) {
                     </div>
 
                     {/* Table */}
-                    <DataTable<Carrier>
-                        data={carriers.data}
+                    <DataTable<Order>
+                        data={orders.data}
                         columns={columns}
                         rowSelection={rowSelection}
                         onRowSelectionChange={handleRowSelectionChange}
-                        emptyMessage="Aucun transporteur trouvé."
+                        emptyMessage="Aucun commande trouvé."
                     />
 
                     {/* Pagination */}
                     <DataTablePagination
-                        meta={carriers.meta}
+                        meta={orders.meta}
                         perPage={perPage}
                         onPageChange={(page) => applyFilters({ page })}
                         onPerPageChange={(val) => {
@@ -280,17 +305,17 @@ export default function Index({ carriers, filters }: PageProps) {
                         }}
                     />
                 </div>
-            </CarriersLayout>
+            </div>
             {/* AlertDialog */}
             <ConfirmDeleteDialog
                 open={isDialogOpen}
                 onOpenChange={setIsDialogOpen}
                 title="Confirmer la suppression"
-                message={deleteCarrier
-                    ? `Voulez-vous vraiment supprimer ${deleteCarrier.name} ? Cette action est irréversible.`
+                message={deleteOrder
+                    ? `Voulez-vous vraiment supprimer cette commande ? Cette action est irréversible.`
                     : `Voulez-vous vraiment supprimer ${Object.keys(rowSelection).length} produit(s) ? Cette action est irréversible.`}
                 onConfirm={() => {
-                    const ids = deleteCarrier ? [deleteCarrier.id]
+                    const ids = deleteOrder ? [deleteOrder.id]
                         : Object.keys(rowSelection).map(k => {
                             const row = table.getRowModel().rows[Number(k)];
                             return row.original.id;
@@ -308,7 +333,7 @@ export default function Index({ carriers, filters }: PageProps) {
                                     <div className="flex flex-col">
                                         <span className="font-semibold text-foreground">Succès</span>
                                         <span className="text-sm text-muted-foreground">
-                                            Les transporteurs sélectionnés ont été supprimés.
+                                            Les produits sélectionnés ont été supprimés.
                                         </span>
                                     </div>
                                 );
@@ -344,10 +369,10 @@ export default function Index({ carriers, filters }: PageProps) {
                         }
                     );
                     setRowSelection({});
-                    setDeleteCarrier(null);
+                    setDeleteOrder(null);
                     setIsDialogOpen(false);
                 }}
             />
-        </AppLayout >
+        </AppLayout>
     );
 }

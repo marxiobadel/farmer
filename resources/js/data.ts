@@ -83,3 +83,36 @@ export const productStatus = [
 ];
 
 export const fonts = ["Arial", "Georgia", "Times New Roman", "Courier New"];
+
+export const pricingTypes = [
+    { label: "Prix fixe", value: "fixed" },
+    { label: "Par poids", value: "weight" },
+    { label: "Par prix de commande", value: "price" },
+    { label: "Par volume", value: "volume" },
+];
+
+export const orderDeliveryStatus = [
+    { label: "En attente de paiement", value: "pending" },
+    { label: "En traitement", value: "processing" },
+    { label: "En préparation", value: "packing" },
+    { label: "En attente de ramassage", value: "awaiting_pickup" },
+    { label: "Pris en charge par le transporteur", value: "picked_up" },
+    { label: "En transit", value: "in_transit" },
+    { label: "Arrivé au centre de distribution", value: "at_hub" },
+    { label: "En cours de livraison", value: "out_for_delivery" },
+    { label: "Livré", value: "delivered" },
+
+    // Problèmes potentiels
+    { label: "Problème de livraison", value: "delivery_issue" },
+    { label: "Adresse incorrecte", value: "wrong_address" },
+    { label: "Destinataire absent", value: "recipient_absent" },
+    { label: "Retourné à l'expéditeur", value: "returned" },
+
+    // Finaux
+    { label: "Terminée", value: "completed" },
+    { label: "Annulée", value: "cancelled" },
+];
+
+export const paymentMethods = [
+    { label: "Cash", value: "cash" },
+];

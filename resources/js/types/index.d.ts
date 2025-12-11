@@ -55,6 +55,7 @@ export interface User {
     is_active: boolean;
     two_factor_enabled?: boolean;
     country: Country | null;
+    addresses: Address[];
     created_at: string;
     updated_at: string;
     [key: string]: unknown; // This allows for additional properties...
@@ -87,6 +88,7 @@ export interface Address {
     state: string;
     postal_code: string;
     country: Country;
+    country_id: string | number | null;
     user: User;
     is_default: boolean;
     created_at: string;
@@ -160,6 +162,72 @@ export interface Variant {
     options: VariantOption[];
 }
 
+export interface Address {
+    id: number;
+    alias: string;
+    firstname: string;
+    lastname: string;
+    city: string;
+    street: string;
+    state: string;
+    postal_code: string;
+    phone?: string;
+    company?: string;
+    [key: string]: any;
+}
+
+export interface CartItem {
+    id: number;
+    cart_id: number;
+    product_id: number;
+    variant_id: number | null;
+    name: string | null;
+    variant: VariantOption[] | null;
+    product: Product | null;
+    price: number;
+    quantity: number;
+    total: number;
+    image: string | null;
+}
+
+export interface Cart {
+    id: number;
+    user_id: number | null;
+    items: CartItem[];
+    total_qty: number;
+    subtotal: number;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface OrderItem {
+    id: number;
+    order_id: number;
+    product_id: number;
+    variant_id: number | null;
+    price: number;
+    quantity: number;
+    total: number;
+    image: string | null;
+}
+
+export interface Order {
+    id: number;
+    user_id: number | null;
+    user: User;
+    carrier_id: number | null;
+    status: string;
+    total: number;
+
+    items: OrderItem[];
+
+    shipping_address: Address | Record<string, any> | null;
+    invoice_address: Address | Record<string, any> | null;
+
+    created_at: string;
+    updated_at: string;
+}
+
 export interface Product {
     id: number;
     name: string;
@@ -219,8 +287,41 @@ export interface Zone {
     latitude: string | null;
     longitude: string | null;
     country: Country | null;
+    rates: CarrierRate[];
     created_at: string;
     updated_at: string;
+}
+
+export interface CarrierRate {
+    id: number;
+    min_weight?: number | null;
+    max_weight?: number | null;
+    min_price?: number | null;
+    max_price?: number | null;
+    min_volume?: number | null;
+    max_volume?: number | null;
+    rate_price: number;
+    delivery_time?: string | null;
+    carrier_id: number;
+    carrier: Carrier;
+    zone_id: number;
+    zone?: Zone; // relation optionnelle
+}
+
+export interface Carrier {
+    id: number;
+    name: string;
+    description?: string | null;
+    base_price?: number | null;
+    free_shipping_min?: number | null;
+    pricing_type?: string | null; // "weight" | "price" | "volume"
+    is_active?: boolean;
+
+    created_at: string;
+    updated_at: string;
+
+    rates?: CarrierRate[];
+    zones?: Zone[];
 }
 
 export type Role = 'visitor' | 'superadmin' | 'admin' | 'customer' | string;

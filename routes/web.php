@@ -37,8 +37,12 @@ Route::middleware(['auth'])->group(function () {
             Route::resource('products', ProductController::class)->except(['destroy', 'show']);
             Route::post('products/destroy', [ProductController::class, 'destroy'])->name('products.destroy');
 
-            Route::resource('orders', OrderController::class)->except(['destroy', 'show']);
+            Route::resource('orders', OrderController::class)->except(['destroy']);
             Route::post('orders/destroy', [OrderController::class, 'destroy'])->name('orders.destroy');
+
+            Route::post('carts/{cart}/add', [OrderController::class, 'addToCart'])->name('carts.add');
+            Route::patch('carts/{cart}/items/{cartItem}', [OrderController::class, 'updateCartItem'])->name('carts.items.update');
+            Route::delete('carts/{cart}/items/{cartItem}', [OrderController::class, 'removeCartItem'])->name('carts.items.remove');
 
             Route::resource('testimonials', TestimonialController::class)->only(['index', 'store', 'update']);
             Route::post('testimonials/destroy', [TestimonialController::class, 'destroy'])->name('testimonials.destroy');

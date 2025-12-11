@@ -45,7 +45,7 @@ export default function Index({ products, filters }: PageProps) {
     const formatPrice = useCurrencyFormatter();
 
     const isMobile = useIsMobile();
-    console.log(products);
+
     const [search, setSearch] = useState(filters.search ?? "");
     const [sort, setSort] = useState("");
     const [perPage, setPerPage] = useState<number>(filters.per_page ?? 10);

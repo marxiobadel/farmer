@@ -4,7 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class AddressResource extends JsonResource
+class OrderResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -19,16 +19,11 @@ class AddressResource extends JsonResource
 
         return [
             'id' => $this->id,
-            'alias' => $this->alias,
-            'address' => $this->address,
-            'firstname' => $this->firstname,
-            'lastname' => $this->lastname,
-            'phone' => $this->phone,
-            'city' => $this->city,
-            'street' => $this->street,
-            'postal_code' => $this->postal_code,
-            'is_default' => $this->is_default,
-            'state' => $this->state,
+            'user_id' => $this->user_id,
+            'carrier_id' => $this->carrier_id,
+            'status' => $this->status,
+            'total' => $this->total,
+            'items' => OrderItemResource::collection($this->items),
             'user' => $this->whenLoaded('user', function () {
                 return [
                     'id' => $this->user->id,
@@ -38,8 +33,8 @@ class AddressResource extends JsonResource
                     'email' => $this->user->email,
                 ];
             }),
-            'country_id' => $this->country_id,
-            'country' => new CountryResource($this->whenLoaded('country')),
+            'shipping_address' => $this->shipping_address,
+            'invoice_address' => $this->invoice_address,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

@@ -1,9 +1,9 @@
 import { Head, useForm as useInertiaForm } from "@inertiajs/react";
-import { useForm } from "react-hook-form";
+import { useFieldArray, useForm } from "react-hook-form";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { BreadcrumbItem, User } from "@/types";
+import { BreadcrumbItem, Country, User } from "@/types";
 import AppLayout from "@/layouts/app-layout";
 import { useEventBus } from "@/context/event-bus-context";
 import { userRoles } from "@/data";
@@ -13,6 +13,9 @@ import { toast } from "sonner";
 import { UserInput } from "./create";
 import { dashboard } from "@/routes";
 import admin from "@/routes/admin";
+import { PlusCircle } from "lucide-react";
+import { Accordion } from "@/components/ui/accordion";
+import AddressForm from "./components/address-form";
 
 // ----------- Types -------------
 
@@ -24,13 +27,14 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 interface EditProps {
     user: User;
+    countries: Country[];
 }
 
-export default function Edit({ user }: EditProps) {
+export default function Edit({ user, countries }: EditProps) {
     const { emit } = useEventBus();
     const isMobile = useIsMobile();
-
-    const initialInputs: UserInput = {
+console.log(user.addresses);
+    const initialInputs: Partial<UserInput> = {
         firstname: user.firstname || '',
         lastname: user.lastname || '',
         phone: user.phone || '',
@@ -38,19 +42,35 @@ export default function Edit({ user }: EditProps) {
         role_name: user.roles[0] || '',
         is_active: user.is_active || true,
         email: user.email || '',
+        addresses: user.addresses?.map((address) => ({
+            id: address.id,
+            alias: address.alias ?? '',
+            firstname: address.firstname ?? '',
+            lastname: address.lastname ?? '',
+            phone: address.phone ?? '',
+            address: address.address ?? '',
+            city: address.city ?? '',
+            state: address.state ?? '',
+            postal_code: address.postal_code ?? '',
+            country_id: address.country_id != null ? String(address.country_id) : "",
+            is_default: address.is_default
+        })) ?? [],
     };
 
-    const form = useForm<UserInput>({ defaultValues: { ...initialInputs } });
+    const form = useForm<Partial<UserInput>>({ defaultValues: { ...initialInputs } });
 
     const { control, handleSubmit } = form;
 
+    const { fields, append, remove } = useFieldArray({ control, name: "addresses" });
+
     const {
         put,
+        data,
         processing,
         errors,
         setData,
         clearErrors,
-    } = useInertiaForm<UserInput>({ ...initialInputs });
+    } = useInertiaForm<Partial<UserInput>>({ ...initialInputs });
 
     const onSubmit = () => {
         put(admin.users.update(user.id).url, {
@@ -137,6 +157,50 @@ export default function Edit({ user }: EditProps) {
                                         onFocus={() => clearErrors('email')}
                                         error={errors.email}
                                     />
+                                </div>
+                            </Card>
+                            <Card className="p-4 space-y-4 shadow-none">
+                                <div>
+                                    <h2 className="text-xl font-semibold mb-1">Adresses</h2>
+                                    <p className="text-sm text-muted-foreground mb-4">
+                                        Ces informations serviront à la livraison ou à la facturation
+                                    </p>
+                                    <Accordion type="multiple" className="space-y-2 w-full">
+                                        {fields.map((field, index) => (
+                                            <AddressForm
+                                                key={field.id}
+                                                control={control}
+                                                index={index}
+                                                remove={remove}
+                                                errors={errors as any}
+                                                postData={data}
+                                                countries={countries}
+                                                setData={setData}
+                                            />
+                                        ))}
+                                    </Accordion>
+                                    {errors.addresses && (
+                                        <p className="text-red-500 text-sm mt-2">{errors.addresses}</p>
+                                    )}
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        className="mt-4 flex items-center gap-2"
+                                        onClick={() => append({
+                                            alias: '',
+                                            firstname: '',
+                                            lastname: '',
+                                            phone: '',
+                                            address: '',
+                                            city: '',
+                                            country_id: '',
+                                            state: '',
+                                            postal_code: '',
+                                            is_default: false
+                                        })}
+                                    >
+                                        <PlusCircle className="h-4 w-4" /> Ajouter une adresse
+                                    </Button>
                                 </div>
                             </Card>
                         </div>

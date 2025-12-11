@@ -31,6 +31,7 @@ class UserResource extends JsonResource
             'country' => $this->whenLoaded('country', function () {
                 return new CountryResource($this->country);
             }),
+            'addresses' => AddressResource::collection($this->addresses),
             'is_active' => $this->is_active,
             'email_verified_at' => $this->email_verified_at,
             'created_at' => $this->created_at,
