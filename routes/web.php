@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\ContactController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\FaqController;
 use App\Http\Controllers\Admin\OrderController;
+use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\TestimonialController;
 use App\Http\Controllers\Admin\UserController;
@@ -39,6 +40,10 @@ Route::middleware(['auth'])->group(function () {
 
             Route::resource('orders', OrderController::class)->except(['destroy']);
             Route::post('orders/destroy', [OrderController::class, 'destroy'])->name('orders.destroy');
+            Route::patch('orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.update-status');
+            Route::get('orders/{order}/invoice', [OrderController::class, 'downloadInvoice'])->name('orders.invoice');
+
+            Route::patch('payments/{payment}/status', [PaymentController::class, 'updateStatus'])->name('payments.update-status');
 
             Route::post('carts/{cart}/add', [OrderController::class, 'addToCart'])->name('carts.add');
             Route::patch('carts/{cart}/items/{cartItem}', [OrderController::class, 'updateCartItem'])->name('carts.items.update');

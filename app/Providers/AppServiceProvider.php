@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\StockMovement;
+use App\Observers\StockMovementObserver;
 use App\Services\InterconnectSmsService;
 use App\Services\MobileMoney;
 use App\Services\OpenAi;
@@ -30,6 +32,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        StockMovement::observe(StockMovementObserver::class);
+
         // Supprime l'enveloppe "data" par défaut dans les ressources JSON (API)
         JsonResource::withoutWrapping();
 

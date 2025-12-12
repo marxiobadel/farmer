@@ -204,7 +204,17 @@ export default function Edit({ product, categories }: EditProps) {
 
     const onSubmit = () => {
         transform((data) => {
-            return { ...data, image_ids: imageIds, _method: "PUT"};
+            const normalizedVariants = (data.variants || []).map((v) => ({
+                ...v,
+                image: v.image instanceof File ? v.image : null,
+            }));
+
+            return {
+                ...data,
+                variants: normalizedVariants,
+                image_ids: imageIds,
+                _method: "PUT",
+            };
         });
 
         post(admin.products.update(product.slug).url, {
@@ -410,7 +420,7 @@ export default function Edit({ product, categories }: EditProps) {
                                     <div className="pt-4 border-t">
                                         <h3 className="text-lg font-medium mb-3">Variantes générées ({variantFields.length})</h3>
                                         <div className="border rounded-md overflow-hidden">
-                                            <Table>
+                                            <Table className={cn({'w-[600px]': isMobile})}>
                                                 <TableHeader>
                                                     <TableRow>
                                                         <TableHead className="w-[80px]">Défaut</TableHead>

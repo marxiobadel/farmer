@@ -31,8 +31,17 @@ class OrderResource extends JsonResource
                     'lastname' => $this->user->lastname,
                     'fullname' => $this->user->fullname,
                     'email' => $this->user->email,
+                    'phone' => $this->user->phone,
                 ];
             }),
+            'carrier' => $this->whenLoaded('carrier', function () {
+                return [
+                    'id' => $this->carrier->id,
+                    'name' => $this->carrier->name,
+                    'pricing_type' => $this->carrier->pricing_type,
+                ];
+            }),
+            'payments' => PaymentResource::collection($this->payments),
             'shipping_address' => $this->shipping_address,
             'invoice_address' => $this->invoice_address,
             'created_at' => $this->created_at,

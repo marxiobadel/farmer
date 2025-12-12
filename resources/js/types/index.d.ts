@@ -205,6 +205,8 @@ export interface OrderItem {
     order_id: number;
     product_id: number;
     variant_id: number | null;
+    product: Product;
+    variant: VariantOption[] | null;
     price: number;
     quantity: number;
     total: number;
@@ -216,14 +218,47 @@ export interface Order {
     user_id: number | null;
     user: User;
     carrier_id: number | null;
+    carrier: Carrier;
     status: string;
     total: number;
 
     items: OrderItem[];
+    payments: Payment[];
 
     shipping_address: Address | Record<string, any> | null;
     invoice_address: Address | Record<string, any> | null;
 
+    created_at: string;
+    updated_at: string;
+}
+
+export interface Payment {
+    id: number;
+
+    // Relations
+    order_id: number;
+    user_id?: number | null;
+
+    // Identifiers
+    reference?: string | null;
+    transaction_id?: string | null;
+
+    // Payment details
+    method: string;       // e.g. "credit_card", "om", "momo"
+    provider?: string | null;
+
+    // Financial
+    amount: number;
+    currency: string;     // e.g. "XAF"
+
+    // Status
+    status: "pending" | "completed" | "failed" | "refunded" | "cancelled";
+
+    // Gateway raw data
+    details?: any;
+
+    // Dates
+    paid_at?: string | null;
     created_at: string;
     updated_at: string;
 }

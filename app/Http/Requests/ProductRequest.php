@@ -92,25 +92,7 @@ class ProductRequest extends FormRequest
             'variants.*.is_default' => ['boolean'],
 
             // Variant single image file
-            'variants.*.image' => [
-                'nullable',
-                function ($attribute, $value, $fail) {
-                    if ($value instanceof \Illuminate\Http\UploadedFile) {
-                        // Validate file
-                        if (!in_array($value->extension(), ['jpg', 'jpeg', 'png', 'webp'])) {
-                            $fail("L'image de la variante doit être une image valide.");
-                        }
-                        if ($value->getSize() > 5 * 1024 * 1024) {
-                            $fail("L'image de la variante ne doit pas dépasser 5MB.");
-                        }
-                    } elseif (is_string($value)) {
-                        // Validate URL
-                        if (!filter_var($value, FILTER_VALIDATE_URL)) {
-                            $fail("Le champ $attribute doit être une URL valide.");
-                        }
-                    }
-                }
-            ], // 5MB
+            'variants.*.image' => ['nullable', 'image', 'max:5120'], // 5MB
         ];
     }
 

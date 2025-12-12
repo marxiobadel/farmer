@@ -16,8 +16,11 @@ use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\StockMovement;
 use App\Models\User;
 use App\Models\Zone;
+use App\Settings\GeneralSettings;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Concurrency;
 use Illuminate\Support\Facades\DB;
@@ -171,14 +174,14 @@ class OrderController extends Controller
         try {
             // A. Create Order
             $order = Order::create([
-                'user_id'          => $data['user_id'],
-                'carrier_id'       => $data['carrier_id'],
-                'status'           => $data['status'] ?? 'pending',
-                'total'            => $grandTotal,
+                'user_id' => $data['user_id'],
+                'carrier_id' => $data['carrier_id'],
+                'status' => $data['status'] ?? 'pending',
+                'total' => $grandTotal,
                 // SNAPSHOT: Convert models to array to save JSON.
                 // This ensures if the user changes their address later, the order history remains correct.
                 'shipping_address' => $shippingAddress->toArray(),
-                'invoice_address'  => $billingAddress->toArray(),
+                'invoice_address' => $billingAddress->toArray(),
             ]);
 
             // B. Create Order Items (Transfer from Cart)
@@ -186,8 +189,19 @@ class OrderController extends Controller
                 $order->items()->create([
                     'product_id' => $item->product_id,
                     'variant_id' => $item->variant_id,
-                    'quantity'   => $item->quantity,
-                    'price'      => $item->price, // Price at the moment of purchase
+                    'quantity' => $item->quantity,
+                    'price' => $item->price, // Price at the moment of purchase
+                ]);
+
+                StockMovement::create([
+                    'product_id' => $item->product_id,
+                    'variant_id' => $item->variant_id,
+                    'user_id' => auth()->id(), // Ou null si c'est le client
+                    'quantity' => -($item->quantity), // NÉGATIF pour une sortie
+                    'type' => 'sale',
+                    'reference_type' => Order::class,
+                    'reference_id' => $order->id,
+                    'note' => "Commande #{$order->id}"
                 ]);
             }
 
@@ -196,16 +210,16 @@ class OrderController extends Controller
             $paymentStatus = ($data['method'] === 'cash') ? 'pending' : 'pending';
 
             $order->payments()->create([
-                'user_id'        => $data['user_id'],
-                'reference'      => 'PAY-' . strtoupper(Str::random(12)),
+                'user_id' => $data['user_id'],
+                'reference' => 'PAY-' . strtoupper(Str::random(12)),
                 'transaction_id' => null, // Will be filled by payment gateway callback if online
-                'method'         => $data['method'],
-                'provider'       => $this->getProviderForMethod($data['method']), // helper to determine provider
-                'amount'         => $grandTotal,
-                'currency'       => Number::defaultCurrency(),
-                'status'         => $paymentStatus,
-                'paid_at'        => null,
-                'details'        => null,
+                'method' => $data['method'],
+                'provider' => $this->getProviderForMethod($data['method']), // helper to determine provider
+                'amount' => $grandTotal,
+                'currency' => Number::defaultCurrency(),
+                'status' => $paymentStatus,
+                'paid_at' => null,
+                'details' => null,
             ]);
 
             // D. Clear Cart
@@ -228,11 +242,48 @@ class OrderController extends Controller
         }
     }
 
+    public function updateStatus(Request $request, Order $order)
+    {
+        $validated = $request->validate([
+            'status' => ['required', 'string']
+        ]);
+
+        $order->update([
+            'status' => $validated['status']
+        ]);
+
+        return back()->with('success', 'Statut de la commande mis à jour.');
+    }
+
+    public function downloadInvoice(GeneralSettings $settings, Order $order)
+    {
+        // Charger les relations nécessaires
+        $order->load(['user', 'items.product', 'items.variant', 'carrier']);
+
+        // Préparer les données pour la vue
+        $data = [
+            'order' => $order,
+            'company' => [
+                'name' => config('app.name'),
+                'address' => $settings->address,
+                'phone' => $settings->phone,
+                'email' => $settings->email,
+                'logo' => public_path('images/logo_with_bg.png')
+            ]
+        ];
+
+        // Générer le PDF
+        $pdf = Pdf::loadView('pdf.invoice', $data);
+
+        // Télécharger le fichier
+        return $pdf->download('facture-' . $order->id . '.pdf');
+    }
+
     private function calculateShippingCost($carrierId, $zoneId, $metrics)
     {
         // 1. Get Rates for this Zone/Carrier
         $rates = CarrierRate::where('carrier_id', '=', $carrierId)
-            ->where('zone_id', '=',$zoneId)
+            ->where('zone_id', '=', $zoneId)
             ->with('carrier')
             ->get();
 

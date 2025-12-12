@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\ProductStatus;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Cache;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -13,7 +14,7 @@ use Spatie\Tags\HasTags;
 
 class Product extends Model implements HasMedia
 {
-    use HasSlug, HasTags, InteractsWithMedia;
+    use HasSlug, HasTags, InteractsWithMedia, SoftDeletes;
 
     protected $guarded = ['id'];
 

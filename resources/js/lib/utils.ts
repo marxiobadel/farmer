@@ -108,3 +108,11 @@ export const generateImage = async (): Promise<void> => {
         console.error("Failed to generate image", error);
     }
 };
+
+export async function urlToFile(imageUrl: string, filename = "image.jpg"): Promise<File> {
+    const response = await fetch(imageUrl);
+    const blob = await response.blob();
+    const extension = blob.type.split("/")[1] || "jpg";
+
+    return new File([blob], `${filename}.${extension}`, { type: blob.type });
+}

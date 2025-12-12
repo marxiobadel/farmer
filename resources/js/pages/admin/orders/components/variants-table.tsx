@@ -44,7 +44,7 @@ export function ProductVariantsTable({ product, onAddToCart }: ProductVariantsTa
     const currentVariants = product.variants!.slice(startIndex, endIndex);
 
     return (
-        <div>
+        <div className="overflow-x-auto">
             <table className="w-full text-sm border mb-4">
                 <thead>
                     <tr className="bg-gray-100 text-left">

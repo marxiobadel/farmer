@@ -91,6 +91,26 @@ export const pricingTypes = [
     { label: "Par volume", value: "volume" },
 ];
 
+export const colorMap: Record<string, string> = {
+    pending: "bg-gray-200 text-gray-800",
+    processing: "bg-blue-100 text-blue-800",
+    packing: "bg-blue-200 text-blue-900",
+    awaiting_pickup: "bg-orange-100 text-orange-800",
+    picked_up: "bg-indigo-100 text-indigo-800",
+    in_transit: "bg-purple-100 text-purple-800",
+    at_hub: "bg-violet-100 text-violet-800",
+    out_for_delivery: "bg-yellow-100 text-yellow-800",
+    delivered: "bg-green-100 text-green-800",
+
+    delivery_issue: "bg-red-100 text-red-800",
+    wrong_address: "bg-red-200 text-red-900",
+    recipient_absent: "bg-orange-200 text-orange-900",
+    returned: "bg-pink-200 text-pink-900",
+
+    completed: "bg-green-200 text-green-900",
+    cancelled: "bg-red-300 text-red-900",
+};
+
 export const orderDeliveryStatus = [
     { label: "En attente de paiement", value: "pending" },
     { label: "En traitement", value: "processing" },
@@ -111,6 +131,14 @@ export const orderDeliveryStatus = [
     // Finaux
     { label: "Terminée", value: "completed" },
     { label: "Annulée", value: "cancelled" },
+];
+
+export const paymentStatus = [
+    { label: "En attente", value: "pending" },
+    { label: "Payé", value: "completed" },
+    { label: "Echoué", value: "failed" },
+    { label: "Annulé", value: "cancelled" },
+    { label: "Retourné", value: "refunded" },
 ];
 
 export const paymentMethods = [

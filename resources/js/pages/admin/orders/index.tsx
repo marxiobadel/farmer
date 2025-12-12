@@ -17,7 +17,7 @@ import DataTable from '@/components/datatable';
 import { useEventBus } from '@/context/event-bus-context';
 import { dashboard } from '@/routes';
 import admin from '@/routes/admin';
-import { orderDeliveryStatus } from '@/data';
+import { colorMap, orderDeliveryStatus } from '@/data';
 import { useCurrencyFormatter } from '@/hooks/use-currency';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -144,26 +144,6 @@ export default function Index({ orders, filters }: PageProps) {
             ),
             cell: ({ row }) => {
                 const status = row.original.status;
-
-                const colorMap: Record<string, string> = {
-                    pending: "bg-gray-200 text-gray-800",
-                    processing: "bg-blue-100 text-blue-800",
-                    packing: "bg-blue-200 text-blue-900",
-                    awaiting_pickup: "bg-orange-100 text-orange-800",
-                    picked_up: "bg-indigo-100 text-indigo-800",
-                    in_transit: "bg-purple-100 text-purple-800",
-                    at_hub: "bg-violet-100 text-violet-800",
-                    out_for_delivery: "bg-yellow-100 text-yellow-800",
-                    delivered: "bg-green-100 text-green-800",
-
-                    delivery_issue: "bg-red-100 text-red-800",
-                    wrong_address: "bg-red-200 text-red-900",
-                    recipient_absent: "bg-orange-200 text-orange-900",
-                    returned: "bg-pink-200 text-pink-900",
-
-                    completed: "bg-green-200 text-green-900",
-                    cancelled: "bg-red-300 text-red-900",
-                };
 
                 const colorClass = colorMap[status] ?? "bg-muted text-muted-foreground";
 

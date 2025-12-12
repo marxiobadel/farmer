@@ -5,6 +5,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { cn, inputClassNames } from "@/lib/utils";
 import { Address } from "@/types";
 
 interface AddressSelectorProps {
@@ -34,7 +35,7 @@ export function AddressSelector({
                 onValueChange={onChange}
                 value={stringValue}
             >
-                <SelectTrigger>
+                <SelectTrigger className={cn('line-clamp-1', inputClassNames())}>
                     <SelectValue placeholder={addresses.length === 0 ? "Aucune adresse disponible" : placeholder} />
                 </SelectTrigger>
                 <SelectContent>

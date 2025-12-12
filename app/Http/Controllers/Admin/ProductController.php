@@ -10,6 +10,7 @@ use App\Models\Attribute;
 use App\Models\AttributeOption;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\StockMovement;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
@@ -89,7 +90,7 @@ class ProductController extends Controller
             $product = Product::create([
                 'name' => $data['name'],
                 'base_price' => $data['price'] ?? 0,
-                'quantity' => $data['quantity'] ?? 0,
+                'quantity' => 0,
                 'short_description' => $data['meta_description'] ?? null,
                 'description' => $data['description'] ?? null,
                 'weight' => $data['weight'] ?? null,
@@ -141,9 +142,20 @@ class ProductController extends Controller
                     $variant = $product->variants()->create([
                         'sku' => uniqid('SKU-'),
                         'price' => $variantData['price'],
-                        'quantity' => $variantData['quantity'],
+                        'quantity' => 0,
                         'is_default' => !!$variantData['is_default'],
                     ]);
+
+                    if ($variantData['quantity'] > 0) {
+                        StockMovement::create([
+                            'variant_id' => $variant->id,
+                            'product_id' => $product->id,
+                            'user_id' => auth()->id(),
+                            'quantity' => $variantData['quantity'],
+                            'type' => 'initial',
+                            'note' => 'Stock initial (Variante)'
+                        ]);
+                    }
 
                     if (!empty($variantData['image'])) {
                         $variant->addMedia($variantData['image'])->toMediaCollection('image');
@@ -167,6 +179,18 @@ class ProductController extends Controller
                 }
 
                 $product->update(['quantity' => $product->variants()->sum('quantity')]);
+            } else {
+                $initialQty = $data['quantity'] ?? 0;
+
+                if ($initialQty > 0) {
+                    StockMovement::create([
+                        'product_id' => $product->id,
+                        'user_id' => auth()->id(),
+                        'quantity' => $initialQty,
+                        'type' => 'initial',
+                        'note' => 'Stock initial'
+                    ]);
+                }
             }
 
             DB::commit();
@@ -188,7 +212,6 @@ class ProductController extends Controller
             $product->update([
                 'name' => $data['name'],
                 'base_price' => $data['price'] ?? 0,
-                'quantity' => $data['quantity'] ?? 0,
                 'short_description' => $data['meta_description'] ?? null,
                 'description' => $data['description'] ?? null,
                 'weight' => $data['weight'] ?? null,
@@ -206,15 +229,12 @@ class ProductController extends Controller
                 $product->media()
                     ->where('collection_name', 'images')
                     ->whereNotIn('id', $imageIds)
-                    ->get()
-                    ->each
-                    ->delete();
+                    ->get()->each->delete();
             }
 
             if (!empty($data['images'])) {
                 foreach ($data['images'] as $index => $file) {
                     $media = $product->addMedia($file)->toMediaCollection('images');
-
                     if (isset($data['default_image']) && (int) $data['default_image'] === $index) {
                         $product->update(['default_image_id' => $media->id]);
                     }
@@ -226,11 +246,8 @@ class ProductController extends Controller
             }
 
             $attributes = $product->attributes;
-
             $product->attributes()->detach();
-
             AttributeOption::whereIn('attribute_id', $attributes->pluck('id'))->delete();
-
             Attribute::whereIn('id', $attributes->pluck('id'))->delete();
 
             foreach ($product->variants as $variant) {
@@ -244,13 +261,12 @@ class ProductController extends Controller
             $optionMap = [];
 
             if (!empty($data['attributes'])) {
+                // ... (Création des attributs identique à votre code) ...
                 foreach ($data['attributes'] as $attributeData) {
-
                     $attribute = Attribute::create([
                         'name' => $attributeData['name'],
                         'type' => 'radio',
                     ]);
-
                     $product->attributes()->attach($attribute->id);
                     $attributeMap[$attributeData['name']] = $attribute->id;
 
@@ -259,48 +275,79 @@ class ProductController extends Controller
                             'attribute_id' => $attribute->id,
                             'name' => $optionData['name'],
                         ]);
-
                         $optionMap[$attribute->id][$optionData['name']] = $option->id;
                     }
                 }
             }
 
+            // --- CAS 1 : PRODUIT VARIABLE (Has Variants) ---
             if (!empty($data['variants'])) {
                 foreach ($data['variants'] as $variantData) {
+                    // A. Créer la variante à 0
                     $variant = $product->variants()->create([
                         'sku' => uniqid('SKU-'),
                         'price' => $variantData['price'],
-                        'quantity' => $variantData['quantity'],
+                        'quantity' => 0, // On initialise à 0 pour laisser le mouvement agir
                         'is_default' => !!$variantData['is_default'],
                     ]);
 
-                    if ($variantData['image'] instanceof UploadedFile) {
+                    if (!empty($variantData['image'])) {
                         $variant->addMedia($variantData['image'])->toMediaCollection('image');
-                    } elseif (is_string($variantData['image'])) {
-                        $variant->addMediaFromUrl($variantData['image'])->toMediaCollection('image');
                     }
 
-                    // assign options to variant
+                    // Options
                     $parts = explode(" / ", $variantData['name']);
                     $attrIndex = 0;
-
                     foreach ($data['attributes'] as $attr) {
                         $attrId = $attributeMap[$attr['name']];
                         $optionName = $parts[$attrIndex];
                         $optionId = $optionMap[$attrId][$optionName];
-
                         $variant->options()->create([
                             'attribute_id' => $attrId,
                             'attribute_option_id' => $optionId,
                         ]);
-
                         $attrIndex++;
+                    }
+
+                    // B. GESTION DU STOCK (Ajustement / Correction)
+                    $targetQty = (int) $variantData['quantity'];
+                    if ($targetQty > 0) {
+                        StockMovement::create([
+                            'variant_id' => $variant->id,
+                            'product_id' => $product->id,
+                            'user_id' => auth()->id(),
+                            'quantity' => $targetQty,
+                            'type' => 'adjustment', // C'est une correction/mise à jour
+                            'note' => 'Mise à jour produit (Recréation variante)'
+                        ]);
+                        // L'observer va passer le stock de 0 à X
                     }
                 }
 
-                $product->update([
-                    'quantity' => $product->variants()->sum('quantity')
-                ]);
+                // Recalculer le total parent
+                $product->update(['quantity' => $product->variants()->sum('quantity')]);
+            }
+
+            // --- CAS 2 : PRODUIT SIMPLE (No Variants) ---
+            else {
+                // Ici, le produit existe déjà, donc il a déjà un stock (ex: 10)
+                // L'utilisateur envoie la nouvelle valeur désirée (ex: 15)
+
+                $currentQty = $product->quantity;
+                $targetQty = (int) ($data['quantity'] ?? 0);
+
+                // On calcule la différence (15 - 10 = +5) ou (8 - 10 = -2)
+                $diff = $targetQty - $currentQty;
+
+                if ($diff !== 0) {
+                    StockMovement::create([
+                        'product_id' => $product->id,
+                        'user_id' => auth()->id(),
+                        'quantity' => $diff, // Peut être positif ou négatif
+                        'type' => 'adjustment', // 'correction' ou 'inventory'
+                        'note' => 'Mise à jour manuelle fiche produit'
+                    ]);
+                }
             }
 
             DB::commit();
@@ -308,7 +355,6 @@ class ProductController extends Controller
             return to_route('admin.products.index');
         } catch (\Exception $e) {
             DB::rollBack();
-
             return back()->withInput()->with('error', $e->getMessage());
         }
     }
@@ -322,13 +368,40 @@ class ProductController extends Controller
 
         try {
             DB::transaction(function () use ($request) {
-                $ids = $request->input('ids');
-
-                // Récupérer tous les produits à supprimer
-                $products = Product::whereIn('id', $ids)->get();
+                $products = Product::with('variants')->whereIn('id', $request->input('ids'))->get();
 
                 foreach ($products as $product) {
-                    $product->tags()->delete();
+
+                    // GESTION DU STOCK (Traçabilité avant suppression)
+                    // On enregistre une "Perte/Destruction" pour justifier la disparition du stock
+
+                    // A. Pour le produit simple
+                    if ($product->quantity > 0) {
+                        StockMovement::create([
+                            'product_id' => $product->id,
+                            'user_id' => auth()->id(),
+                            'quantity' => -($product->quantity), // On vide le stock
+                            'type' => 'destruction', // Nouveau type à prévoir
+                            'note' => 'Suppression définitive du produit'
+                        ]);
+                    }
+
+                    // B. Pour les variantes (si elles existent)
+                    foreach ($product->variants as $variant) {
+                        if ($variant->quantity > 0) {
+                            StockMovement::create([
+                                'variant_id' => $variant->id,
+                                'product_id' => $product->id,
+                                'user_id' => auth()->id(),
+                                'quantity' => -($variant->quantity),
+                                'type' => 'destruction',
+                                'note' => 'Suppression définitive du produit (Variante)'
+                            ]);
+                        }
+                    }
+
+                    $product->tags()->detach();
+
                     $product->delete();
                 }
             });
