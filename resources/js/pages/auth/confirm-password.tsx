@@ -12,7 +12,7 @@ export default function ConfirmPassword() {
     return (
         <AuthLayout
             title="Confirmez votre mot de passe"
-            description="Ceci est une zone sécurisée de l’application. Veuillez confirmer votre mot de passe avant de continuer."
+            description="Ceci est une zone sécurisée de l'application. Veuillez confirmer votre mot de passe avant de continuer."
         >
             <Head title="Confirmer le mot de passe" />
 

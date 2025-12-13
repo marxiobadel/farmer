@@ -14,7 +14,18 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\ZoneController;
 use App\Http\Controllers\Front\IndexController;
 use App\Http\Controllers\Settings\ProfileController;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
+
+Route::get('migrate', function() {
+    Artisan::call('migrate');
+    dd('migrated!');
+});
+
+Route::get('storage/link', function() {
+    Artisan::call('storage:link');
+    dd('storage linked!');
+});
 
 Route::get('/', [IndexController::class, 'home'])->name('home');
 

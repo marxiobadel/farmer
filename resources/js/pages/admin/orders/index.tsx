@@ -293,7 +293,7 @@ export default function Index({ orders, filters }: PageProps) {
                 title="Confirmer la suppression"
                 message={deleteOrder
                     ? `Voulez-vous vraiment supprimer cette commande ? Cette action est irréversible.`
-                    : `Voulez-vous vraiment supprimer ${Object.keys(rowSelection).length} produit(s) ? Cette action est irréversible.`}
+                    : `Voulez-vous vraiment supprimer ${Object.keys(rowSelection).length} commande(s) ? Cette action est irréversible.`}
                 onConfirm={() => {
                     const ids = deleteOrder ? [deleteOrder.id]
                         : Object.keys(rowSelection).map(k => {
@@ -304,7 +304,7 @@ export default function Index({ orders, filters }: PageProps) {
                     if (ids.length === 0) return;
 
                     router.post(
-                        admin.products.destroy().url,
+                        admin.orders.destroy().url,
                         { ids },
                         {
                             preserveState: true,
@@ -313,7 +313,7 @@ export default function Index({ orders, filters }: PageProps) {
                                     <div className="flex flex-col">
                                         <span className="font-semibold text-foreground">Succès</span>
                                         <span className="text-sm text-muted-foreground">
-                                            Les produits sélectionnés ont été supprimés.
+                                            Les commandes sélectionnées ont été supprimées.
                                         </span>
                                     </div>
                                 );
