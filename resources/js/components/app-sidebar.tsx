@@ -5,7 +5,7 @@ import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, Sid
 import { dashboard } from '@/routes';
 import type { NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { Boxes, FileQuestion, LayoutGrid, MessageCircle, ShoppingBag, User2, Star, Truck } from 'lucide-react';
+import { Boxes, FileQuestion, LayoutGrid, MessageCircle, ShoppingBag, User2, Star, Truck, Box } from 'lucide-react';
 import AppLogo from './app-logo';
 import admin from '@/routes/admin';
 
@@ -22,6 +22,11 @@ const catalogueNavItems: NavItem[] = [
         title: 'Produits',
         href: admin.products.index().url,
         icon: Boxes,
+    },
+    {
+        title: 'Stocks',
+        href: admin.inventory.index().url,
+        icon: Box,
     },
     {
         title: 'Commandes',

@@ -301,6 +301,36 @@ export interface Product {
     updated_at: string;
 }
 
+export interface StockMovement {
+    id: number;
+    quantity: number;
+    type: string;
+    stock_before: number;
+    stock_after: number;
+    note?: string;
+    created_at: string;
+    user?: {
+        id: number;
+        name: string;
+    };
+    product: {
+        id: number;
+        name: string;
+        image?: string;
+    };
+    variant?: {
+        id: number;
+        name: string;
+        sku: string;
+    };
+    reference?: {
+        type: string;
+        id: number;
+        label: string;
+        route_name?: string;
+    };
+}
+
 export interface Testimonial {
     id: number;
     name: string;

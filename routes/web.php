@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\FaqController;
 use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\ProductController;
+use App\Http\Controllers\Admin\StockMovementController;
 use App\Http\Controllers\Admin\TestimonialController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\ZoneController;
@@ -17,12 +18,12 @@ use App\Http\Controllers\Settings\ProfileController;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 
-Route::get('migrate', function() {
+Route::get('migrate', function () {
     Artisan::call('migrate');
     dd('migrated!');
 });
 
-Route::get('storage/link', function() {
+Route::get('storage/link', function () {
     Artisan::call('storage:link');
     dd('storage linked!');
 });
@@ -48,6 +49,11 @@ Route::middleware(['auth'])->group(function () {
 
             Route::resource('products', ProductController::class)->except(['destroy', 'show']);
             Route::post('products/destroy', [ProductController::class, 'destroy'])->name('products.destroy');
+
+            Route::prefix('inventory')->name('inventory.')->group(function () {
+                Route::get('movements', [StockMovementController::class, 'index'])->name('index');
+                Route::post('adjust', [StockMovementController::class, 'store'])->name('store');
+            });
 
             Route::resource('orders', OrderController::class)->except(['destroy']);
             Route::post('orders/destroy', [OrderController::class, 'destroy'])->name('orders.destroy');
