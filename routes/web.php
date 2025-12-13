@@ -53,6 +53,7 @@ Route::middleware(['auth'])->group(function () {
             Route::prefix('inventory')->name('inventory.')->group(function () {
                 Route::get('movements', [StockMovementController::class, 'index'])->name('index');
                 Route::post('adjust', [StockMovementController::class, 'store'])->name('store');
+                Route::get('{stockMovement}', [StockMovementController::class, 'show'])->name('show');
             });
 
             Route::resource('orders', OrderController::class)->except(['destroy']);

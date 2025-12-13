@@ -316,6 +316,7 @@ export interface StockMovement {
     product: {
         id: number;
         name: string;
+        slug: string;
         image?: string;
     };
     variant?: {

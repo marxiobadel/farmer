@@ -229,6 +229,10 @@ export default function InventoryIndex({ movements, filters, types, products }: 
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => router.visit(admin.inventory.show(row.original.id).url)}>
+                            <ArrowRightLeft className="mr-2 h-4 w-4" />
+                            Voir
+                        </DropdownMenuItem>
                         {/* Note: No delete action for stock movements to preserve audit trail */}
                         <DropdownMenuItem onClick={() => navigator.clipboard.writeText(String(row.original.id))}>
                             <AlertCircle className="mr-2 h-4 w-4" />

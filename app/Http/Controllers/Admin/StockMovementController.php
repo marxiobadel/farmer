@@ -80,6 +80,15 @@ class StockMovementController extends Controller
         ]);
     }
 
+    public function show(StockMovement $stockMovement)
+    {
+        $stockMovement->load(['product', 'variant', 'user', 'reference']);
+
+        return Inertia::render('admin/inventory/show', [
+            'movement' => new StockMovementResource($stockMovement),
+        ]);
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([
