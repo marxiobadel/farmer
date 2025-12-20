@@ -75,10 +75,10 @@
 
     /* Primary — amber-600 */
     --primary: oklch(0.72 0.18 70);
-    --primary-foreground: oklch(0.98 0.01 270);
+    --primary-foreground: oklch(0.985 0 0);
 
     /* Secondary neutrals */
-    --secondary: oklch(0.92 0.02 270);
+    --secondary: oklch(0.95 0.04 85);
     --secondary-foreground: oklch(0.28 0.02 270);
 
     --muted: oklch(0.95 0.01 270);

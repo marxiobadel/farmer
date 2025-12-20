@@ -27,7 +27,7 @@ class CarrierController extends Controller
 
         if ($request->filled('search')) {
             $searchColumns = ['name', 'description'];
-            $query->whereAny($searchColumns, 'like', '%' . $request->string('search') . '%');
+            $query->whereAny($searchColumns, 'like', '%'.$request->string('search').'%');
         }
 
         $allowed = ['name', 'created_at', 'updated_at'];
@@ -86,7 +86,7 @@ class CarrierController extends Controller
                 'pricing_type' => $data['pricing_type'],
             ]);
 
-            if (!empty($data['rates'])) {
+            if (! empty($data['rates'])) {
                 foreach ($data['rates'] as $rateData) {
                     $carrier->rates()->create([
                         'min_weight' => $rateData['min_weight'] ?? null,
@@ -130,7 +130,7 @@ class CarrierController extends Controller
 
             $carrier->rates()->delete();
 
-            if (!empty($data['rates'])) {
+            if (! empty($data['rates'])) {
                 foreach ($data['rates'] as $rateData) {
                     $carrier->rates()->create([
                         'min_weight' => $rateData['min_weight'] ?? null,
@@ -161,7 +161,7 @@ class CarrierController extends Controller
         try {
             $ids = $request->input('ids', []);
 
-            if (!empty($ids) && is_array($ids)) {
+            if (! empty($ids) && is_array($ids)) {
                 Carrier::whereIn('id', $ids)->each(function ($carrier) {
                     $carrier->rates()->delete();
                     $carrier->delete();
@@ -170,7 +170,7 @@ class CarrierController extends Controller
 
             return redirect()->back()->with('success', 'Transporteur(s) supprimé(s) avec succès.');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Erreur : ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Erreur : '.$e->getMessage());
         }
     }
 }

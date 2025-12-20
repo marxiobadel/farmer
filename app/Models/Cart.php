@@ -3,8 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Cart extends Model
 {
@@ -23,6 +23,6 @@ class Cart extends Model
     // Calcul du total du panier
     public function getTotalAttribute(): float
     {
-        return $this->items->sum(fn($item) => $item->price * $item->quantity);
+        return $this->items->sum(fn ($item) => $item->price * $item->quantity);
     }
 }

@@ -32,6 +32,8 @@ Route::get('/', [IndexController::class, 'home'])->name('home');
 
 Route::middleware(['auth'])->group(function () {
     Route::prefix('admin')->middleware(['can:access-admin'])->group(function () {
+        Route::redirect('/', '/admin/dashboard', 301);
+
         Route::get('dashboard', [DashboardController::class, 'dashboard'])->name('dashboard');
 
         Route::name('admin.')->group(function () {
@@ -94,4 +96,4 @@ Route::middleware(['auth'])->group(function () {
     });
 });
 
-require __DIR__ . '/settings.php';
+require __DIR__.'/settings.php';

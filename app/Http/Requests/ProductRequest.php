@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Enums\ProductStatus;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
 class ProductRequest extends FormRequest
@@ -31,6 +32,7 @@ class ProductRequest extends FormRequest
             'height' => ['nullable', 'numeric', 'min:0'],
             'width' => ['nullable', 'numeric', 'min:0'],
             'length' => ['nullable', 'numeric', 'min:0'],
+            'origin' => ['nullable', 'string', 'max:255'],
 
             'status' => ['required', Rule::in(ProductStatus::values())],
 
@@ -63,7 +65,7 @@ class ProductRequest extends FormRequest
             'attributes.*.options.*.name' => [
                 'required_with:attributes.*.options',
                 'string',
-                'max:255'
+                'max:255',
             ],
 
             // ---------------------------------
@@ -80,19 +82,36 @@ class ProductRequest extends FormRequest
             'variants.*.price' => [
                 'required_with:variants',
                 'numeric',
-                'min:0'
+                'min:0',
             ],
 
             'variants.*.quantity' => [
                 'required_with:variants',
                 'integer',
-                'min:0'
+                'min:0',
             ],
 
             'variants.*.is_default' => ['boolean'],
 
-            // Variant single image file
-            'variants.*.image' => ['nullable', 'image', 'max:5120'], // 5MB
+            'variants.*.image' => [
+                'nullable',
+                function ($attribute, $value, $fail) {
+                    if (is_string($value)) {
+                        return;
+                    }
+
+                    // Validation manuelle si c'est un fichier
+                    $validator = Validator::make(
+                        ['image' => $value],
+                        ['image' => 'image|max:5120']
+                    );
+
+                    if ($validator->fails()) {
+                        // On retourne le message d'erreur de Laravel (ex: "Le fichier doit être une image")
+                        $fail($validator->errors()->first('image'));
+                    }
+                },
+            ],
         ];
     }
 
@@ -123,7 +142,7 @@ class ProductRequest extends FormRequest
     {
         $variants = $this->input('variants', []);
 
-        if (!empty($variants)) {
+        if (! empty($variants)) {
             // Ensure ONLY ONE variant is_default = true
             $defaultCount = collect($variants)->where('is_default', true)->count();
 

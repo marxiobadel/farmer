@@ -22,7 +22,7 @@ class CartResource extends JsonResource
             'user_id' => $this->user_id,
             'items' => CartItemResource::collection($this->items),
             'total_qty' => $this->items->sum('quantity'),
-            'subtotal' => $this->items->sum(fn($item) => $item->price * $item->quantity),
+            'subtotal' => $this->items->sum(fn ($item) => $item->price * $item->quantity),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

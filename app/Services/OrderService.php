@@ -2,9 +2,9 @@
 
 namespace App\Services;
 
+use App\Models\Cart;
 use App\Models\Order;
 use App\Models\OrderItem;
-use App\Models\Cart;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -32,7 +32,7 @@ class OrderService
             $order = Order::create([
                 'user_id' => Auth::id(),
                 'status' => $status,
-                'total' => $cartItems->sum(fn($item) => $item->price * $item->quantity),
+                'total' => $cartItems->sum(fn ($item) => $item->price * $item->quantity),
                 'shipping_address' => $shippingAddress,
             ]);
 

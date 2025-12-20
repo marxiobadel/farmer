@@ -20,7 +20,7 @@ class ProfileController extends Controller
      */
     public function settings(Request $request, string $page): Response
     {
-        if (!in_array($page, config('services.settings_routes'))) {
+        if (! in_array($page, config('services.settings_routes'))) {
             abort(404);
         }
 

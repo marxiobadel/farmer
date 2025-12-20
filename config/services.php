@@ -82,6 +82,6 @@ return [
         'access_key' => env('MOMO_ACCESS_KEY'),
         'secret_access_key' => env('MOMO_SECRET_ACCESS_KEY'),
         'client_id' => env('MOMO_CLIENT_ID'),
-        'client_secret' => env('MOMO_CLIENT_SECRET')
+        'client_secret' => env('MOMO_CLIENT_SECRET'),
     ],
 ];

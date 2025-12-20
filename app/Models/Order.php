@@ -3,8 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Order extends Model
 {
@@ -14,12 +14,12 @@ class Order extends Model
         'status',
         'total',
         'shipping_address',
-        'invoice_address'
+        'invoice_address',
     ];
 
     protected $casts = [
         'shipping_address' => 'json',
-        'invoice_address' => 'json'
+        'invoice_address' => 'json',
     ];
 
     public function user(): BelongsTo

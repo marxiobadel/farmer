@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Country;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Number;
 use Illuminate\Support\Str;
 
@@ -91,7 +92,14 @@ if (! function_exists('countryName')) {
             return $frenchName;
         }
 
-        $countriesData = json_decode(file_get_contents(storage_path('countries.json')), true);
+        // Utilisation de static pour garder les données en mémoire durant la requête
+        static $countriesData = null;
+
+        if ($countriesData === null) {
+            $countriesData = Cache::rememberForever('countries_json', function () {
+                return json_decode(file_get_contents(storage_path('countries.json')), true);
+            });
+        }
 
         foreach ($countriesData as $data) {
             if ($data['iso2'] === $country->iso) {

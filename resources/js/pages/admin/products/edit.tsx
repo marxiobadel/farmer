@@ -49,6 +49,7 @@ export default function Edit({ product, categories }: EditProps) {
         description: product.description || "",
         meta_description: product.short_description || "",
         price: String(product.base_price ?? ""),
+        origin: product.origin ?? "",
         quantity: String(product.quantity ?? "0"),
         weight: String(product.weight ?? ""),
         height: String(product.height ?? ""),
@@ -206,7 +207,10 @@ export default function Edit({ product, categories }: EditProps) {
         transform((data) => {
             const normalizedVariants = (data.variants || []).map((v) => ({
                 ...v,
-                image: v.image instanceof File ? v.image : null,
+                // CORRECTION: Si c'est un fichier (nouveau), on l'envoie.
+                // Si c'est une string (URL existante) ou null, on renvoie "KEEP" ou la valeur telle quelle
+                // pour que le backend sache qu'il ne doit pas attendre de fichier mais récupérer l'ancien.
+                image: v.image instanceof File ? v.image : (typeof v.image === 'string' ? 'keep' : null),
             }));
 
             return {
@@ -420,7 +424,7 @@ export default function Edit({ product, categories }: EditProps) {
                                     <div className="pt-4 border-t">
                                         <h3 className="text-lg font-medium mb-3">Variantes générées ({variantFields.length})</h3>
                                         <div className="border rounded-md overflow-hidden">
-                                            <Table className={cn({'w-[600px]': isMobile})}>
+                                            <Table className={cn({ 'w-[600px]': isMobile })}>
                                                 <TableHeader>
                                                     <TableRow>
                                                         <TableHead className="w-[80px]">Défaut</TableHead>
@@ -621,7 +625,15 @@ export default function Edit({ product, categories }: EditProps) {
                                         Le prix et la quantité sont gérés par variante.
                                     </div>
                                 )}
-
+                                <FormFieldWrapper
+                                    control={control}
+                                    name="origin"
+                                    label="Origine"
+                                    placeholder="Ex: Ferme MontView"
+                                    onValueChange={(value) => setData("origin", value)}
+                                    onFocus={() => clearErrors('origin')}
+                                    error={errors.origin}
+                                />
                                 <FormFieldWrapper
                                     control={control}
                                     name="category_ids"

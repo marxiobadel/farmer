@@ -268,6 +268,8 @@ export interface Product {
     name: string;
     slug: string;
 
+    origin: string;
+
     // Prices
     base_price: number;
     quantity: number;

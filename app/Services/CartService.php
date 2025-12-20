@@ -56,7 +56,7 @@ class CartService
     }
 
     // Mettre à jour la quantité
-    public function updateQuantity(int $productId, ?int $variantId, int $quantity): CartItem|null
+    public function updateQuantity(int $productId, ?int $variantId, int $quantity): ?CartItem
     {
         $cartItem = $this->cart->items()
             ->where('product_id', $productId)
@@ -66,6 +66,7 @@ class CartService
         if ($cartItem) {
             if ($quantity <= 0) {
                 $cartItem->delete();
+
                 return null;
             }
             $cartItem->quantity = $quantity;
@@ -84,7 +85,7 @@ class CartService
     // Calculer le total
     public function getTotal(): float
     {
-        return $this->cart->items->sum(fn($item) => $item->price * $item->quantity);
+        return $this->cart->items->sum(fn ($item) => $item->price * $item->quantity);
     }
 
     // Vider le panier

@@ -28,14 +28,14 @@ class DashboardController extends Controller
             return Concurrency::driver('sync')->run([
 
                 // 1. User Stats (Your existing logic)
-                fn() => [
+                fn () => [
                     'admins' => User::role(['admin', 'superadmin'])->count(),
                     'customers' => User::has('orders')->count(),
                     'visitors' => User::withoutRole(['admin', 'superadmin'])->doesntHave('orders')->count(),
                 ],
 
                 // 2. Revenue & Financials (Current Month vs Last Month)
-                fn() => [
+                fn () => [
                     'revenue_current' => Order::where('status', 'completed')
                         ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
                         ->sum('total'),
@@ -47,7 +47,7 @@ class DashboardController extends Controller
                 ],
 
                 // 3. Inventory Health (Critical for operations)
-                fn() => [
+                fn () => [
                     'low_stock_count' => Product::where('quantity', '<=', 5)->count(),
                     'out_of_stock_count' => Product::where('quantity', 0)->count(),
                     'top_products' => DB::table('order_items')
@@ -59,7 +59,7 @@ class DashboardController extends Controller
                 ],
 
                 // 4. Chart Data (Last 30 Days Sales)
-                fn() => Order::where('status', 'completed')
+                fn () => Order::where('status', 'completed')
                     ->where('created_at', '>=', Carbon::now()->subDays(30))
                     ->selectRaw('DATE(created_at) as date, SUM(total) as total')
                     ->groupBy('date')
@@ -67,7 +67,7 @@ class DashboardController extends Controller
                     ->get(),
 
                 // 5. Recent Activity (Latest 5 orders)
-                fn() => Order::with('user:id,firstname,lastname,email')
+                fn () => Order::with('user:id,firstname,lastname,email')
                     ->latest()
                     ->take(5)
                     ->get(['id', 'user_id', 'total', 'status', 'created_at']),
@@ -78,7 +78,7 @@ class DashboardController extends Controller
         [$userStats, $financials, $inventory, $chartData, $recentOrders] = $stats;
 
         // Helper to calculate growth percentage safely
-        $calculateGrowth = fn($current, $previous) => $previous > 0
+        $calculateGrowth = fn ($current, $previous) => $previous > 0
             ? round((($current - $previous) / $previous) * 100, 1)
             : 100;
 
@@ -96,9 +96,9 @@ class DashboardController extends Controller
                 'out_of_stock' => $inventory['out_of_stock_count'],
             ],
             'charts' => [
-                'sales_over_time' => $chartData
+                'sales_over_time' => $chartData,
             ],
-            'recent_orders' => $recentOrders
+            'recent_orders' => $recentOrders,
         ];
 
         return Inertia::render('admin/index', [

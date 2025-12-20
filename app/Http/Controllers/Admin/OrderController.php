@@ -47,7 +47,7 @@ class OrderController extends Controller
             $query->where(function ($q) use ($search) {
                 $searchColumns = ['firstname', 'lastname', 'email'];
                 $q->where('id', '=', $search)
-                    ->orWhereHas('user', fn($u) => $u->whereAny($searchColumns, 'like', "%$search%"))
+                    ->orWhereHas('user', fn ($u) => $u->whereAny($searchColumns, 'like', "%$search%"))
                     ->orWhere('status', 'like', "%$search%");
             });
         }
@@ -55,7 +55,6 @@ class OrderController extends Controller
         if ($request->filled('status')) {
             $query->where('status', '=', $request->string('status'));
         }
-
 
         $allowed = ['total', 'created_at', 'updated_at', 'status'];
         if ($request->filled('sort')) {
@@ -109,15 +108,13 @@ class OrderController extends Controller
 
     /**
      * Load the shared data for both create/edit forms.
-     *
-     * @return array
      */
     private function loadOrderFormData(): array
     {
         return Concurrency::driver('sync')->run([
-            fn() => Product::with('variants.options')->latest()->get(),
-            fn() => User::with('addresses')->latest('firstname')->get(),
-            fn() => Zone::with('rates.carrier')->get(),
+            fn () => Product::with('variants.options')->latest()->get(),
+            fn () => User::with('addresses')->latest('firstname')->get(),
+            fn () => Zone::with('rates.carrier')->get(),
         ]);
     }
 
@@ -142,7 +139,7 @@ class OrderController extends Controller
 
         $shippingAddress = Address::findOrFail($data['shipping_address_id']);
 
-        $billingAddress = !empty($data['billing_address_id'])
+        $billingAddress = ! empty($data['billing_address_id'])
             ? Address::findOrFail($data['billing_address_id'])
             : $shippingAddress;
 
@@ -201,7 +198,7 @@ class OrderController extends Controller
                     'type' => 'sale',
                     'reference_type' => Order::class,
                     'reference_id' => $order->id,
-                    'note' => "Commande #{$order->id}"
+                    'note' => "Commande #{$order->id}",
                 ]);
             }
 
@@ -211,7 +208,7 @@ class OrderController extends Controller
 
             $order->payments()->create([
                 'user_id' => $data['user_id'],
-                'reference' => 'PAY-' . strtoupper(Str::random(12)),
+                'reference' => 'PAY-'.strtoupper(Str::random(12)),
                 'transaction_id' => null, // Will be filled by payment gateway callback if online
                 'method' => $data['method'],
                 'provider' => $this->getProviderForMethod($data['method']), // helper to determine provider
@@ -238,18 +235,18 @@ class OrderController extends Controller
 
             return redirect()
                 ->route('admin.orders.create', $request->safe()->only(['cart_id']))
-                ->with('error', 'Erreur lors de la création de la commande: ' . $e->getMessage());
+                ->with('error', 'Erreur lors de la création de la commande: '.$e->getMessage());
         }
     }
 
     public function updateStatus(Request $request, Order $order)
     {
         $validated = $request->validate([
-            'status' => ['required', 'string']
+            'status' => ['required', 'string'],
         ]);
 
         $order->update([
-            'status' => $validated['status']
+            'status' => $validated['status'],
         ]);
 
         return back()->with('success', 'Statut de la commande mis à jour.');
@@ -268,15 +265,15 @@ class OrderController extends Controller
                 'address' => $settings->address,
                 'phone' => $settings->phone,
                 'email' => $settings->email,
-                'logo' => public_path('images/logo_with_bg.png')
-            ]
+                'logo' => public_path('images/logo_with_bg.png'),
+            ],
         ];
 
         // Générer le PDF
         $pdf = Pdf::loadView('pdf.invoice', $data);
 
         // Télécharger le fichier
-        return $pdf->download('facture-' . $order->id . '.pdf');
+        return $pdf->download('facture-'.$order->id.'.pdf');
     }
 
     private function calculateShippingCost($carrierId, $zoneId, $metrics)
@@ -290,6 +287,7 @@ class OrderController extends Controller
         // Fallback if no rates found: Check Carrier base price directly
         if ($rates->isEmpty()) {
             $carrier = Carrier::find($carrierId);
+
             return $carrier ? $carrier->base_price : 0;
         }
 
@@ -313,6 +311,7 @@ class OrderController extends Controller
             case 'weight':
                 $matchedRate = $rates->first(function ($rate) use ($metrics) {
                     $max = $rate->max_weight ?? INF;
+
                     return $metrics['weight'] >= $rate->min_weight && $metrics['weight'] <= $max;
                 });
                 break;
@@ -320,6 +319,7 @@ class OrderController extends Controller
             case 'price':
                 $matchedRate = $rates->first(function ($rate) use ($metrics) {
                     $max = $rate->max_price ?? INF;
+
                     return $metrics['price'] >= $rate->min_price && $metrics['price'] <= $max;
                 });
                 break;
@@ -327,6 +327,7 @@ class OrderController extends Controller
             case 'volume':
                 $matchedRate = $rates->first(function ($rate) use ($metrics) {
                     $max = $rate->max_volume ?? INF;
+
                     return $metrics['volume'] >= $rate->min_volume && $metrics['volume'] <= $max;
                 });
                 break;
@@ -361,7 +362,7 @@ class OrderController extends Controller
 
             return redirect()->back()->with('success', 'Commande(s) supprimé(s) avec succès.');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Erreur : ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Erreur : '.$e->getMessage());
         }
     }
 
@@ -404,6 +405,7 @@ class OrderController extends Controller
     public function removeCartItem(Cart $cart, CartItem $cartItem)
     {
         $cartItem->delete();
+
         return redirect()->route('admin.orders.create', ['cart_id' => $cart->id]);
     }
 }

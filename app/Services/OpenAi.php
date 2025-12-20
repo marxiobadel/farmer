@@ -14,7 +14,7 @@ class OpenAi
             ['type' => 'input_text', 'text' => $instruction],
         ];
 
-        if (!empty($fileUrl)) {
+        if (! empty($fileUrl)) {
             $content[] = ['type' => 'input_file', 'file_url' => $fileUrl];
         }
 
@@ -30,7 +30,7 @@ class OpenAi
 
         $response = Http::withHeaders([
             'Content-Type' => 'application/json',
-            'Authorization' => 'Bearer ' . config('services.openai.key'),
+            'Authorization' => 'Bearer '.config('services.openai.key'),
         ])->timeout(3600)->post('https://api.openai.com/v1/responses', $payload);
 
         if ($response->failed()) {
@@ -40,7 +40,6 @@ class OpenAi
 
         return $this->extractText($response->json());
     }
-
 
     protected function extractText(array $response): ?string
     {

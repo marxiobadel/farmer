@@ -56,6 +56,7 @@ export interface ProductInput {
     description: string;
     meta_description?: string;
     price?: string;
+    origin: string;
     quantity: string;
     weight: string;
     height: string;
@@ -85,6 +86,7 @@ export default function Create({ categories }: PageProps) {
         description: "",
         meta_description: "",
         price: "",
+        origin: "",
         quantity: "0",
         weight: "",
         height: "",
@@ -622,7 +624,15 @@ export default function Create({ categories }: PageProps) {
                                         Le prix et la quantité sont gérés par variante.
                                     </div>
                                 )}
-
+                                <FormFieldWrapper
+                                    control={control}
+                                    name="origin"
+                                    label="Origine"
+                                    placeholder="Ex: Ferme MontView"
+                                    onValueChange={(value) => setData("origin", value)}
+                                    onFocus={() => clearErrors('origin')}
+                                    error={errors.origin}
+                                />
                                 <FormFieldWrapper
                                     control={control}
                                     name="category_ids"

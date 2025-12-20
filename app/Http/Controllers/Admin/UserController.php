@@ -30,7 +30,7 @@ class UserController extends Controller
 
         if ($request->filled('search')) {
             $searchColumns = ['firstname', 'lastname', 'email'];
-            $query->whereAny($searchColumns, 'like', '%' . $request->string('search') . '%');
+            $query->whereAny($searchColumns, 'like', '%'.$request->string('search').'%');
         }
 
         $allowed = ['firstname', 'lastname', 'email', 'status', 'created_at', 'updated_at'];
@@ -90,7 +90,7 @@ class UserController extends Controller
                     'phone',
                     'address',
                     'is_active',
-                    'password'
+                    'password',
                 ])
             );
 
@@ -98,7 +98,7 @@ class UserController extends Controller
 
             $addresses = $request->safe()->input('addresses', []);
 
-            if (!empty($addresses)) {
+            if (! empty($addresses)) {
                 foreach ($addresses as $addr) {
                     $user->addresses()->create([
                         'alias' => $addr['alias'] ?? null,
@@ -117,7 +117,7 @@ class UserController extends Controller
                 // Ensure only ONE default address
                 $defaultAddress = $user->addresses()->where('is_default', '=', true)->first();
 
-                if (!$defaultAddress && $user->addresses()->count() > 0) {
+                if (! $defaultAddress && $user->addresses()->count() > 0) {
                     // If none marked default on creation → set the first one
                     $user->addresses()->first()->update(['is_default' => true]);
                 } else {
@@ -152,7 +152,7 @@ class UserController extends Controller
                     'phone',
                     'address',
                     'is_active',
-                    'password'
+                    'password',
                 ])
             );
 
@@ -162,7 +162,7 @@ class UserController extends Controller
 
             $addresses = $request->safe()->input('addresses', []);
 
-            if (!empty($addresses)) {
+            if (! empty($addresses)) {
                 foreach ($addresses as $addr) {
                     $user->addresses()->create([
                         'alias' => $addr['alias'] ?? null,
@@ -181,7 +181,7 @@ class UserController extends Controller
                 // Ensure only ONE default address
                 $defaultAddress = $user->addresses()->where('is_default', '=', true)->first();
 
-                if (!$defaultAddress && $user->addresses()->count() > 0) {
+                if (! $defaultAddress && $user->addresses()->count() > 0) {
                     // If none marked default on creation → set the first one
                     $user->addresses()->first()->update(['is_default' => true]);
                 } else {
@@ -250,11 +250,11 @@ class UserController extends Controller
             return redirect()->back()->withErrors($e->errors())->withInput();
         } catch (\Throwable $e) {
             DB::rollBack();
-            Log::error('Erreur lors de la suppression des utilisateurs : ' . $e->getMessage(), [
+            Log::error('Erreur lors de la suppression des utilisateurs : '.$e->getMessage(), [
                 'stack' => $e->getTraceAsString(),
             ]);
 
-            return redirect()->back()->with('error', 'Une erreur est survenue : ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Une erreur est survenue : '.$e->getMessage());
         }
     }
 }

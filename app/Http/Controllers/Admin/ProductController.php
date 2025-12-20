@@ -10,6 +10,7 @@ use App\Models\Attribute;
 use App\Models\AttributeOption;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\ProductVariant;
 use App\Models\StockMovement;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -31,7 +32,7 @@ class ProductController extends Controller
         $query = Product::with(['variants']);
 
         if ($request->filled('search')) {
-            $query->whereAny(['name', 'short_description', 'description'], 'like', '%' . $request->string('search') . '%');
+            $query->whereAny(['name', 'short_description', 'description'], 'like', '%'.$request->string('search').'%');
         }
 
         $allowed = ['name', 'created_at', 'updated_at'];
@@ -59,7 +60,7 @@ class ProductController extends Controller
     {
         $categories = Cache::rememberForever(
             'products_categories_oldest',
-            fn() => Category::forProduct()->oldest('name')->get()
+            fn () => Category::forProduct()->oldest('name')->get()
         );
 
         return Inertia::render('admin/products/create', [
@@ -71,7 +72,7 @@ class ProductController extends Controller
     {
         $categories = Cache::rememberForever(
             'products_categories_oldest',
-            fn() => Category::forProduct()->oldest('name')->get()
+            fn () => Category::forProduct()->oldest('name')->get()
         );
 
         return Inertia::render('admin/products/edit', [
@@ -91,6 +92,7 @@ class ProductController extends Controller
                 'name' => $data['name'],
                 'base_price' => $data['price'] ?? 0,
                 'quantity' => 0,
+                'origin' => $data['origin'] ?? null,
                 'short_description' => $data['meta_description'] ?? null,
                 'description' => $data['description'] ?? null,
                 'weight' => $data['weight'] ?? null,
@@ -103,7 +105,7 @@ class ProductController extends Controller
             $product->categories()->sync($data['category_ids'] ?? []);
             $product->syncTags($data['tags'] ?? []);
 
-            if (!empty($data['images'])) {
+            if (! empty($data['images'])) {
                 foreach ($data['images'] as $index => $file) {
                     $media = $product->addMedia($file)->toMediaCollection('images');
 
@@ -116,11 +118,11 @@ class ProductController extends Controller
             $attributeMap = [];
             $optionMap = [];
 
-            if (!empty($data['attributes'])) {
+            if (! empty($data['attributes'])) {
                 foreach ($data['attributes'] as $attributeData) {
                     $attribute = Attribute::create([
                         'name' => $attributeData['name'],
-                        'type' => 'radio'
+                        'type' => 'radio',
                     ]);
 
                     $product->attributes()->syncWithoutDetaching([$attribute->id]);
@@ -137,13 +139,13 @@ class ProductController extends Controller
                 }
             }
 
-            if (!empty($data['variants'])) {
+            if (! empty($data['variants'])) {
                 foreach ($data['variants'] as $variantData) {
                     $variant = $product->variants()->create([
                         'sku' => uniqid('SKU-'),
                         'price' => $variantData['price'],
                         'quantity' => 0,
-                        'is_default' => !!$variantData['is_default'],
+                        'is_default' => (bool) $variantData['is_default'],
                     ]);
 
                     if ($variantData['quantity'] > 0) {
@@ -153,15 +155,15 @@ class ProductController extends Controller
                             'user_id' => auth()->id(),
                             'quantity' => $variantData['quantity'],
                             'type' => 'initial',
-                            'note' => 'Stock initial (Variante)'
+                            'note' => 'Stock initial (Variante)',
                         ]);
                     }
 
-                    if (!empty($variantData['image'])) {
+                    if (! empty($variantData['image'])) {
                         $variant->addMedia($variantData['image'])->toMediaCollection('image');
                     }
 
-                    $parts = explode(" / ", $variantData['name']);
+                    $parts = explode(' / ', $variantData['name']);
                     $attrIndex = 0;
 
                     foreach ($data['attributes'] as $attr) {
@@ -188,7 +190,7 @@ class ProductController extends Controller
                         'user_id' => auth()->id(),
                         'quantity' => $initialQty,
                         'type' => 'initial',
-                        'note' => 'Stock initial'
+                        'note' => 'Stock initial',
                     ]);
                 }
             }
@@ -198,6 +200,7 @@ class ProductController extends Controller
             return to_route('admin.products.index');
         } catch (\Exception $e) {
             DB::rollBack();
+
             return back()->withInput()->with('error', $e->getMessage());
         }
     }
@@ -212,6 +215,7 @@ class ProductController extends Controller
             $product->update([
                 'name' => $data['name'],
                 'base_price' => $data['price'] ?? 0,
+                'origin' => $data['origin'] ?? null,
                 'short_description' => $data['meta_description'] ?? null,
                 'description' => $data['description'] ?? null,
                 'weight' => $data['weight'] ?? null,
@@ -232,7 +236,7 @@ class ProductController extends Controller
                     ->get()->each->delete();
             }
 
-            if (!empty($data['images'])) {
+            if (! empty($data['images'])) {
                 foreach ($data['images'] as $index => $file) {
                     $media = $product->addMedia($file)->toMediaCollection('images');
                     if (isset($data['default_image']) && (int) $data['default_image'] === $index) {
@@ -245,13 +249,34 @@ class ProductController extends Controller
                 $product->update(['default_image_id' => $data['default_image']]);
             }
 
+            $preservedMedia = [];
+
+            $product->load('variants.optionValues');
+
+            foreach ($product->variants as $variant) {
+                // Ici, les AttributeOption existent encore, donc on peut récupérer le nom
+                $variantName = $variant->optionValues
+                    ->map(fn ($opt) => $opt->name)
+                    ->join(' / ');
+
+                $mediaItem = $variant->getFirstMedia('image');
+
+                if ($mediaItem) {
+                    $mediaItem->update([
+                        'model_type' => 'App\Models\TempMedia',
+                        'model_id' => 0,
+                    ]);
+
+                    $preservedMedia[$variantName] = $mediaItem;
+                }
+            }
+
             $attributes = $product->attributes;
             $product->attributes()->detach();
             AttributeOption::whereIn('attribute_id', $attributes->pluck('id'))->delete();
             Attribute::whereIn('id', $attributes->pluck('id'))->delete();
 
             foreach ($product->variants as $variant) {
-                $variant->clearMediaCollection('image');
                 $variant->options()->delete();
             }
 
@@ -260,8 +285,7 @@ class ProductController extends Controller
             $attributeMap = [];
             $optionMap = [];
 
-            if (!empty($data['attributes'])) {
-                // ... (Création des attributs identique à votre code) ...
+            if (! empty($data['attributes'])) {
                 foreach ($data['attributes'] as $attributeData) {
                     $attribute = Attribute::create([
                         'name' => $attributeData['name'],
@@ -280,36 +304,53 @@ class ProductController extends Controller
                 }
             }
 
-            // --- CAS 1 : PRODUIT VARIABLE (Has Variants) ---
-            if (!empty($data['variants'])) {
+            // --- RECRÉATION DES VARIANTES ---
+            if (! empty($data['variants'])) {
                 foreach ($data['variants'] as $variantData) {
-                    // A. Créer la variante à 0
                     $variant = $product->variants()->create([
                         'sku' => uniqid('SKU-'),
                         'price' => $variantData['price'],
-                        'quantity' => 0, // On initialise à 0 pour laisser le mouvement agir
-                        'is_default' => !!$variantData['is_default'],
+                        'quantity' => 0,
+                        'is_default' => (bool) $variantData['is_default'],
                     ]);
 
-                    if (!empty($variantData['image'])) {
+                    // CAS 1: Nouvelle image uploadée
+                    if (isset($variantData['image']) && $variantData['image'] instanceof UploadedFile) {
                         $variant->addMedia($variantData['image'])->toMediaCollection('image');
+                    }
+                    // CAS 2: Pas de nouvelle image, on tente de récupérer l'ancienne via le nom
+                    elseif (isset($preservedMedia[$variantData['name']])) {
+                        $oldMedia = $preservedMedia[$variantData['name']];
+
+                        // On réattache l'ancien média à la nouvelle variante
+                        $oldMedia->update([
+                            'model_type' => ProductVariant::class,
+                            'model_id' => $variant->id,
+                        ]);
                     }
 
                     // Options
-                    $parts = explode(" / ", $variantData['name']);
+                    $parts = explode(' / ', $variantData['name']);
                     $attrIndex = 0;
                     foreach ($data['attributes'] as $attr) {
+                        // Sécurité si les indexes ne correspondent pas
+                        if (! isset($attributeMap[$attr['name']])) {
+                            continue;
+                        }
+
                         $attrId = $attributeMap[$attr['name']];
-                        $optionName = $parts[$attrIndex];
-                        $optionId = $optionMap[$attrId][$optionName];
-                        $variant->options()->create([
-                            'attribute_id' => $attrId,
-                            'attribute_option_id' => $optionId,
-                        ]);
+                        $optionName = $parts[$attrIndex] ?? '';
+
+                        if (isset($optionMap[$attrId][$optionName])) {
+                            $optionId = $optionMap[$attrId][$optionName];
+                            $variant->options()->create([
+                                'attribute_id' => $attrId,
+                                'attribute_option_id' => $optionId,
+                            ]);
+                        }
                         $attrIndex++;
                     }
 
-                    // B. GESTION DU STOCK (Ajustement / Correction)
                     $targetQty = (int) $variantData['quantity'];
                     if ($targetQty > 0) {
                         StockMovement::create([
@@ -317,36 +358,36 @@ class ProductController extends Controller
                             'product_id' => $product->id,
                             'user_id' => auth()->id(),
                             'quantity' => $targetQty,
-                            'type' => 'adjustment', // C'est une correction/mise à jour
-                            'note' => 'Mise à jour produit (Recréation variante)'
+                            'type' => 'adjustment',
+                            'note' => 'Mise à jour produit (Recréation variante)',
                         ]);
-                        // L'observer va passer le stock de 0 à X
                     }
                 }
-
-                // Recalculer le total parent
                 $product->update(['quantity' => $product->variants()->sum('quantity')]);
-            }
-
-            // --- CAS 2 : PRODUIT SIMPLE (No Variants) ---
-            else {
-                // Ici, le produit existe déjà, donc il a déjà un stock (ex: 10)
-                // L'utilisateur envoie la nouvelle valeur désirée (ex: 15)
-
+            } else {
+                // Votre logique existante pour le produit simple
                 $currentQty = $product->quantity;
                 $targetQty = (int) ($data['quantity'] ?? 0);
-
-                // On calcule la différence (15 - 10 = +5) ou (8 - 10 = -2)
                 $diff = $targetQty - $currentQty;
 
                 if ($diff !== 0) {
                     StockMovement::create([
                         'product_id' => $product->id,
                         'user_id' => auth()->id(),
-                        'quantity' => $diff, // Peut être positif ou négatif
-                        'type' => 'adjustment', // 'correction' ou 'inventory'
-                        'note' => 'Mise à jour manuelle fiche produit'
+                        'quantity' => $diff,
+                        'type' => 'adjustment',
+                        'note' => 'Mise à jour manuelle fiche produit',
                     ]);
+                }
+            }
+
+            // Nettoyage : Si des médias orphelins restent (ex: variante supprimée par l'user), on les supprime
+            if (! empty($preservedMedia)) {
+                foreach ($preservedMedia as $media) {
+                    // Si le model_id est encore 0, c'est qu'il n'a pas été réassigné
+                    if ($media->fresh()->model_id === 0) {
+                        $media->delete();
+                    }
                 }
             }
 
@@ -355,6 +396,7 @@ class ProductController extends Controller
             return to_route('admin.products.index');
         } catch (\Exception $e) {
             DB::rollBack();
+
             return back()->withInput()->with('error', $e->getMessage());
         }
     }
@@ -382,7 +424,7 @@ class ProductController extends Controller
                             'user_id' => auth()->id(),
                             'quantity' => -($product->quantity), // On vide le stock
                             'type' => 'destruction', // Nouveau type à prévoir
-                            'note' => 'Suppression définitive du produit'
+                            'note' => 'Suppression définitive du produit',
                         ]);
                     }
 
@@ -395,7 +437,7 @@ class ProductController extends Controller
                                 'user_id' => auth()->id(),
                                 'quantity' => -($variant->quantity),
                                 'type' => 'destruction',
-                                'note' => 'Suppression définitive du produit (Variante)'
+                                'note' => 'Suppression définitive du produit (Variante)',
                             ]);
                         }
                     }
@@ -408,7 +450,7 @@ class ProductController extends Controller
 
             return redirect()->back()->with('success', 'Produit(s) supprimé(s) avec succès.');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Erreur lors de la suppression : ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Erreur lors de la suppression : '.$e->getMessage());
         }
     }
 }

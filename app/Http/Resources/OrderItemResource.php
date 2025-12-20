@@ -28,14 +28,14 @@ class OrderItemResource extends JsonResource
                     'name' => $this->product->name,
                 ];
             }),
-            'variant'       => $this->variant ? $this->variant->options->map(fn($o) => [
+            'variant' => $this->variant ? $this->variant->options->map(fn ($o) => [
                 'attribute' => $o->attribute->name,
-                'option'    => $o->option->name,
+                'option' => $o->option->name,
             ]) : null,
             'price' => $this->price,
             'quantity' => $this->quantity,
             'total' => $this->price * $this->quantity,
-            'image' => $this->variant?->image_url
+            'image' => $this->variant?->image_url,
         ];
     }
 }

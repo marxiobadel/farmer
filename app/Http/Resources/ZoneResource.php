@@ -25,7 +25,7 @@ class ZoneResource extends JsonResource
             'country' => $this->whenLoaded('country', function () {
                 return new CountryResource($this->country);
             }),
-            'rates' => $this->rates->map(fn($rate) => [
+            'rates' => $this->rates->map(fn ($rate) => [
                 'id' => $rate->id,
                 'carrier_id' => $rate->carrier_id,
                 'min_weight' => $rate->min_weight,
@@ -36,7 +36,7 @@ class ZoneResource extends JsonResource
                 'max_volume' => $rate->max_volume,
                 'rate_price' => $rate->rate_price,
                 'delivery_time' => $rate->delivery_time,
-                'carrier'  => [
+                'carrier' => [
                     'id' => $rate->carrier->id,
                     'name' => $rate->carrier->name,
                     'description' => $rate->carrier->description,
@@ -44,7 +44,7 @@ class ZoneResource extends JsonResource
                     'free_shipping_min' => $rate->carrier->free_shipping_min,
                     'is_active' => $rate->carrier->is_active,
                     'pricing_type' => $rate->carrier->pricing_type,
-                ]
+                ],
             ]),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,

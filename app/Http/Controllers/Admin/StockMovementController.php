@@ -4,9 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ProductResource;
+use App\Http\Resources\StockMovementResource;
 use App\Models\Product;
-use App\Models\StockMovement;
-use App\Http\Resources\StockMovementResource; // We will create this below
+use App\Models\StockMovement; // We will create this below
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -33,11 +33,11 @@ class StockMovementController extends Controller
                 $q->where('note', 'like', "%$search%") // Search in notes
                     ->orWhere('id', $search)
                     // Search by Product Name
-                    ->orWhereHas('product', fn($p) => $p->where('name', 'like', "%$search%"))
+                    ->orWhereHas('product', fn ($p) => $p->where('name', 'like', "%$search%"))
                     // Search by Variant SKU
-                    ->orWhereHas('variant', fn($v) => $v->where('sku', 'like', "%$search%"))
+                    ->orWhereHas('variant', fn ($v) => $v->where('sku', 'like', "%$search%"))
                     // Search by User Name
-                    ->orWhereHas('user', fn($u) => $u->where('firstname', 'like', "%$search%")
+                    ->orWhereHas('user', fn ($u) => $u->where('firstname', 'like', "%$search%")
                         ->orWhere('lastname', 'like', "%$search%"));
             });
         }

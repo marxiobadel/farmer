@@ -18,7 +18,7 @@ class PaymentResource extends JsonResource
         }
 
         return [
-             'id' => $this->id,
+            'id' => $this->id,
 
             // Relations
             'order_id' => $this->order_id,
