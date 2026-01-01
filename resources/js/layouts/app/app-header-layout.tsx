@@ -1,17 +1,15 @@
-import { AppContent } from '@/components/app-content';
-import { AppHeader } from '@/components/app-header';
-import { AppShell } from '@/components/app-shell';
-import { type BreadcrumbItem } from '@/types';
+import { Footer } from '@/components/ecommerce/footer';
+import { Header } from '@/components/ecommerce/header';
 import type { PropsWithChildren } from 'react';
 
-export default function AppHeaderLayout({
-    children,
-    breadcrumbs,
-}: PropsWithChildren<{ breadcrumbs?: BreadcrumbItem[] }>) {
+export default function AppHeaderLayout({ children }: PropsWithChildren) {
     return (
-        <AppShell>
-            <AppHeader breadcrumbs={breadcrumbs} />
-            <AppContent>{children}</AppContent>
-        </AppShell>
+        <div className="min-h-screen bg-stone-50 font-sans text-stone-900 selection:bg-primary/20 selection:text-primary">
+            <Header />
+            <main className="flex-1">
+                {children}
+            </main>
+            <Footer />
+        </div>
     );
 }

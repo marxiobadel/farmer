@@ -1,6 +1,7 @@
 import type { Category, Product } from "@/types/ecommerce";
 import { useMemo } from "react";
 import { ProductCard } from "./product-card";
+import { AnimatePresence, motion } from "framer-motion";
 
 interface ProductGridProps {
     selectedCategory: Category;
@@ -99,7 +100,7 @@ export const ProductGrid = ({ selectedCategory }: ProductGridProps) => {
     }, [selectedCategory]);
 
     return (
-        <div className="container max-w-7xl mx-auto px-4 py-12">
+        <div className="container max-w-7xl mx-auto px-4 py-16 sm:py-20 md:py-24">
             <div className="flex items-baseline justify-between mb-8">
                 <h2 className="text-2xl font-bold text-stone-900">
                     {selectedCategory === "Tous" ? "Catalogue Complet" : selectedCategory}

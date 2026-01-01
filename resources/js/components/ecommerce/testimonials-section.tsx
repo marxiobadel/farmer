@@ -25,7 +25,7 @@ const testimonials = [
 
 export const TestimonialsSection = () => {
     return (
-        <section className="bg-stone-900 py-24 sm:py-32 relative overflow-hidden">
+        <section className="bg-stone-900 py-16 sm:py-20 md:py-24 relative overflow-hidden">
             {/* Background Pattern */}
             <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
                 <div className="absolute right-0 top-0 -translate-y-1/2 w-96 h-96 bg-primary rounded-full blur-[120px]" />

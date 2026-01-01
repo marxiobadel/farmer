@@ -11,7 +11,7 @@ class IndexController extends Controller
 {
     public function home(Request $request)
     {
-        return Inertia::render('welcome', [
+        return Inertia::render('front/index', [
             'canRegister' => Features::enabled(Features::registration()),
         ]);
     }

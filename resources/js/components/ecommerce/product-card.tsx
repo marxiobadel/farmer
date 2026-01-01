@@ -1,43 +1,44 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import type { Product } from "@/types/ecommerce";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { Heart, MapPin, Plus, ShoppingBasket } from "lucide-react";
-import { useState } from "react";
 
 interface ProductCardProps {
     product: Product;
 }
 
 export const ProductCard = ({ product }: ProductCardProps) => {
-    const [isHovered, setIsHovered] = useState(false);
+    // Suppression du useState qui cause des re-rendus inutiles
 
     return (
         <motion.div
-            className="group relative flex h-full flex-col overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-stone-200/50 transition-all hover:shadow-xl hover:shadow-primary/5 hover:ring-primary/20"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            className="group relative flex h-full flex-col overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-stone-200/50 transition-shadow duration-300 hover:shadow-xl hover:shadow-primary/5 hover:ring-primary/20"
+            initial="hidden"
+            whileInView="visible"
+            whileHover="hover"
+            // Optimisation 2 : L'animation se déclenche quand l'élément entre de 50px dans l'écran
             viewport={{ once: true, margin: "-50px" }}
-            onHoverStart={() => setIsHovered(true)}
-            onHoverEnd={() => setIsHovered(false)}
+            variants={{
+                hidden: { opacity: 0, y: 20 },
+                visible: {
+                    opacity: 1,
+                    y: 0,
+                    // Optimisation 3 : Une courbe "easeOut" est plus naturelle pour l'œil humain
+                    transition: { duration: 0.5, ease: "easeOut" }
+                }
+            }}
         >
             {/* --- Zone Image --- */}
-            <div className="relative aspect-[4/5] w-full overflow-hidden bg-stone-100">
-
-                {/* Image avec effet Zoom */}
-                <motion.div
-                    className="h-full w-full"
-                    animate={{ scale: isHovered ? 1.08 : 1 }}
-                    transition={{ duration: 0.7, ease: [0.33, 1, 0.68, 1] }} // Courbe de Bézier fluide
-                >
+            <div className="relative aspect-[16/9] w-full overflow-hidden bg-stone-100">
+                <div className="h-full w-full">
                     <img
                         src={product.image}
                         alt={product.name}
                         className="h-full w-full object-cover object-center"
                         loading="lazy"
                     />
-                </motion.div>
+                </div>
 
                 {/* Overlay Haut (Badges + Wishlist) */}
                 <div className="absolute inset-x-0 top-0 flex justify-between p-3 z-10">
@@ -62,25 +63,26 @@ export const ProductCard = ({ product }: ProductCardProps) => {
                     </button>
                 </div>
 
-                {/* Quick Add Button (Slide Up Interaction) */}
-                <AnimatePresence>
-                    {isHovered && product.isAvailable && (
-                        <motion.div
-                            initial={{ y: "100%", opacity: 0 }}
-                            animate={{ y: 0, opacity: 1 }}
-                            exit={{ y: "100%", opacity: 0 }}
-                            transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                            className="absolute inset-x-0 bottom-0 p-4 z-20"
+                {/* Quick Add Button (Slide Up Interaction via Variants) */}
+                {product.isAvailable && (
+                    <motion.div
+                        className="absolute inset-x-0 bottom-0 p-4 z-20"
+                        // L'animation est pilotée par le "whileHover" du parent
+                        variants={{
+                            hidden: { y: "100%", opacity: 0 }, // État par défaut (caché)
+                            visible: { y: "100%", opacity: 0 }, // Reste caché lors de l'apparition de la carte
+                            hover: { y: 0, opacity: 1 }         // Apparaît au survol
+                        }}
+                        transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                    >
+                        <Button
+                            className="w-full h-11 gap-2 rounded-xl bg-stone-900/95 text-white shadow-lg backdrop-blur hover:bg-primary hover:text-white transition-colors duration-300"
                         >
-                            <Button
-                                className="w-full h-11 gap-2 rounded-xl bg-stone-900/95 text-white shadow-lg backdrop-blur hover:bg-primary hover:text-white transition-colors duration-300"
-                            >
-                                <Plus className="h-4 w-4" />
-                                <span className="font-medium">Ajout Rapide</span>
-                            </Button>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
+                            <Plus className="h-4 w-4" />
+                            <span className="font-medium">Ajout Rapide</span>
+                        </Button>
+                    </motion.div>
+                )}
             </div>
 
             {/* --- Zone Contenu --- */}
@@ -99,6 +101,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
 
                     {/* Titre */}
                     <h3 className="text-lg font-bold text-stone-800 leading-snug group-hover:text-primary transition-colors line-clamp-2">
+                        {/* z-0 sur le lien pour ne pas bloquer le clic du bouton Ajout Rapide (z-20) */}
                         <a href={`/produits/${product.id}`} className="focus:outline-none">
                             <span className="absolute inset-0 z-0" aria-hidden="true" />
                             {product.name}

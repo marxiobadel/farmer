@@ -30,6 +30,8 @@ Route::get('storage/link', function () {
 
 Route::get('/', [IndexController::class, 'home'])->name('home');
 
+Route::resource('products', \App\Http\Controllers\Front\ProductController::class)->only(['index', 'show']);
+
 Route::middleware(['auth'])->group(function () {
     Route::prefix('admin')->middleware(['can:access-admin'])->group(function () {
         Route::redirect('/', '/admin/dashboard', 301);

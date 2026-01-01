@@ -25,7 +25,7 @@ const features = [
 
 export const FeaturesSection = () => {
     return (
-        <div className="bg-white py-24 sm:py-32">
+        <div className="bg-white py-16 sm:py-20 md:py-24">
             <div className="mx-auto max-w-7xl px-6 lg:px-8">
                 <div className="mx-auto max-w-2xl lg:text-center">
                     <h2 className="text-base font-bold leading-7 text-primary tracking-widest uppercase">
@@ -40,7 +40,7 @@ export const FeaturesSection = () => {
                 </div>
 
                 <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-none">
-                    <dl className="grid max-w-xl grid-cols-1 gap-x-12 gap-y-16 lg:max-w-none lg:grid-cols-4">
+                    <dl className="grid max-w-xl grid-cols-1 gap-x-12 gap-y-12 sm:gap-y-16 lg:max-w-none lg:grid-cols-4">
                         {features.map((feature) => (
                             <div key={feature.name} className="flex flex-col items-start group">
                                 <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-stone-50 border border-stone-100 shadow-sm transition-colors group-hover:bg-primary/10 group-hover:border-primary/20">

@@ -5,7 +5,7 @@ import { BlobBackground, HenIllustration } from "./illustrations";
 
 export const HeroSection = () => {
     return (
-        <section className="relative w-full overflow-hidden bg-stone-50 pt-20 pb-24 lg:pt-32 lg:pb-40">
+        <section className="relative w-full overflow-hidden bg-stone-50 pt-16 pb-20 sm:pt-20 sm:pb-24">
             {/* Background Decorations */}
             <div className="absolute top-0 right-0 -z-10 opacity-30">
                 <BlobBackground className="w-[800px] h-[800px] text-primary/20 blur-3xl rotate-45 translate-x-1/3 -translate-y-1/3" />

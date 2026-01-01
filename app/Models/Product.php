@@ -3,18 +3,22 @@
 namespace App\Models;
 
 use App\Enums\ProductStatus;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Cache;
+use Overtrue\LaravelFavorite\Traits\Favoriteable;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\Sitemap\Contracts\Sitemapable;
+use Spatie\Sitemap\Tags\Url;
 use Spatie\Sluggable\HasSlug;
 use Spatie\Sluggable\SlugOptions;
 use Spatie\Tags\HasTags;
 
-class Product extends Model implements HasMedia
+class Product extends Model implements HasMedia, Sitemapable
 {
-    use HasSlug, HasTags, InteractsWithMedia, SoftDeletes;
+    use HasSlug, Favoriteable, HasTags, InteractsWithMedia, SoftDeletes;
 
     protected $guarded = ['id'];
 
@@ -64,5 +68,18 @@ class Product extends Model implements HasMedia
     public function variants()
     {
         return $this->hasMany(ProductVariant::class, 'product_id');
+    }
+
+    public function scopePublished($query)
+    {
+        return $query->where('products.status', '=', ProductStatus::PUBLISHED);
+    }
+
+    public function toSitemapTag(): Url|string|array
+    {
+        return Url::create(route('products.show', [$this->slug]))
+            ->setLastModificationDate(Carbon::create($this->updated_at))
+            ->setChangeFrequency(Url::CHANGE_FREQUENCY_MONTHLY)
+            ->setPriority(0.8);
     }
 }

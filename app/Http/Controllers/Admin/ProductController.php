@@ -212,6 +212,7 @@ class ProductController extends Controller
         try {
             $data = $request->validated();
 
+            // 1. Mise à jour des informations de base du produit
             $product->update([
                 'name' => $data['name'],
                 'base_price' => $data['price'] ?? 0,
@@ -228,14 +229,16 @@ class ProductController extends Controller
             $product->categories()->sync($data['category_ids'] ?? []);
             $product->syncTags($data['tags'] ?? []);
 
+            // 2. Gestion des suppressions d'images existantes
             if ($request->has('image_ids')) {
                 $imageIds = $request->input('image_ids', []);
                 $product->media()
-                    ->where('collection_name', 'images')
+                    ->where('collection_name', '=', 'images')
                     ->whereNotIn('id', $imageIds)
                     ->get()->each->delete();
             }
 
+            // 3. Ajout des nouvelles images
             if (! empty($data['images'])) {
                 foreach ($data['images'] as $index => $file) {
                     $media = $product->addMedia($file)->toMediaCollection('images');
@@ -249,28 +252,39 @@ class ProductController extends Controller
                 $product->update(['default_image_id' => $data['default_image']]);
             }
 
+            // ---------------------------------------------------------
+            // POINT 2 : SAUVEGARDE DES DONNÉES AVANT SUPPRESSION
+            // ---------------------------------------------------------
             $preservedMedia = [];
+            $preservedVariants = []; // Tableau pour stocker prix, qté, sku
 
             $product->load('variants.optionValues');
 
             foreach ($product->variants as $variant) {
-                // Ici, les AttributeOption existent encore, donc on peut récupérer le nom
+                // Construction de la clé unique (Nom de la variante)
                 $variantName = $variant->optionValues
                     ->map(fn ($opt) => $opt->name)
                     ->join(' / ');
 
+                // A. Sauvegarde du Média (existant)
                 $mediaItem = $variant->getFirstMedia('image');
-
                 if ($mediaItem) {
                     $mediaItem->update([
                         'model_type' => 'App\Models\TempMedia',
                         'model_id' => 0,
                     ]);
-
                     $preservedMedia[$variantName] = $mediaItem;
                 }
+
+                // B. Sauvegarde des Données (NOUVEAU)
+                $preservedVariants[$variantName] = [
+                    'price' => $variant->price,
+                    'quantity' => $variant->quantity,
+                    'sku' => $variant->sku,
+                ];
             }
 
+            // 4. Suppression destructive (Attributs & Variantes)
             $attributes = $product->attributes;
             $product->attributes()->detach();
             AttributeOption::whereIn('attribute_id', $attributes->pluck('id'))->delete();
@@ -279,9 +293,9 @@ class ProductController extends Controller
             foreach ($product->variants as $variant) {
                 $variant->options()->delete();
             }
-
             $product->variants()->delete();
 
+            // 5. Recréation des Attributs
             $attributeMap = [];
             $optionMap = [];
 
@@ -304,39 +318,58 @@ class ProductController extends Controller
                 }
             }
 
-            // --- RECRÉATION DES VARIANTES ---
+            // 6. Recréation des Variantes avec RESTAURATION
             if (! empty($data['variants'])) {
                 foreach ($data['variants'] as $variantData) {
+
+                    // Initialisation des valeurs par défaut venant du formulaire
+                    $price = $variantData['price'];
+                    $quantity = (int) $variantData['quantity'];
+                    $sku = uniqid('SKU-');
+                    $variantName = $variantData['name'];
+
+                    // TENTATIVE DE RESTAURATION
+                    if (isset($preservedVariants[$variantName])) {
+                        $oldData = $preservedVariants[$variantName];
+
+                        // Restauration du SKU pour garder la traçabilité si possible
+                        $sku = $oldData['sku'];
+
+                        // Si le frontend renvoie 0 (bug potentiel ou champ vide) alors qu'on avait du stock, on restaure
+                        // Note: Vous pouvez ajuster cette condition selon si vous voulez forcer la restauration ou non
+                        if ($quantity === 0 && $oldData['quantity'] > 0) {
+                            $quantity = $oldData['quantity'];
+                        }
+
+                        // Optionnel : Restauration du prix si 0 ou vide
+                        if ((float)$price === 0.0 && (float)$oldData['price'] > 0.0) {
+                            $price = $oldData['price'];
+                        }
+                    }
+
                     $variant = $product->variants()->create([
-                        'sku' => uniqid('SKU-'),
-                        'price' => $variantData['price'],
-                        'quantity' => 0,
+                        'sku' => $sku,
+                        'price' => $price,
+                        'quantity' => 0, // On initialise à 0 pour gérer le mouvement de stock juste après
                         'is_default' => (bool) $variantData['is_default'],
                     ]);
 
-                    // CAS 1: Nouvelle image uploadée
+                    // Gestion des Images (inchangée)
                     if (isset($variantData['image']) && $variantData['image'] instanceof UploadedFile) {
                         $variant->addMedia($variantData['image'])->toMediaCollection('image');
-                    }
-                    // CAS 2: Pas de nouvelle image, on tente de récupérer l'ancienne via le nom
-                    elseif (isset($preservedMedia[$variantData['name']])) {
-                        $oldMedia = $preservedMedia[$variantData['name']];
-
-                        // On réattache l'ancien média à la nouvelle variante
+                    } elseif (isset($preservedMedia[$variantName])) {
+                        $oldMedia = $preservedMedia[$variantName];
                         $oldMedia->update([
                             'model_type' => ProductVariant::class,
                             'model_id' => $variant->id,
                         ]);
                     }
 
-                    // Options
-                    $parts = explode(' / ', $variantData['name']);
+                    // Liaison des Options
+                    $parts = explode(' / ', $variantName);
                     $attrIndex = 0;
                     foreach ($data['attributes'] as $attr) {
-                        // Sécurité si les indexes ne correspondent pas
-                        if (! isset($attributeMap[$attr['name']])) {
-                            continue;
-                        }
+                        if (! isset($attributeMap[$attr['name']])) continue;
 
                         $attrId = $attributeMap[$attr['name']];
                         $optionName = $parts[$attrIndex] ?? '';
@@ -351,26 +384,40 @@ class ProductController extends Controller
                         $attrIndex++;
                     }
 
-                    $targetQty = (int) $variantData['quantity'];
-                    if ($targetQty > 0) {
+                    // Gestion des Mouvements de Stock
+                    // On compare la quantité cible ($quantity restaurée ou saisie) avec 0 (nouveau record)
+                    if ($quantity > 0) {
+                        // Pour éviter de fausser l'historique (créer un mouvement "+10" alors que le stock existait déjà),
+                        // on pourrait vérifier si c'est une restauration.
+                        // Mais pour simplifier et assurer la cohérence du champ 'quantity' final :
+
+                        // 1. On met à jour la quantité réelle sur le modèle
+                        $variant->update(['quantity' => $quantity]);
+
+                        // 2. On crée un log.
+                        // Si c'est une restauration exacte, techniquement ce n'est pas un mouvement physique,
+                        // mais comme on a supprimé l'ancien record, c'est une "Correction administrative".
                         StockMovement::create([
                             'variant_id' => $variant->id,
                             'product_id' => $product->id,
                             'user_id' => auth()->id(),
-                            'quantity' => $targetQty,
-                            'type' => 'adjustment',
-                            'note' => 'Mise à jour produit (Recréation variante)',
+                            'quantity' => $quantity,
+                            'type' => 'adjustment', // ou 'restoration' si vous créez ce type
+                            'note' => isset($preservedVariants[$variantName])
+                                ? 'Restauration suite mise à jour produit'
+                                : 'Stock initial (Mise à jour)',
                         ]);
                     }
                 }
                 $product->update(['quantity' => $product->variants()->sum('quantity')]);
             } else {
-                // Votre logique existante pour le produit simple
+                // Logique pour produit sans variante (inchangée)
                 $currentQty = $product->quantity;
                 $targetQty = (int) ($data['quantity'] ?? 0);
                 $diff = $targetQty - $currentQty;
 
                 if ($diff !== 0) {
+                    $product->update(['quantity' => $targetQty]); // Mise à jour explicite nécessaire ici aussi
                     StockMovement::create([
                         'product_id' => $product->id,
                         'user_id' => auth()->id(),
@@ -381,10 +428,9 @@ class ProductController extends Controller
                 }
             }
 
-            // Nettoyage : Si des médias orphelins restent (ex: variante supprimée par l'user), on les supprime
+            // Nettoyage des médias orphelins
             if (! empty($preservedMedia)) {
                 foreach ($preservedMedia as $media) {
-                    // Si le model_id est encore 0, c'est qu'il n'a pas été réassigné
                     if ($media->fresh()->model_id === 0) {
                         $media->delete();
                     }
@@ -396,7 +442,6 @@ class ProductController extends Controller
             return to_route('admin.products.index');
         } catch (\Exception $e) {
             DB::rollBack();
-
             return back()->withInput()->with('error', $e->getMessage());
         }
     }

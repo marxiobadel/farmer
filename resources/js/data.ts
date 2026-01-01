@@ -113,24 +113,24 @@ export const colorMap: Record<string, string> = {
 
 export const orderDeliveryStatus = [
     { label: "En attente de paiement", value: "pending" },
-    { label: "En traitement", value: "processing" },
-    { label: "En préparation", value: "packing" },
-    { label: "En attente de ramassage", value: "awaiting_pickup" },
-    { label: "Pris en charge par le transporteur", value: "picked_up" },
-    { label: "En transit", value: "in_transit" },
-    { label: "Arrivé au centre de distribution", value: "at_hub" },
-    { label: "En cours de livraison", value: "out_for_delivery" },
-    { label: "Livré", value: "delivered" },
+    { label: "En traitement", value: "processing" }, // Le paiement est validé. L'entrepôt reçoit l'ordre de commande.
+    { label: "En préparation", value: "packing" }, // L'équipe logistique est en train d'emballer les produits (mise en carton).
+    { label: "En attente de ramassage", value: "awaiting_pickup" }, // Le colis est prêt, étiqueté et attend que le transporteur (ex: DHL, La Poste) vienne le chercher à l'entrepôt.
+    { label: "Pris en charge par le transporteur", value: "picked_up" }, // Le transporteur a scanné le colis et l'a récupéré.
+    { label: "En transit", value: "in_transit" }, // Le colis voyage entre deux centres ou vers la ville de destination.
+    { label: "Arrivé au centre de distribution", value: "at_hub" }, // Le colis est arrivé dans un centre de tri régional ou local.
+    { label: "En cours de livraison", value: "out_for_delivery" }, // Le colis est dans le camion du livreur final ("Dernier kilomètre").
+    { label: "Livré", value: "delivered" }, // Le client a reçu le colis.
 
     // Problèmes potentiels
-    { label: "Problème de livraison", value: "delivery_issue" },
-    { label: "Adresse incorrecte", value: "wrong_address" },
-    { label: "Destinataire absent", value: "recipient_absent" },
-    { label: "Retourné à l'expéditeur", value: "returned" },
+    { label: "Problème de livraison", value: "delivery_issue" }, // Retard global, accident, ou problème non spécifié.
+    { label: "Adresse incorrecte", value: "wrong_address" }, // Le livreur ne trouve pas le lieu.
+    { label: "Destinataire absent", value: "recipient_absent" }, // Tentative de livraison échouée.
+    { label: "Retourné à l'expéditeur", value: "returned" }, // Après plusieurs échecs ou refus, le colis revient chez vous.
 
     // Finaux
-    { label: "Terminée", value: "completed" },
-    { label: "Annulée", value: "cancelled" },
+    { label: "Terminée", value: "completed" }, // La commande est close (délai de rétractation passé ou satisfaction confirmée). Souvent utilisé pour déclencher les points de fidélité.
+    { label: "Annulée", value: "cancelled" }, // La commande a été stoppée avant expédition.
 ];
 
 export const paymentStatus = [

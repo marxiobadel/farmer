@@ -9,6 +9,10 @@ use App\Http\Resources\OrderResource;
 use App\Http\Resources\ProductResource;
 use App\Http\Resources\UserResource;
 use App\Http\Resources\ZoneResource;
+use App\Mail\OrderCancelled;
+use App\Mail\OrderDelivered;
+use App\Mail\OrderOutForDelivery;
+use App\Mail\OrderShipped;
 use App\Models\Address;
 use App\Models\Carrier;
 use App\Models\CarrierRate;
@@ -22,8 +26,10 @@ use App\Models\Zone;
 use App\Settings\GeneralSettings;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Concurrency;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Number;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -47,7 +53,7 @@ class OrderController extends Controller
             $query->where(function ($q) use ($search) {
                 $searchColumns = ['firstname', 'lastname', 'email'];
                 $q->where('id', '=', $search)
-                    ->orWhereHas('user', fn ($u) => $u->whereAny($searchColumns, 'like', "%$search%"))
+                    ->orWhereHas('user', fn($u) => $u->whereAny($searchColumns, 'like', "%$search%"))
                     ->orWhere('status', 'like', "%$search%");
             });
         }
@@ -112,9 +118,9 @@ class OrderController extends Controller
     private function loadOrderFormData(): array
     {
         return Concurrency::driver('sync')->run([
-            fn () => Product::with('variants.options')->latest()->get(),
-            fn () => User::with('addresses')->latest('firstname')->get(),
-            fn () => Zone::with('rates.carrier')->get(),
+            fn() => Product::with('variants.options')->latest()->get(),
+            fn() => User::with('addresses')->latest('firstname')->get(),
+            fn() => Zone::with('rates.carrier')->get(),
         ]);
     }
 
@@ -139,7 +145,7 @@ class OrderController extends Controller
 
         $shippingAddress = Address::findOrFail($data['shipping_address_id']);
 
-        $billingAddress = ! empty($data['billing_address_id'])
+        $billingAddress = !empty($data['billing_address_id'])
             ? Address::findOrFail($data['billing_address_id'])
             : $shippingAddress;
 
@@ -208,7 +214,7 @@ class OrderController extends Controller
 
             $order->payments()->create([
                 'user_id' => $data['user_id'],
-                'reference' => 'PAY-'.strtoupper(Str::random(12)),
+                'reference' => 'PAY-' . strtoupper(Str::random(12)),
                 'transaction_id' => null, // Will be filled by payment gateway callback if online
                 'method' => $data['method'],
                 'provider' => $this->getProviderForMethod($data['method']), // helper to determine provider
@@ -235,7 +241,7 @@ class OrderController extends Controller
 
             return redirect()
                 ->route('admin.orders.create', $request->safe()->only(['cart_id']))
-                ->with('error', 'Erreur lors de la création de la commande: '.$e->getMessage());
+                ->with('error', 'Erreur lors de la création de la commande: ' . $e->getMessage());
         }
     }
 
@@ -245,19 +251,50 @@ class OrderController extends Controller
             'status' => ['required', 'string'],
         ]);
 
-        $order->update([
-            'status' => $validated['status'],
-        ]);
+        $newStatus = $validated['status'];
+
+        if ($order->status === $newStatus) {
+            return back()->with('info', 'La commande a déjà ce statut.');
+        }
+
+        $order->update(['status' => $newStatus]);
+
+        $emailCacheKey = "order_{$order->id}_status_{$newStatus}_sent";
+
+        $shouldSendEmail = Cache::add($emailCacheKey, true, now()->addYear());
+
+        if ($shouldSendEmail) {
+            $this->sendEmailNotification($order, $newStatus);
+        }
 
         return back()->with('success', 'Statut de la commande mis à jour.');
     }
 
+    protected function sendEmailNotification(Order $order, string $status)
+    {
+        $user = $order->user;
+
+        if (!$user) {
+            return;
+        }
+
+        $mailable = match ($status) {
+            'picked_up' => new OrderShipped($order),    // Exemple : Pris en charge
+            'out_for_delivery' => new OrderOutForDelivery($order), // Exemple : En cours de livraison
+            'delivered' => new OrderDelivered($order),  // Exemple : Livré
+            'cancelled' => new OrderCancelled($order),  // Exemple : Annulé
+            default => null,
+        };
+
+        if ($mailable) {
+            Mail::to($user)->queue($mailable);
+        }
+    }
+
     public function downloadInvoice(GeneralSettings $settings, Order $order)
     {
-        // Charger les relations nécessaires
         $order->load(['user', 'items.product', 'items.variant', 'carrier']);
 
-        // Préparer les données pour la vue
         $data = [
             'order' => $order,
             'company' => [
@@ -269,11 +306,9 @@ class OrderController extends Controller
             ],
         ];
 
-        // Générer le PDF
         $pdf = Pdf::loadView('pdf.invoice', $data);
 
-        // Télécharger le fichier
-        return $pdf->download('facture-'.$order->id.'.pdf');
+        return $pdf->download('facture-' . $order->id . '.pdf');
     }
 
     private function calculateShippingCost($carrierId, $zoneId, $metrics)
@@ -362,7 +397,7 @@ class OrderController extends Controller
 
             return redirect()->back()->with('success', 'Commande(s) supprimé(s) avec succès.');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Erreur : '.$e->getMessage());
+            return redirect()->back()->with('error', 'Erreur : ' . $e->getMessage());
         }
     }
 

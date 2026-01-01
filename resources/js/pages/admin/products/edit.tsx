@@ -137,7 +137,7 @@ export default function Edit({ product, categories }: EditProps) {
         setImageIds(ids);
     }, [imagePreviews]);
 
-    useEffect(() => {
+   useEffect(() => {
         const attributes = (watchedAttributes || []) as AttributeInput[];
 
         const validAttributes = attributes.filter(
@@ -147,7 +147,7 @@ export default function Edit({ product, categories }: EditProps) {
                 attr.options.some((o) => o.name)
         );
 
-        // If empty, wipe variants
+        // Si plus d'attributs valides, on vide les variantes
         const currentVariants = form.getValues("variants") as VariantInput[];
 
         if (validAttributes.length === 0) {
@@ -166,12 +166,22 @@ export default function Edit({ product, categories }: EditProps) {
 
         const combos = cartesianProduct(optionsStack);
 
-        const newVariants = combos.map((combo) => {
+        const newVariants = combos.map((combo, index) => { // Ajout de l'index ici
             const variantName = combo.join(" / ");
-            const existing = currentVariants.find((v) => v.name === variantName);
+
+            // 1. On cherche d'abord une correspondance exacte par nom (cas standard)
+            let existing = currentVariants.find((v) => v.name === variantName);
+
+            // 2. CORRECTION CRITIQUE : Fallback par Index
+            // Si on ne trouve pas par nom, MAIS que le nombre de variantes n'a pas changé,
+            // on suppose que c'est un renommage. On garde donc les données de la variante au même index.
+            if (!existing && combos.length === currentVariants.length) {
+                existing = currentVariants[index];
+            }
 
             return {
                 name: variantName,
+                // On récupère les valeurs existantes (trouvées par nom OU par index)
                 price: existing?.price ?? form.getValues("price") ?? "",
                 quantity: existing?.quantity ?? "0",
                 is_default: existing?.is_default ?? false,
@@ -188,8 +198,8 @@ export default function Edit({ product, categories }: EditProps) {
             setData("variants", newVariants);
         }
     }, [
-        JSON.stringify(watchedAttributes), // ⬅ stabilizes the deep structure
-        cartesianProduct                   // ⬅ stable callback
+        JSON.stringify(watchedAttributes),
+        cartesianProduct
     ]);
 
     const editor = useEditor({
@@ -227,8 +237,6 @@ export default function Edit({ product, categories }: EditProps) {
             preserveScroll: 'errors',
             onSuccess: () => emit("product.saved", "Produit modifié avec succès !"),
             onError: (errors) => {
-                console.log(errors);
-
                 if (errors.error) {
                     toast.error('Erreur !', { description: errors.error });
                 } else {
