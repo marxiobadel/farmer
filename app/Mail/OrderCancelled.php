@@ -21,7 +21,7 @@ class OrderCancelled extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Annulation de la commande #' . $this->order->id,
+            subject: 'Annulation de la commande #'.$this->order->id,
         );
     }
 

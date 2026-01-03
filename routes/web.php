@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\TestimonialController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\ZoneController;
 use App\Http\Controllers\Front\IndexController;
+use App\Http\Controllers\Front\NewsletterController;
 use App\Http\Controllers\Settings\ProfileController;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
@@ -29,10 +30,31 @@ Route::get('storage/link', function () {
 });
 
 Route::get('/', [IndexController::class, 'home'])->name('home');
+foreach (config('services.frontend_routes') as $route) {
+    Route::get($route['uri'], [IndexController::class, $route['action']])->name($route['name']);
+}
+
+Route::prefix('contact')
+    ->controller(\App\Http\Controllers\Front\ContactController::class)
+    ->group(function () {
+        Route::get('/', 'index')->name('contact');
+        Route::post('/', 'store')->name('contact.store');
+    });
+
+Route::post('newsletters', [NewsletterController::class, 'store'])->name('newsletter.store');
 
 Route::resource('products', \App\Http\Controllers\Front\ProductController::class)->only(['index', 'show']);
 
 Route::middleware(['auth'])->group(function () {
+    Route::get('/espace-pro', [\App\Http\Controllers\Front\ProController::class, 'index'])->name('pro.index');
+    Route::post('/espace-pro', [\App\Http\Controllers\Front\ProController::class, 'store'])->name('pro.store');
+
+    Route::prefix('profile')->name('profile.')
+        ->controller(\App\Http\Controllers\Front\ProfileController::class)
+        ->group(function () {
+            Route::get('/', 'index')->name('index');
+        });
+
     Route::prefix('admin')->middleware(['can:access-admin'])->group(function () {
         Route::redirect('/', '/admin/dashboard', 301);
 

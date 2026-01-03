@@ -342,7 +342,7 @@ class ProductController extends Controller
                         }
 
                         // Optionnel : Restauration du prix si 0 ou vide
-                        if ((float)$price === 0.0 && (float)$oldData['price'] > 0.0) {
+                        if ((float) $price === 0.0 && (float) $oldData['price'] > 0.0) {
                             $price = $oldData['price'];
                         }
                     }
@@ -369,7 +369,9 @@ class ProductController extends Controller
                     $parts = explode(' / ', $variantName);
                     $attrIndex = 0;
                     foreach ($data['attributes'] as $attr) {
-                        if (! isset($attributeMap[$attr['name']])) continue;
+                        if (! isset($attributeMap[$attr['name']])) {
+                            continue;
+                        }
 
                         $attrId = $attributeMap[$attr['name']];
                         $optionName = $parts[$attrIndex] ?? '';
@@ -442,6 +444,7 @@ class ProductController extends Controller
             return to_route('admin.products.index');
         } catch (\Exception $e) {
             DB::rollBack();
+
             return back()->withInput()->with('error', $e->getMessage());
         }
     }

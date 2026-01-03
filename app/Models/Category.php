@@ -27,10 +27,12 @@ class Category extends Model implements HasMedia
     {
         static::saved(function ($category) {
             Cache::forget('products_categories_oldest');
+            Cache::forget('front_products_categories_oldest');
         });
 
         static::deleted(function ($category) {
             Cache::forget('products_categories_oldest');
+            Cache::forget('front_products_categories_oldest');
         });
     }
 
@@ -60,7 +62,7 @@ class Category extends Model implements HasMedia
     public function coverUrl(): Attribute
     {
         return new Attribute(
-            get: fn () => $this->getFirstMediaUrl('cover', 'thumb')
+            get: fn() => $this->getFirstMediaUrl('cover', 'thumb')
         );
     }
 

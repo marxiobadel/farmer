@@ -18,7 +18,7 @@ use Spatie\Tags\HasTags;
 
 class Product extends Model implements HasMedia, Sitemapable
 {
-    use HasSlug, Favoriteable, HasTags, InteractsWithMedia, SoftDeletes;
+    use Favoriteable, HasSlug, HasTags, InteractsWithMedia, SoftDeletes;
 
     protected $guarded = ['id'];
 

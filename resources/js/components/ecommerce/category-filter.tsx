@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { Category } from "@/types/ecommerce";
+import { usePage } from "@inertiajs/react";
 import { motion } from "framer-motion";
 
 interface CategoryFilterProps {
@@ -21,6 +22,9 @@ export const CategoryFilter = ({
     selectedCategory,
     onSelectCategory,
 }: CategoryFilterProps) => {
+    const props = usePage().props;
+
+    console.log(props.categories);
     return (
         <div className="w-full">
             <div className="container max-w-7xl mx-auto px-4">

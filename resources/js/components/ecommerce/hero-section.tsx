@@ -2,6 +2,8 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, CheckCircle2, Star } from "lucide-react";
 import { motion } from "framer-motion";
 import { BlobBackground, HenIllustration } from "./illustrations";
+import { router } from "@inertiajs/react";
+import pro from "@/routes/pro";
 
 export const HeroSection = () => {
     return (
@@ -49,7 +51,11 @@ export const HeroSection = () => {
                                 Voir nos offres
                                 <ArrowRight className="ml-2 h-5 w-5" />
                             </Button>
-                            <Button size="lg" variant="outline" className="border-2 border-stone-200 text-stone-700 hover:border-primary hover:text-primary hover:bg-transparent h-14 px-8 text-lg rounded-full">
+                            <Button
+                                onClick={() => router.visit(pro.index().url)}
+                                size="lg"
+                                variant="outline"
+                                className="border-2 border-stone-200 text-stone-700 hover:border-primary hover:text-primary hover:bg-transparent h-14 px-8 text-lg rounded-full">
                                 Devenir Partenaire
                             </Button>
                         </div>

@@ -36,6 +36,10 @@ export interface SharedData {
         linkedin_url: string;
         twitter_url: string;
         youtube_url: string;
+        headoffice: string;
+        budget: string;
+        registration: string;
+        taxpayer_number: string;
     };
     defaultCurrency: string;
     [key: string]: unknown;

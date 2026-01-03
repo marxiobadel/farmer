@@ -31,7 +31,7 @@ enum OrderStatus: string
 
     public function label(): string
     {
-        return match($this) {
+        return match ($this) {
             self::PENDING => 'En attente de paiement',
             self::PROCESSING => 'En traitement',
             self::PACKING => 'En préparation',
@@ -53,7 +53,7 @@ enum OrderStatus: string
     // Méthode helper pour les couleurs dans le front ou admin
     public function color(): string
     {
-        return match($this) {
+        return match ($this) {
             self::PENDING, self::AWAITING_PICKUP => 'gray',
             self::PROCESSING, self::PACKING => 'blue',
             self::PICKED_UP, self::IN_TRANSIT, self::AT_HUB, self::OUT_FOR_DELIVERY => 'indigo',

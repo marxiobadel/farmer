@@ -22,6 +22,14 @@ class GeneralSettings extends Settings
 
     public string $address;
 
+    public string $headoffice;
+
+    public string $budget;
+
+    public string $registration;
+
+    public string $taxpayer_number;
+
     public static function group(): string
     {
         return 'general';

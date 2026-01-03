@@ -4,10 +4,11 @@ import { HeroSection } from "@/components/ecommerce/hero-section";
 import { ProductGrid } from "@/components/ecommerce/product-grid";
 import { TestimonialsSection } from "@/components/ecommerce/testimonials-section";
 import type { Category } from "@/types/ecommerce";
-import { Head } from "@inertiajs/react";
+import { Head, Link } from "@inertiajs/react";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import AppLayout from "@/layouts/app-layout";
+import pro from "@/routes/pro";
 
 export default function Index() {
     const [selectedCategory, setSelectedCategory] = useState<Category>("Tous");
@@ -79,12 +80,12 @@ export default function Index() {
                         transition={{ delay: 0.2 }}
                         className="mt-10 flex items-center justify-center gap-x-6"
                     >
-                        <a
-                            href="#"
+                        <Link
+                            href={pro.index()}
                             className="rounded-full bg-white px-8 py-3.5 text-sm font-semibold text-primary shadow-sm hover:bg-stone-100 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-white transition-colors"
                         >
                             Ouvrir un compte Pro
-                        </a>
+                        </Link>
                     </motion.div>
                 </div>
             </section>

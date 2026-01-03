@@ -27,7 +27,7 @@ class OrderShipped extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Votre commande #' . $this->order->id . ' est en route !',
+            subject: 'Votre commande #'.$this->order->id.' est en route !',
         );
     }
 
@@ -39,7 +39,7 @@ class OrderShipped extends Mailable implements ShouldQueue
         return new Content(
             markdown: 'emails.orders.shipped',
             with: [
-                'url' => url('/dashboard/orders/' . $this->order->id),
+                'url' => url('/dashboard/orders/'.$this->order->id),
             ],
         );
     }

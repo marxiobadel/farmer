@@ -1,7 +1,6 @@
 import type { Category, Product } from "@/types/ecommerce";
 import { useMemo } from "react";
 import { ProductCard } from "./product-card";
-import { AnimatePresence, motion } from "framer-motion";
 
 interface ProductGridProps {
     selectedCategory: Category;

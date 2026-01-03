@@ -6,16 +6,24 @@ import { Separator } from "@/components/ui/separator";
 import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Link } from "@inertiajs/react";
-import { Menu, Search, ShoppingBasket, Tractor, ChevronRight, LogIn, UserPlus, Minus, Plus, Trash2 } from "lucide-react";
+import { Link, router, usePage } from "@inertiajs/react";
+import { Menu, Search, ShoppingBasket, Tractor, ChevronRight, LogIn, UserPlus, Minus, Plus, Trash2, UserCircle, LogOut, SquareActivity } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { about, contact, dashboard, farming, login, logout, register } from "@/routes";
+import type { SharedData } from "@/types";
+import { useMobileNavigation } from "@/hooks/use-mobile-navigation";
+import profile from "@/routes/profile";
+import Can from "../can";
+import products from "@/routes/products";
 
 export const Header = () => {
+    const { name, auth } = usePage<SharedData>().props;
+
     const navItems = [
-        { label: "Nos Produits", href: "#" },
-        { label: "Nos offres", href: "#" },
-        { label: "À propos", href: "#" },
-        { label: "Contact", href: "#" },
+        { label: "Nos Produits", href: products.index().url },
+        { label: "Elevage", href: farming().url },
+        { label: "À propos", href: about().url },
+        { label: "Contact", href: contact().url },
     ];
 
     const mockSearchResults = [
@@ -55,6 +63,13 @@ export const Header = () => {
 
     const cartTotal = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
 
+    const cleanup = useMobileNavigation();
+
+    const handleLogout = () => {
+        cleanup();
+        router.flushAll();
+    };
+
     return (
         <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
             <div className="container max-w-7xl mx-auto flex h-16 items-center justify-between px-4">
@@ -65,7 +80,7 @@ export const Header = () => {
                         <Tractor className="h-5 w-5 text-primary-foreground" />
                     </div>
                     <span className="text-xl font-bold tracking-tight text-stone-900 hidden sm:inline-block">
-                        MontView Farm
+                        {name}
                     </span>
                     <span className="text-xl font-bold tracking-tight text-stone-900 sm:hidden">
                         MontView
@@ -236,7 +251,7 @@ export const Header = () => {
                                 <Button variant="ghost" className="relative h-9 w-9 rounded-full">
                                     <Avatar className="h-9 w-9">
                                         {/* Image de l'avatar (remplacez src par l'URL de l'utilisateur si connecté) */}
-                                        <AvatarImage src="" alt="@user" />
+                                        <AvatarImage src={auth?.user?.avatar_url || ''} alt="@user" />
 
                                         {/* Fallback : s'affiche si l'image ne charge pas ou si pas d'image */}
                                         <AvatarFallback className="bg-primary/10 text-primary font-medium">
@@ -252,18 +267,44 @@ export const Header = () => {
                                 </div>
                                 <Separator className="my-2" />
                                 <div className="grid gap-2">
-                                    <Link href="/login" className="w-full">
-                                        <Button variant="ghost" className="w-full justify-start gap-2 h-9 px-2 font-normal">
-                                            <LogIn className="h-4 w-4 text-stone-500" />
-                                            Se connecter
-                                        </Button>
-                                    </Link>
-                                    <Link href="/register" className="w-full">
-                                        <Button className="w-full justify-start gap-2 h-9 px-2 font-normal">
-                                            <UserPlus className="h-4 w-4" />
-                                            Créer un compte
-                                        </Button>
-                                    </Link>
+                                    {auth?.user ? (
+                                        <>
+                                            <Button asChild variant="ghost" className="w-full">
+                                                <Link href={profile.index()} className="w-full justify-start gap-2 h-9 px-2 font-normal">
+                                                    <UserCircle className="h-4 w-4 text-stone-500" />
+                                                    Mon profil
+                                                </Link>
+                                            </Button>
+                                            <Can role="superadmin">
+                                                <Button asChild variant="ghost" className="w-full">
+                                                    <Link href={dashboard()} className="w-full justify-start gap-2 h-9 px-2 font-normal">
+                                                        <SquareActivity className="h-4 w-4 text-stone-500" />
+                                                        Administration
+                                                    </Link>
+                                                </Button>
+                                            </Can>
+                                            <Button asChild variant="outline" className="w-full">
+                                                <Link href={logout()} onClick={handleLogout} className="w-full justify-start gap-2 h-9 px-2 font-normal">
+                                                    <LogOut className="h-4 w-4" />
+                                                    Déconnexion
+                                                </Link>
+                                            </Button>
+                                        </>
+                                    ) :
+                                        <>
+                                            <Button asChild variant="ghost" className="w-full">
+                                                <Link href={login()} className="w-full justify-start gap-2 h-9 px-2 font-normal">
+                                                    <LogIn className="h-4 w-4 text-stone-500" />
+                                                    Se connecter
+                                                </Link>
+                                            </Button>
+                                            <Button asChild variant="outline" className="w-full">
+                                                <Link href={register()} className="w-full justify-start gap-2 h-9 px-2 font-normal">
+                                                    <UserPlus className="h-4 w-4" />
+                                                    Créer un compte
+                                                </Link>
+                                            </Button>
+                                        </>}
                                 </div>
                             </PopoverContent>
                         </Popover>
@@ -283,7 +324,7 @@ export const Header = () => {
                                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary">
                                         <Tractor className="h-5 w-5 text-primary-foreground" />
                                     </div>
-                                    <span className="font-bold">Montview Farm</span>
+                                    <span className="font-bold">{name}</span>
                                 </SheetTitle>
                             </SheetHeader>
 
@@ -308,27 +349,52 @@ export const Header = () => {
                                     </p>
                                 </div>
                                 <div className="grid gap-3">
-                                    {/* Bouton de Connexion : Primaire, Sombre, Fort */}
-                                    <Link href="/login" className="w-full">
-                                        <Button className="w-full justify-start gap-3 h-12 rounded-lg text-base font-medium shadow-md hover:shadow-lg transition-all">
-                                            <LogIn className="h-5 w-5 opacity-70" />
-                                            Se connecter
-                                        </Button>
-                                    </Link>
+                                    {auth?.user ?
+                                        <>
+                                            <Button asChild variant="outline" className="w-full">
+                                                <Link href={profile.index()} className="w-full justify-start gap-3 h-10 rounded-lg text-base font-medium">
+                                                    <UserCircle className="h-5 w-5 opacity-70" />
+                                                    Mon profil
+                                                </Link>
+                                            </Button>
+                                            <Can role="superadmin">
+                                                <Button asChild variant="outline" className="w-full">
+                                                    <Link href={dashboard()} className="w-full justify-start gap-3 h-10 rounded-lg text-base font-medium">
+                                                        <SquareActivity className="h-5 w-5 opacity-70" />
+                                                        Administration
+                                                    </Link>
+                                                </Button>
+                                            </Can>
+                                            <Button asChild variant="destructive" className="w-full">
+                                                <Link href={logout()} onClick={handleLogout} className="w-full justify-start gap-3 h-10 rounded-lg text-base font-medium">
+                                                    <LogOut className="h-4 w-4" />
+                                                    Déconnexion
+                                                </Link>
+                                            </Button>
+                                        </>
+                                        :
+                                        <>
+                                            {/* Bouton de Connexion : Primaire, Sombre, Fort */}
+                                            <Button asChild className="w-full">
+                                                <Link href={login()} className="w-full justify-start gap-3 h-10 rounded-lg text-base font-medium shadow-md hover:shadow-lg transition-all">
+                                                    <LogIn className="h-5 w-5 opacity-70" />
+                                                    Se connecter
+                                                </Link>
+                                            </Button>
 
-                                    {/* Bouton d'Inscription : Secondaire, Blanc, Épuré */}
-                                    <Link href="/register" className="w-full">
-                                        <Button
-                                            variant="outline"
-                                            className="w-full justify-start gap-3 h-12 rounded-lg text-base font-medium bg-white border-stone-200 text-stone-700 hover:bg-stone-100 hover:text-stone-900 shadow-sm"
-                                        >
-                                            <UserPlus className="h-5 w-5 text-primary opacity-80" />
-                                            Créer un compte
-                                        </Button>
-                                    </Link>
+                                            {/* Bouton d'Inscription : Secondaire, Blanc, Épuré */}
+                                            <Button asChild variant="outline" className="w-full">
+                                                <Link
+                                                    href={register()}
+                                                    className="w-full justify-start gap-3 h-10 rounded-lg text-base font-medium bg-white border-stone-200 text-stone-700 hover:bg-stone-100 hover:text-stone-900 shadow-sm"
+                                                >
+                                                    <UserPlus className="h-5 w-5 text-primary opacity-80" />
+                                                    Créer un compte
+                                                </Link>
+                                            </Button>
+                                        </>}
                                 </div>
                             </div>
-
                         </SheetContent>
                     </Sheet>
                 </div>

@@ -21,7 +21,7 @@ class OrderDelivered extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Votre commande #' . $this->order->id . ' a été livrée',
+            subject: 'Votre commande #'.$this->order->id.' a été livrée',
         );
     }
 

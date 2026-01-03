@@ -222,6 +222,11 @@ return [
         'address' => 'adresse',
         'start_date' => 'date de début',
         'end_date' => 'date de fin',
+        'company_name' => 'raison sociale',
+        'niu' => 'numéro contribuable',
+        'contact_name' => 'nom du contact',
+        'phone' => 'numéro de téléphone',
+        'activity_sector' => "secteur d'activité",
     ],
 
 ];

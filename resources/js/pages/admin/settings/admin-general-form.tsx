@@ -20,6 +20,10 @@ export default function AdminGeneralForm() {
         linkedin_url: settings.linkedin_url ?? '',
         twitter_url: settings.twitter_url ?? '',
         youtube_url: settings.youtube_url ?? '',
+        headoffice: settings.headoffice ?? '',
+        budget: settings.budget ?? '',
+        registration: settings.registration ?? '',
+        taxpayer_number: settings.taxpayer_number ?? '',
     });
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -95,6 +99,65 @@ export default function AdminGeneralForm() {
                             className={cn("mt-1", inputClassNames())}
                         />
                         {errors.phone && <p className="text-sm text-red-500 mt-1">{errors.phone}</p>}
+                    </div>
+                </div>
+            </div>
+
+            <div className="flex flex-col lg:flex-row items-start gap-6 p-6 border-b border-gray-100">
+                {/* Intro block */}
+                <div className="w-full lg:w-[300px] mb-4 lg:mb-0">
+                    <h2 className="font-semibold text-gray-900 text-lg dark:text-gray-100">Légalité</h2>
+                    <p className="text-gray-500 text-sm dark:text-gray-400">
+                        Ces informations seront affichées dans les mentions légales du site.
+                    </p>
+                </div>
+
+                {/* Form block */}
+                <div className="flex-1 flex flex-col gap-4">
+                    <div>
+                        <label htmlFor="headoffice" className="text-sm font-medium text-gray-500 dark:text-gray-300">Siège social</label>
+                        <Input
+                            id="headoffice"
+                            value={data.headoffice}
+                            onChange={(e) => setData('headoffice', e.target.value)}
+                            className={cn("mt-1", inputClassNames())}
+                        />
+                        {errors.headoffice && <p className="text-sm text-red-500 mt-1">{errors.headoffice}</p>}
+                    </div>
+
+                    <div>
+                        <label htmlFor="budget" className="text-sm font-medium text-gray-500 dark:text-gray-300">Le capital</label>
+                        <Input
+                            id="budget"
+                            type="number"
+                            value={data.budget}
+                            onChange={(e) => setData('budget', e.target.value)}
+                            className={cn("mt-1", inputClassNames())}
+                        />
+                        {errors.budget && <p className="text-sm text-red-500 mt-1">{errors.budget}</p>}
+                    </div>
+
+                    <div>
+                        <label htmlFor="registration" className="text-sm font-medium text-gray-500 dark:text-gray-300">Immatriculation</label>
+                        <Input
+                            id="registration"
+                            type="text"
+                            value={data.registration}
+                            onChange={(e) => setData('registration', e.target.value)}
+                            className={cn("mt-1", inputClassNames())}
+                        />
+                        {errors.registration && <p className="text-sm text-red-500 mt-1">{errors.registration}</p>}
+                    </div>
+                    <div>
+                        <label htmlFor="taxpayer_number" className="text-sm font-medium text-gray-500 dark:text-gray-300">Numéro de contribuable</label>
+                        <Input
+                            id="taxpayer_number"
+                            type="text"
+                            value={data.taxpayer_number}
+                            onChange={(e) => setData('taxpayer_number', e.target.value)}
+                            className={cn("mt-1", inputClassNames())}
+                        />
+                        {errors.taxpayer_number && <p className="text-sm text-red-500 mt-1">{errors.taxpayer_number}</p>}
                     </div>
                 </div>
             </div>

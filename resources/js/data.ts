@@ -165,3 +165,11 @@ export const movementTypeLabels: Record<string, string> = {
     destruction: "Destruction",
     initial: "Initial",
 };
+
+export const businessTypes = [
+    { value: "restaurant", label: "Restaurant / Traiteur" },
+    { value: "hotel", label: "Hôtellerie" },
+    { value: "bakery", label: "Boulangerie / Pâtisserie" },
+    { value: "reseller", label: "Supermarché / Revendeur" },
+    { value: "other", label: "Autre" },
+];

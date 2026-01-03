@@ -61,6 +61,10 @@ class HandleInertiaRequests extends Middleware
                 'linkedin_url' => $settings->linkedin_url,
                 'twitter_url' => $settings->twitter_url,
                 'youtube_url' => $settings->youtube_url,
+                'headoffice' => $settings->headoffice,
+                'budget' => $settings->budget,
+                'registration' => $settings->registration,
+                'taxpayer_number' => $settings->taxpayer_number,
             ],
         ];
     }

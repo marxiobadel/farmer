@@ -52,6 +52,10 @@ return [
         'linkedin_url',
         'twitter_url',
         'youtube_url',
+        'headoffice',
+        'budget',
+        'registration',
+        'taxpayer_number',
     ],
 
     'openai' => [
@@ -83,5 +87,14 @@ return [
         'secret_access_key' => env('MOMO_SECRET_ACCESS_KEY'),
         'client_id' => env('MOMO_CLIENT_ID'),
         'client_secret' => env('MOMO_CLIENT_SECRET'),
+    ],
+
+    'frontend_routes' => [
+        ['uri' => 'about', 'action' => 'about', 'name' => 'about'],
+        ['uri' => 'faqs', 'action' => 'faqs', 'name' => 'faqs'],
+        ['uri' => 'farming', 'action' => 'farming', 'name' => 'farming'],
+        ['uri' => 'privacy', 'action' => 'privacy', 'name' => 'privacy'],
+        ['uri' => 'legal', 'action' => 'legal', 'name' => 'legal'],
+        ['uri' => 'cgv', 'action' => 'cgv', 'name' => 'cgv'],
     ],
 ];
