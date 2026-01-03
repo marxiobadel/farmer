@@ -1,6 +1,8 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import products from "@/routes/products";
 import type { Product } from "@/types/ecommerce";
+import { Link } from "@inertiajs/react";
 import { motion } from "framer-motion";
 import { Heart, MapPin, Plus, ShoppingBasket } from "lucide-react";
 
@@ -9,15 +11,13 @@ interface ProductCardProps {
 }
 
 export const ProductCard = ({ product }: ProductCardProps) => {
-    // Suppression du useState qui cause des re-rendus inutiles
-
     return (
         <motion.div
+            key={product.id}
             className="group relative flex h-full flex-col overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-stone-200/50 transition-shadow duration-300 hover:shadow-xl hover:shadow-primary/5 hover:ring-primary/20"
             initial="hidden"
             whileInView="visible"
             whileHover="hover"
-            // Optimisation 2 : L'animation se déclenche quand l'élément entre de 50px dans l'écran
             viewport={{ once: true, margin: "-50px" }}
             variants={{
                 hidden: { opacity: 0, y: 20 },
@@ -102,10 +102,15 @@ export const ProductCard = ({ product }: ProductCardProps) => {
                     {/* Titre */}
                     <h3 className="text-lg font-bold text-stone-800 leading-snug group-hover:text-primary transition-colors line-clamp-2">
                         {/* z-0 sur le lien pour ne pas bloquer le clic du bouton Ajout Rapide (z-20) */}
-                        <a href={`/produits/${product.id}`} className="focus:outline-none">
+                        <Link href={products.show(product.slug)} className="focus:outline-none">
                             <span className="absolute inset-0 z-0" aria-hidden="true" />
                             {product.name}
-                        </a>
+                            {product.variant_name && (
+                                <span className="ml-1 text-sm text-stone-500 font-medium">
+                                    ({product.variant_name})
+                                </span>
+                            )}
+                        </Link>
                     </h3>
                 </div>
 

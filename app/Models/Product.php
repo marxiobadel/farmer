@@ -30,10 +30,12 @@ class Product extends Model implements HasMedia, Sitemapable
     {
         static::saved(function ($course) {
             Cache::forget('products_oldest');
+            Cache::forget('front_products_categories_oldest');
         });
 
         static::deleted(function ($course) {
             Cache::forget('products_oldest');
+            Cache::forget('front_products_categories_oldest');
         });
     }
 

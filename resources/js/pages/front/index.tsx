@@ -3,58 +3,98 @@ import { FeaturesSection } from "@/components/ecommerce/features-section";
 import { HeroSection } from "@/components/ecommerce/hero-section";
 import { ProductGrid } from "@/components/ecommerce/product-grid";
 import { TestimonialsSection } from "@/components/ecommerce/testimonials-section";
-import type { Category } from "@/types/ecommerce";
-import { Head, Link } from "@inertiajs/react";
-import { useState } from "react";
-import { motion } from "framer-motion";
 import AppLayout from "@/layouts/app-layout";
 import pro from "@/routes/pro";
+import { Category, Product } from "@/types";
+import { Head, Link } from "@inertiajs/react";
+import { motion } from "framer-motion";
+import { useMemo, useState } from "react";
 
-export default function Index() {
-    const [selectedCategory, setSelectedCategory] = useState<Category>("Tous");
+// Extension locale pour typer les données brutes du backend
+interface HomeCategory extends Category {
+    products: Product[];
+}
+
+interface Props {
+    categories: HomeCategory[];
+    canRegister: boolean;
+}
+
+export default function Index({ categories, canRegister }: Props) {
+    const [selectedCategory, setSelectedCategory] = useState<string>("Tous");
+
+    const allProducts = useMemo(() => {
+        return categories.flatMap(cat =>
+            cat.products.map(prod => {
+                let displayPrice = prod.base_price;
+                let variantName = null;
+                let image = prod.default_image;
+                let availableQty = prod.quantity;
+
+                // Logique de sélection de la variante
+                if (prod.variants && prod.variants.length > 0) {
+                    const selectedVariant = prod.variants.find(v => v.is_default) || prod.variants[0];
+
+                    // Mise à jour du prix
+                    displayPrice = selectedVariant.price;
+
+                    // Extraction du nom de la variante (ex: "Gros Calibre")
+                    if (selectedVariant.options && selectedVariant.options.length > 0) {
+                        variantName = selectedVariant.options.map(opt => opt.option).join(' / ');
+                    }
+
+                    image = selectedVariant.image;
+                    availableQty = selectedVariant.quantity;
+                }
+
+                return {
+                    ...prod,
+                    base_price: displayPrice,
+                    variant_name: variantName, // On passe le nom séparément
+                    category_name: cat.name,
+                    image,
+                    availableQty
+                };
+            })
+        );
+    }, [categories]);
+
+    const displayedProducts = useMemo(() => {
+        if (selectedCategory === "Tous") {
+            return allProducts;
+        }
+        return allProducts.filter((p: any) => p.category_name === selectedCategory);
+    }, [selectedCategory, allProducts]);
 
     return (
         <AppLayout layout="guest">
             <Head title="L'Excellence Avicole" />
-
             <HeroSection />
 
-            {/* Filtres Sticky avec fond flouté */}
             <div className="sticky top-16 z-40 bg-white/80 backdrop-blur-md border-b border-stone-200/50 shadow-sm transition-all">
                 <CategoryFilter
+                    categories={categories}
                     selectedCategory={selectedCategory}
                     onSelectCategory={setSelectedCategory}
                 />
             </div>
 
-            {/* Grille Produits */}
             <div className="bg-white relative">
-                {/* Petit élément décoratif subtil */}
                 <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -z-0 pointer-events-none" />
-
                 <div className="relative z-10">
-                    {/* AnimatePresence pour des transitions fluides entre catégories si ProductGrid le supporte */}
-                    <ProductGrid selectedCategory={selectedCategory} />
+                    <ProductGrid
+                        products={displayedProducts}
+                        selectedCategoryName={selectedCategory}
+                    />
                 </div>
             </div>
 
             <TestimonialsSection />
             <FeaturesSection />
 
-            {/* Section Call to Action B2B - Redesign Modern */}
+            {/* Section Call to Action B2B */}
             <section className="relative isolate overflow-hidden bg-amber-600 py-16 sm:py-24">
-                <div className="absolute left-1/2 top-1/2 -z-10 h-[64rem] w-[64rem] -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)] sm:left-full sm:-ml-80 lg:left-1/2 lg:ml-0 lg:-translate-x-1/2 lg:translate-y-0">
-                    <svg viewBox="0 0 1024 1024" aria-hidden="true" className="absolute left-1/2 top-1/2 -z-10 h-[64rem] w-[64rem] -translate-x-1/2 -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)]">
-                        <circle cx="512" cy="512" r="512" fill="url(#gradient)" fillOpacity="0.7" />
-                        <defs>
-                            <radialGradient id="gradient">
-                                <stop stopColor="white" />
-                                <stop offset="1" stopColor="white" stopOpacity="0" />
-                            </radialGradient>
-                        </defs>
-                    </svg>
-                </div>
-
+               {/* ... (Le reste du code de la section reste identique) ... */}
                 <div className="mx-auto max-w-7xl px-6 lg:px-8 text-center relative z-10">
                     <motion.h2
                         initial={{ opacity: 0, y: 20 }}

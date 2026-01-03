@@ -27,6 +27,7 @@ class HomeCategoryResource extends JsonResource
                     'slug' => $product->slug,
                     'base_price' => $product->base_price,
                     'origin' => $product->origin,
+                    'quantity' => $product->quantity,
                     'default_image' => $product->default_image_id
                         ? $product->getMedia('images')->where('id', $product->default_image_id)->first()?->getUrl()
                         : null,
@@ -42,8 +43,8 @@ class HomeCategoryResource extends JsonResource
                                 return [
                                     'attribute_id' => $opt->attribute_id,
                                     'attribute_option_id' => $opt->attribute_option_id,
-                                    'attribute' => $opt->attribute->name,
-                                    'option' => $opt->option->name,
+                                    'attribute' => optional($opt->attribute)->name,
+                                    'option' => optional($opt->option)->name,
                                 ];
                             }),
                         ];

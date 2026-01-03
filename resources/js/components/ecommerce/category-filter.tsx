@@ -1,41 +1,33 @@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type { Category } from "@/types/ecommerce";
-import { usePage } from "@inertiajs/react";
+import { Category } from "@/types";
 import { motion } from "framer-motion";
 
 interface CategoryFilterProps {
-    selectedCategory: Category;
-    onSelectCategory: (category: Category) => void;
+    categories: Category[];
+    selectedCategory: string;
+    onSelectCategory: (categoryName: string) => void;
 }
 
-const categories: Category[] = [
-    "Tous",
-    "Œufs de Table",
-    "Poules Pondeuses",
-    "Poussins",
-    "Aliments & Matériel",
-    "Produits Fermiers"
-];
-
 export const CategoryFilter = ({
+    categories,
     selectedCategory,
     onSelectCategory,
 }: CategoryFilterProps) => {
-    const props = usePage().props;
+    // Création de la liste des onglets : "Tous" + les noms des catégories actives
+    const tabs = ["Tous", ...categories.map((c) => c.name)];
 
-    console.log(props.categories);
     return (
         <div className="w-full">
             <div className="container max-w-7xl mx-auto px-4">
                 <div className="flex items-center gap-2 overflow-x-auto py-4 no-scrollbar mask-gradient-x">
-                    {categories.map((cat) => {
-                        const isSelected = selectedCategory === cat;
+                    {tabs.map((tab) => {
+                        const isSelected = selectedCategory === tab;
                         return (
-                            <div key={cat} className="relative">
+                            <div key={tab} className="relative flex-shrink-0">
                                 <Button
                                     variant="ghost"
-                                    onClick={() => onSelectCategory(cat)}
+                                    onClick={() => onSelectCategory(tab)}
                                     className={cn(
                                         "relative z-10 h-10 px-5 rounded-full text-sm font-medium transition-colors duration-300",
                                         isSelected
@@ -43,7 +35,7 @@ export const CategoryFilter = ({
                                             : "text-stone-600 hover:text-stone-900 hover:bg-stone-100"
                                     )}
                                 >
-                                    {cat}
+                                    {tab}
                                 </Button>
                                 {isSelected && (
                                     <motion.div

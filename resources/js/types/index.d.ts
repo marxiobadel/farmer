@@ -126,6 +126,7 @@ export interface Category {
     cover_url: string;
     status: boolean;
     products_count: number;
+    products: Product[];
     parent_id: number | null;
     parent: Category; // For nested categories
     created_at: string;
