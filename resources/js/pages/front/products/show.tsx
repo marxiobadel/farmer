@@ -453,8 +453,8 @@ export default function ProductShow({ product, related }: PageProps) {
 
                     {/* --- PRODUITS SIMILAIRES --- */}
                     {relatedProducts.length > 0 && (
-                        <div className="mt-24 border-t border-stone-200 pt-16">
-                            <div className="flex items-center justify-between mb-8">
+                        <div className="mt-16 sm:mt-20 md:mt-24 border-t border-stone-200 pt-10 sm:pt-16">
+                            <div className="flex items-center justify-between mb-10">
                                 <h2 className="text-2xl font-serif font-bold text-stone-900">
                                     Vous aimerez aussi
                                 </h2>
