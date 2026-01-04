@@ -82,16 +82,34 @@ class ProductController extends Controller
 
     public function show(Request $request, Product $product)
     {
-        $product->load(['media', 'categories', 'variants.options']);
+        $user = auth()->user();
+
+        $product->load(['attributes.options', 'categories', 'variants.options']);
 
         return Inertia::render('front/products/show', [
-            'product' => new ProductResource($product),
-            'related' => Product::where('id', '!=', $product->id)
+            'product' => fn() => new ProductResource($product),
+            'related' => fn() => Product::where('id', '!=', $product->id)
+                ->published()
+                ->with(['variants.options', 'categories'])
                 ->whereHas('categories', function ($q) use ($product) {
                     $q->whereIn('id', $product->categories->pluck('id'));
                 })
                 ->limit(4)
-                ->get()
+                ->get(),
+            'isFavorited' => $user ? $user->hasFavorited($product) : false,
         ]);
+    }
+
+    public function toggle(Product $product)
+    {
+        $user = auth()->user();
+
+        if (!$user) {
+            return back()->with('message', 'Unauthenticated.');
+        }
+
+        $user->toggleFavorite($product);
+
+        return back()->with('favorited', $user->hasFavorited($product));
     }
 }

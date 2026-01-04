@@ -44,6 +44,7 @@ Route::prefix('contact')
 Route::post('newsletters', [NewsletterController::class, 'store'])->name('newsletter.store');
 
 Route::resource('products', \App\Http\Controllers\Front\ProductController::class)->only(['index', 'show']);
+Route::post('products/{product}/favorite', [\App\Http\Controllers\Front\ProductController::class, 'toggle'])->name('products.favorite');
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/espace-pro', [\App\Http\Controllers\Front\ProController::class, 'index'])->name('pro.index');
