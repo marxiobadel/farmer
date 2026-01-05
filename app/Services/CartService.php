@@ -103,7 +103,7 @@ class CartService
         $product = Product::findOrFail($productId);
         $variant = $variantId ? ProductVariant::findOrFail($variantId) : null;
 
-        $price = $variant ? $variant->price : $product->price;
+        $price = $variant ? $variant->price : $product->base_price;
 
         $cartItem = $this->cart->items()
             ->where('product_id', $productId)

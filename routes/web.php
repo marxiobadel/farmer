@@ -51,6 +51,8 @@ Route::prefix('carts')->name('carts.')
     ->group(function () {
         Route::get('/', 'index')->name('index');
         Route::post('add', 'store')->name('store');
+        Route::patch('items/{cartItem}', 'update')->name('items.update');
+        Route::delete('items/{cartItem}', 'destroy')->name('items.destroy');
     });
 
 Route::middleware(['auth'])->group(function () {

@@ -28,7 +28,7 @@ export function AppSidebarHeader({ breadcrumbs = [] }: { breadcrumbs?: Breadcrum
     const unreadCount = 0;
 
     return (
-        <header className={`${page.url.includes('/admin/conversations') ? 'hidden' : 'flex'} h-16 shrink-0 items-center justify-between gap-2 border-b border-sidebar-border/50 px-6 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 md:px-4`}>
+        <header className={`flex h-16 shrink-0 items-center justify-between gap-2 border-b border-sidebar-border/50 px-6 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 md:px-4`}>
             {/* Left side: Sidebar + Breadcrumbs */}
             <div className="flex items-center gap-2">
                 <SidebarTrigger className="-ml-1" />
@@ -72,13 +72,13 @@ export function AppSidebarHeader({ breadcrumbs = [] }: { breadcrumbs?: Breadcrum
                         <DropdownMenuTrigger asChild>
                             <button className="flex items-center gap-2 focus:outline-none">
                                 <Avatar className="h-8 w-8">
-                                    <AvatarImage src={auth.user.avatar_url} alt={auth.user.lastname} />
-                                    <AvatarFallback>{getInitials(auth.user.lastname)}</AvatarFallback>
+                                    <AvatarImage src={auth.user?.avatar_url} alt={auth.user?.lastname || 'user'} />
+                                    <AvatarFallback>{getInitials(auth.user?.lastname || 'user')}</AvatarFallback>
                                 </Avatar>
                                 <div className="flex flex-col items-start text-left">
-                                    <span className="text-sm font-medium">{auth.user.lastname}</span>
-                                    {auth.user.roles.length > 0 &&
-                                        <span className="text-xs text-muted-foreground">{auth.user.roles[0]}</span>}
+                                    <span className="text-sm font-medium">{auth.user?.lastname}</span>
+                                    {auth.user?.roles.length > 0 &&
+                                        <span className="text-xs text-muted-foreground">{auth.user?.roles[0]}</span>}
                                 </div>
                             </button>
                         </DropdownMenuTrigger>

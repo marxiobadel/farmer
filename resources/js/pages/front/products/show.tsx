@@ -146,7 +146,7 @@ export default function ProductShow({ product, related }: PageProps) {
    const handleAddToCart = () => {
         if (isOutOfStock) return;
 
-        router.post(carts.add().url, {
+        router.post(carts.store().url, {
             product_id: product.id,
             variant_id: currentVariant?.id ?? null,
             quantity: quantity
@@ -155,8 +155,7 @@ export default function ProductShow({ product, related }: PageProps) {
             onBefore: () => setAdding(true),
             onFinish: () => setAdding(false),
             onSuccess: () => {
-                // Réinitialise la quantité (optionnel) ou garde l'état
-                // setQuantity(1);
+                setQuantity(1);
 
                 toast.success(
                     <div className="flex flex-col gap-1">
@@ -202,7 +201,7 @@ export default function ProductShow({ product, related }: PageProps) {
             variant_name: variantName,
             price: displayPrice,
             currency: "FCFA", // ou defaultCurrency
-            origin: p.origin || "Cameroun",
+            origin: p.origin || 'Ferme Locale',
             image: image || `https://placehold.co/300?text=${encodeURIComponent(p.name)}`,
             isAvailable: availableQty > 0,
             slug: p.slug,

@@ -86,16 +86,18 @@ class ProductController extends Controller
 
         $product->load(['attributes.options', 'categories', 'variants.options']);
 
+        $related = Product::where('id', '!=', $product->id)
+            ->published()
+            ->with(['variants.options', 'categories'])
+            ->whereHas('categories', function ($q) use ($product) {
+                $q->whereIn('id', $product->categories->pluck('id'));
+            })
+            ->limit(4)
+            ->get();
+
         return Inertia::render('front/products/show', [
             'product' => fn() => new ProductResource($product),
-            'related' => fn() => Product::where('id', '!=', $product->id)
-                ->published()
-                ->with(['variants.options', 'categories'])
-                ->whereHas('categories', function ($q) use ($product) {
-                    $q->whereIn('id', $product->categories->pluck('id'));
-                })
-                ->limit(4)
-                ->get(),
+            'related' => fn() => ProductResource::collection($related),
             'isFavorited' => $user ? $user->hasFavorited($product) : false,
         ]);
     }

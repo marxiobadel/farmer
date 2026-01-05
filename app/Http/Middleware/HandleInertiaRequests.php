@@ -3,6 +3,8 @@
 namespace App\Http\Middleware;
 
 use App\Http\Resources\AuthUserResource;
+use App\Http\Resources\CartResource; // Assurez-vous d'importer la Resource
+use App\Services\CartService;        // Assurez-vous d'importer le Service
 use App\Settings\GeneralSettings;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
@@ -43,7 +45,7 @@ class HandleInertiaRequests extends Middleware
 
         $settings = app(GeneralSettings::class);
 
-        return [
+        $data = [
             ...parent::share($request),
             'name' => config('app.name'),
             'quote' => ['message' => trim($message), 'author' => trim($author)],
@@ -67,5 +69,16 @@ class HandleInertiaRequests extends Middleware
                 'taxpayer_number' => $settings->taxpayer_number,
             ],
         ];
+
+        // AJOUT : Injecter le panier uniquement si on n'est PAS sur une page admin
+        if (! $request->is('admin*')) {
+            // Récupère le panier via le service
+            $cart = app(CartService::class)->getCart();
+
+            // On l'ajoute aux données partagées (en utilisant CartResource pour le formatage)
+            $data['cart'] = new CartResource($cart);
+        }
+
+        return $data;
     }
 }

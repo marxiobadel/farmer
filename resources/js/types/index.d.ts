@@ -41,6 +41,7 @@ export interface SharedData {
         registration: string;
         taxpayer_number: string;
     };
+    cart?: Cart;
     defaultCurrency: string;
     [key: string]: unknown;
 }

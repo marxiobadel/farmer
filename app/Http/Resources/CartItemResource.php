@@ -29,6 +29,7 @@ class CartItemResource extends JsonResource
             ]) : null,
             'product' => $this->product ? [
                 'name' => $this->product->name,
+                'slug' => $this->product->slug,
             ] : null,
             'price' => $this->price,
             'quantity' => $this->quantity,
