@@ -46,9 +46,20 @@ Route::post('newsletters', [NewsletterController::class, 'store'])->name('newsle
 Route::resource('products', \App\Http\Controllers\Front\ProductController::class)->only(['index', 'show']);
 Route::post('products/{product}/favorite', [\App\Http\Controllers\Front\ProductController::class, 'toggle'])->name('products.favorite');
 
+Route::prefix('carts')->name('carts.')
+    ->controller(\App\Http\Controllers\Front\CartController::class)
+    ->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::post('add', 'store')->name('store');
+    });
+
 Route::middleware(['auth'])->group(function () {
-    Route::get('/espace-pro', [\App\Http\Controllers\Front\ProController::class, 'index'])->name('pro.index');
-    Route::post('/espace-pro', [\App\Http\Controllers\Front\ProController::class, 'store'])->name('pro.store');
+    Route::prefix('espace-pro')->name('pro.')
+        ->controller(\App\Http\Controllers\Front\ProController::class)
+        ->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::post('/', 'store')->name('store');
+        });
 
     Route::prefix('profile')->name('profile.')
         ->controller(\App\Http\Controllers\Front\ProfileController::class)
@@ -121,4 +132,4 @@ Route::middleware(['auth'])->group(function () {
     });
 });
 
-require __DIR__.'/settings.php';
+require __DIR__ . '/settings.php';

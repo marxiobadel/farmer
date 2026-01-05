@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Models\StockMovement;
 use App\Observers\StockMovementObserver;
+use App\Services\CartService;
 use App\Services\InterconnectSmsService;
 use App\Services\MobileMoney;
 use App\Services\OpenAi;
@@ -21,6 +22,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        $this->app->singleton(CartService::class, fn () => new CartService);
         $this->app->singleton(OrangeMoney::class, fn () => new OrangeMoney);
         $this->app->singleton(MobileMoney::class, fn () => new MobileMoney);
         $this->app->singleton(OpenAi::class, fn () => new OpenAi);

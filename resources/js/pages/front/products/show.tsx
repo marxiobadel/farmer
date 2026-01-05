@@ -13,6 +13,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import products from '@/routes/products';
 import FavoriteButton from '@/components/ecommerce/favorite-button';
+import carts from '@/routes/carts';
 
 // Adaptateur pour le composant ProductCard qui utilise un type légèrement différent
 interface ProductCardData {
@@ -34,6 +35,8 @@ interface PageProps {
 
 export default function ProductShow({ product, related }: PageProps) {
     const formatPrice = useCurrencyFormatter();
+
+    const [adding, setAdding] = useState(false);
 
     // --- 1. INITIALISATION DE L'ÉTAT (Basé sur l'URL ou les défauts) ---
 
@@ -140,20 +143,34 @@ export default function ProductShow({ product, related }: PageProps) {
         }
     };
 
-    const handleAddToCart = () => {
+   const handleAddToCart = () => {
         if (isOutOfStock) return;
 
-        // Intégration Panier : Utiliser ici votre route d'ajout au panier
-        // router.post(route('cart.add'), { ... })
+        router.post(carts.add().url, {
+            product_id: product.id,
+            variant_id: currentVariant?.id ?? null,
+            quantity: quantity
+        }, {
+            preserveScroll: true,
+            onBefore: () => setAdding(true),
+            onFinish: () => setAdding(false),
+            onSuccess: () => {
+                // Réinitialise la quantité (optionnel) ou garde l'état
+                // setQuantity(1);
 
-        toast.success(
-            <div className="flex flex-col gap-1">
-                <span className="font-bold">Ajouté au panier !</span>
-                <span className="text-xs text-stone-500">
-                    {quantity}x {product.name} ({currentVariant ? 'Variante sélectionnée' : 'Standard'})
-                </span>
-            </div>
-        );
+                toast.success(
+                    <div className="flex flex-col gap-1">
+                        <span className="font-bold">Ajouté au panier !</span>
+                        <span className="text-xs text-stone-500">
+                            {quantity}x {product.name} ({currentVariant ? 'Variante sélectionnée' : 'Standard'})
+                        </span>
+                    </div>
+                );
+            },
+            onError: () => {
+                toast.error("Impossible d'ajouter le produit au panier. Veuillez réessayer.");
+            }
+        });
     };
 
     // Transformation pour les produits similaires (Adapter le type Product global vers le type ProductCard local si besoin)
@@ -363,7 +380,7 @@ export default function ProductShow({ product, related }: PageProps) {
                                     <Button
                                         size="lg"
                                         className="flex-1 h-12 text-base font-bold shadow-sm shadow-primary/20"
-                                        disabled={isOutOfStock}
+                                        disabled={isOutOfStock || adding}
                                         onClick={handleAddToCart}
                                     >
                                         <ShoppingBasket className="w-5 h-5 mr-2" />
