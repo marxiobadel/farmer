@@ -55,7 +55,7 @@ export const CartSheet = ({ cart }: CartSheetProps) => {
                 </SheetHeader>
 
                 {/* LISTE DES PRODUITS */}
-                <ScrollArea className="flex-1 px-4">
+                <ScrollArea className="flex-1 px-4 max-h-[calc(100vh)] overflow-y-auto">
                     {itemsCount > 0 ? (
                         <div className="flex flex-col gap-6 py-6">
                             {cartItems.map((item) => (

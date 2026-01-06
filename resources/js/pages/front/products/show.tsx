@@ -143,7 +143,7 @@ export default function ProductShow({ product, related }: PageProps) {
         }
     };
 
-   const handleAddToCart = () => {
+    const handleAddToCart = () => {
         if (isOutOfStock) return;
 
         router.post(carts.store().url, {
@@ -204,6 +204,8 @@ export default function ProductShow({ product, related }: PageProps) {
             origin: p.origin || 'Ferme Locale',
             image: image || `https://placehold.co/300?text=${encodeURIComponent(p.name)}`,
             isAvailable: availableQty > 0,
+            variants: p.variants,
+            availableQty: p.quantity,
             slug: p.slug,
             badge: undefined
         }
@@ -377,7 +379,6 @@ export default function ProductShow({ product, related }: PageProps) {
 
                                     {/* Bouton Panier */}
                                     <Button
-                                        size="lg"
                                         className="flex-1 h-12 text-base font-bold shadow-sm shadow-primary/20"
                                         disabled={isOutOfStock || adding}
                                         onClick={handleAddToCart}

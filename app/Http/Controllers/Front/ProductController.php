@@ -114,4 +114,19 @@ class ProductController extends Controller
 
         return back()->with('favorited', $user->hasFavorited($product));
     }
+
+    public function search(Request $request)
+    {
+        $query = Product::published()->with(['categories', 'variants.options']);
+
+        if ($request->filled('q')) {
+            $query->whereAny(['name', 'short_description', 'description'], 'like', '%' . $request->string('q') . '%');
+        }
+
+        $products = $query->oldest('name')->take(5)->get();
+
+        return response()->json([
+            'results' => ProductResource::collection($products),
+        ]);
+    }
 }

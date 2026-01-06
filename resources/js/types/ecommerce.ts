@@ -1,3 +1,5 @@
+import { Variant } from ".";
+
 export interface Product {
     id: string;
     name: string;
@@ -10,4 +12,6 @@ export interface Product {
     badge?: string;
     slug: string;
     variant_name?: string | null;
+    variants: Variant[];
+    availableQty?: number;
 }

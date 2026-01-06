@@ -32,6 +32,8 @@ export const ProductGrid = ({ products, selectedCategoryName }: ProductGridProps
                                     image: (product as any).image || `https://placehold.co/300?text=${encodeURIComponent(product.name)}`,
                                     isAvailable: (product as any).availableQty > 0,
                                     slug: product.slug,
+                                    variants: product.variants,
+                                    availableQty: product.quantity,
                                     badge: undefined
                                 }}
                             />

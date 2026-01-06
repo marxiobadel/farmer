@@ -23,6 +23,7 @@ class HomeCategoryResource extends JsonResource
             'parent' => new CategoryResource($this->whenLoaded('parent')),
             'products' => $this->products->map(function ($product) {
                 return [
+                    'id' => $product->id,
                     'name' => $product->name,
                     'slug' => $product->slug,
                     'base_price' => $product->base_price,

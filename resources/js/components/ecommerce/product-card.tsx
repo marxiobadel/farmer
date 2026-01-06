@@ -1,16 +1,54 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import carts from "@/routes/carts";
 import products from "@/routes/products";
 import type { Product } from "@/types/ecommerce";
-import { Link } from "@inertiajs/react";
+import { Link, router } from "@inertiajs/react";
 import { motion } from "framer-motion";
 import { Heart, MapPin, Plus, ShoppingBasket } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 
 interface ProductCardProps {
     product: Product;
 }
 
 export const ProductCard = ({ product }: ProductCardProps) => {
+    const [adding, setAdding] = useState(false);
+
+    const defaultVariant = product.variants.find(v => v.is_default) || product.variants[0];
+    const stockQuantity = defaultVariant ? defaultVariant.quantity : (product.availableQty || 0);
+    const isOutOfStock = stockQuantity <= 0;
+
+    const handleAddToCart = () => {
+        if (isOutOfStock) return;
+
+        router.post(carts.store().url, {
+            product_id: product.id,
+            variant_id: defaultVariant?.id ?? null,
+            quantity: 1
+        }, {
+            preserveScroll: true,
+            preserveState: true,
+            onBefore: () => setAdding(true),
+            onFinish: () => setAdding(false),
+            onSuccess: () => {
+                toast.success(
+                    <div className="flex flex-col gap-1">
+                        <span className="font-bold">Ajouté au panier !</span>
+                        <span className="text-xs text-stone-500">
+                            1x {product.name} ({defaultVariant ? 'Variante sélectionnée' : 'Standard'})
+                        </span>
+                    </div>
+                );
+            },
+            onError: (error: any) => {
+                console.error("Erreur lors de l'ajout au panier :", error);
+                toast.error("Impossible d'ajouter le produit au panier. Veuillez réessayer.");
+            }
+        });
+    };
+
     return (
         <motion.div
             key={product.id}
@@ -76,6 +114,8 @@ export const ProductCard = ({ product }: ProductCardProps) => {
                         transition={{ type: "spring", stiffness: 300, damping: 25 }}
                     >
                         <Button
+                            disabled={isOutOfStock || adding}
+                            onClick={handleAddToCart}
                             className="w-full h-11 gap-2 rounded-xl bg-stone-900/95 text-white shadow-lg backdrop-blur hover:bg-primary hover:text-white transition-colors duration-300"
                         >
                             <Plus className="h-4 w-4" />
@@ -127,9 +167,12 @@ export const ProductCard = ({ product }: ProductCardProps) => {
                     </div>
 
                     {/* Fallback Icon pour Mobile (visible uniquement si pas de hover souris) */}
-                    <div className="lg:hidden flex h-10 w-10 items-center justify-center rounded-full bg-stone-100 text-stone-900">
+                    <button
+                        disabled={isOutOfStock || adding}
+                        onClick={handleAddToCart}
+                        className="z-10 lg:hidden flex h-10 w-10 items-center justify-center rounded-full bg-stone-100 text-stone-900">
                         <ShoppingBasket className="h-5 w-5" />
-                    </div>
+                    </button>
                 </div>
             </div>
         </motion.div>

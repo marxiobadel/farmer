@@ -43,6 +43,7 @@ Route::prefix('contact')
 
 Route::post('newsletters', [NewsletterController::class, 'store'])->name('newsletter.store');
 
+Route::get('products/search', [\App\Http\Controllers\Front\ProductController::class, 'search'])->name('products.search');
 Route::resource('products', \App\Http\Controllers\Front\ProductController::class)->only(['index', 'show']);
 Route::post('products/{product}/favorite', [\App\Http\Controllers\Front\ProductController::class, 'toggle'])->name('products.favorite');
 
