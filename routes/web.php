@@ -56,6 +56,9 @@ Route::prefix('carts')->name('carts.')
         Route::delete('items/{cartItem}', 'destroy')->name('items.destroy');
     });
 
+Route::resource('orders', \App\Http\Controllers\Front\OrderController::class)->only(['create', 'store']);
+Route::get('orders/{order}/success', [\App\Http\Controllers\Front\OrderController::class, 'success'])->name('orders.success');
+
 Route::middleware(['auth'])->group(function () {
     Route::prefix('espace-pro')->name('pro.')
         ->controller(\App\Http\Controllers\Front\ProController::class)

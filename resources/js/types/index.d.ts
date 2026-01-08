@@ -295,6 +295,8 @@ export interface Product {
     // Status
     status: 'published' | 'draft' | string;
 
+    is_favorited: boolean;
+
     // Images
     default_image_id: number | string;
     default_image: string | null;
@@ -361,6 +363,7 @@ export interface Zone {
     latitude: string | null;
     longitude: string | null;
     country: Country | null;
+    country_id: number;
     rates: CarrierRate[];
     created_at: string;
     updated_at: string;

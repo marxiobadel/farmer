@@ -14,4 +14,5 @@ export interface Product {
     variant_name?: string | null;
     variants: Variant[];
     availableQty?: number;
+    is_favorited?: boolean;
 }

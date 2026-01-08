@@ -17,6 +17,11 @@ class ProductResource extends JsonResource
             return [];
         }
 
+        /**
+         * @var \App\Models\User $user
+         */
+        $user = $request->user();
+
         return [
             'id' => $this->id,
             'name' => $this->name,
@@ -28,6 +33,7 @@ class ProductResource extends JsonResource
             'height' => $this->height,
             'width' => $this->width,
             'length' => $this->length,
+            'is_favorited' => $user ? $user->hasFavorited($this->resource) : false,
             'short_description' => $this->short_description,
             'tags' => $this->tagsWithType()->pluck('name'),
             'description' => $this->description,

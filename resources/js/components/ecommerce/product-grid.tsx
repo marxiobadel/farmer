@@ -34,6 +34,7 @@ export const ProductGrid = ({ products, selectedCategoryName }: ProductGridProps
                                     slug: product.slug,
                                     variants: product.variants,
                                     availableQty: product.quantity,
+                                    is_favorited: product.is_favorited,
                                     badge: undefined
                                 }}
                             />

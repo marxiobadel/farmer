@@ -17,15 +17,21 @@ class HomeCategoryResource extends JsonResource
             return [];
         }
 
+        /**
+         * @var \App\Models\User $user
+         */
+        $user = $request->user();
+
         return [
             'id' => $this->id,
             'parent_id' => $this->parent_id,
             'parent' => new CategoryResource($this->whenLoaded('parent')),
-            'products' => $this->products->map(function ($product) {
+            'products' => $this->products->map(function ($product) use ($user) {
                 return [
                     'id' => $product->id,
                     'name' => $product->name,
                     'slug' => $product->slug,
+                    'is_favorited' => $user ? $user->hasFavorited($product) : false,
                     'base_price' => $product->base_price,
                     'origin' => $product->origin,
                     'quantity' => $product->quantity,

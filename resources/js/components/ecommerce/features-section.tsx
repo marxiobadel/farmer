@@ -1,4 +1,5 @@
 import { ShieldCheck, Truck, Sprout, Award } from "lucide-react";
+import { motion, Variants } from "framer-motion";
 
 const features = [
     {
@@ -23,40 +24,90 @@ const features = [
     },
 ];
 
+// Configuration des animations
+const containerVariants: Variants = {
+    hidden: { opacity: 0 },
+    visible: {
+        opacity: 1,
+        transition: {
+            staggerChildren: 0.15
+        }
+    }
+};
+
+const itemVariants: Variants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+        opacity: 1,
+        y: 0,
+        transition: { duration: 0.5, ease: "easeOut" }
+    }
+};
+
 export const FeaturesSection = () => {
     return (
-        <div className="bg-white py-16 sm:py-20 md:py-24">
-            <div className="mx-auto max-w-7xl px-6 lg:px-8">
-                <div className="mx-auto max-w-2xl lg:text-center">
-                    <h2 className="text-base font-bold leading-7 text-primary tracking-widest uppercase">
+        <section className="relative overflow-hidden bg-stone-50/50 py-20 sm:py-24">
+            {/* Élément décoratif d'arrière-plan (optionnel) */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl pointer-events-none opacity-40">
+                <div className="absolute top-0 right-0 -mr-20 -mt-20 h-[500px] w-[500px] rounded-full bg-primary/5 blur-3xl" />
+                <div className="absolute bottom-0 left-0 -ml-20 -mb-20 h-[500px] w-[500px] rounded-full bg-stone-200/40 blur-3xl" />
+            </div>
+
+            <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                {/* En-tête de section */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: "-100px" }}
+                    transition={{ duration: 0.6 }}
+                    className="mx-auto max-w-2xl text-center"
+                >
+                    <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-bold uppercase tracking-widest text-primary ring-1 ring-inset ring-primary/20">
                         Pourquoi Montview ?
+                    </span>
+                    <h2 className="mt-4 text-3xl font-extrabold tracking-tight text-stone-900 sm:text-4xl md:text-5xl">
+                        L'exigence avicole <span className="text-primary">réinventée</span>
                     </h2>
-                    <p className="mt-2 text-3xl font-extrabold tracking-tight text-stone-900 sm:text-4xl">
-                        L'exigence avicole réinventée
-                    </p>
                     <p className="mt-6 text-lg leading-8 text-stone-600">
                         Nous ne faisons aucun compromis sur la santé de nos bêtes ni sur la qualité de nos produits. Une différence que vous goûterez dès la première omelette.
                     </p>
-                </div>
+                </motion.div>
 
-                <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-none">
-                    <dl className="grid max-w-xl grid-cols-1 gap-x-12 gap-y-12 sm:gap-y-16 lg:max-w-none lg:grid-cols-4">
+                {/* Grille de fonctionnalités */}
+                <motion.div
+                    variants={containerVariants}
+                    initial="hidden"
+                    whileInView="visible"
+                    viewport={{ once: true, margin: "-50px" }}
+                    className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-none"
+                >
+                    <dl className="grid max-w-xl grid-cols-1 gap-x-8 gap-y-8 lg:max-w-none lg:grid-cols-4 lg:gap-y-16">
                         {features.map((feature) => (
-                            <div key={feature.name} className="flex flex-col items-start group">
-                                <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-stone-50 border border-stone-100 shadow-sm transition-colors group-hover:bg-primary/10 group-hover:border-primary/20">
-                                    <feature.icon className="h-7 w-7 text-stone-600 transition-colors group-hover:text-primary" aria-hidden="true" />
+                            <motion.div
+                                key={feature.name}
+                                variants={itemVariants}
+                                className="group relative flex flex-col items-start rounded-2xl bg-white p-4 sm:p-6 shadow-sm ring-1 ring-stone-200 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:ring-primary/20"
+                            >
+                                {/* Icône */}
+                                <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl bg-stone-50 ring-1 ring-stone-100 transition-colors duration-300 group-hover:bg-primary group-hover:text-white group-hover:ring-primary">
+                                    <feature.icon className="h-6 w-6 text-stone-500 transition-colors duration-300 group-hover:text-white" aria-hidden="true" />
                                 </div>
-                                <dt className="text-lg font-bold leading-7 text-stone-900">
+
+                                {/* Contenu texte */}
+                                <dt className="text-lg font-bold leading-7 text-stone-900 group-hover:text-primary transition-colors">
                                     {feature.name}
                                 </dt>
-                                <dd className="mt-1 flex flex-auto flex-col text-base leading-7 text-stone-500">
+                                <dd className="mt-2 flex flex-auto flex-col text-base leading-relaxed text-stone-500">
                                     <p className="flex-auto">{feature.description}</p>
                                 </dd>
-                            </div>
+
+                                {/* Petit indicateur visuel (optionnel) */}
+                                <div className="mt-4 h-1 w-12 rounded-full bg-stone-100 transition-all duration-300 group-hover:w-full group-hover:bg-primary/20" />
+                            </motion.div>
                         ))}
                     </dl>
-                </div>
+                </motion.div>
             </div>
-        </div>
+        </section>
     );
 };

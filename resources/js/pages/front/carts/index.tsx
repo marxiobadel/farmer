@@ -3,9 +3,10 @@ import { useCurrencyFormatter } from "@/hooks/use-currency";
 import AppLayout from "@/layouts/app-layout";
 import { SharedData } from "@/types";
 import { Head, Link, router, usePage } from "@inertiajs/react";
-import { ArrowRight, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
+import { Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import routeProducts from '@/routes/products';
 import carts from "@/routes/carts";
+import CheckoutButton from "@/components/ecommerce/checkout-button";
 
 export default function CartIndex() {
     const { cart } = usePage<SharedData>().props;
@@ -169,13 +170,7 @@ export default function CartIndex() {
                                 </dl>
 
                                 <div className="mt-6">
-                                    <Button className="w-full" size="lg" asChild>
-                                        {/* Remplacez par votre route de checkout */}
-                                        <Link href="#">
-                                            Passer la commande
-                                            <ArrowRight className="ml-2 h-4 w-4" />
-                                        </Link>
-                                    </Button>
+                                    <CheckoutButton />
                                 </div>
                             </section>
                         )}

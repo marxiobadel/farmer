@@ -2,8 +2,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import carts from "@/routes/carts";
 import products from "@/routes/products";
+import { SharedData } from "@/types";
 import type { Product } from "@/types/ecommerce";
-import { Link, router } from "@inertiajs/react";
+import { Link, router, usePage } from "@inertiajs/react";
 import { motion } from "framer-motion";
 import { Heart, MapPin, Plus, ShoppingBasket } from "lucide-react";
 import { useState } from "react";
@@ -14,11 +15,58 @@ interface ProductCardProps {
 }
 
 export const ProductCard = ({ product }: ProductCardProps) => {
+    const { auth } = usePage<SharedData>().props;
+
     const [adding, setAdding] = useState(false);
+
+    const [isFavorited, setIsFavorited] = useState(product.is_favorited ?? false);
 
     const defaultVariant = product.variants.find(v => v.is_default) || product.variants[0];
     const stockQuantity = defaultVariant ? defaultVariant.quantity : (product.availableQty || 0);
     const isOutOfStock = stockQuantity <= 0;
+
+    const toggleFavorite = (e: React.MouseEvent) => {
+        e.preventDefault(); // Empêche le clic de se propager si la carte devient cliquable
+        e.stopPropagation();
+
+        const newState = !isFavorited;
+
+        router.post(
+            products.favorite(product.slug).url,
+            {},
+            {
+                preserveScroll: true,
+                preserveState: true,
+                showProgress: false,
+                async: true,
+                onBefore: () => {
+                    setIsFavorited(newState);
+                },
+                onSuccess: () => {
+                    if (auth.user) {
+                        toast.success("Succès", {
+                            description: newState
+                                ? "Ce produit est ajouté dans vos favoris."
+                                : "Ce produit est retiré de vos favoris.",
+                        });
+                    } else {
+                        toast.warning("Avertissement", {
+                            description: "Vous devez être connecté pour réaliser une telle action.",
+                        });
+                    }
+                },
+                onError: (err) => {
+                    console.error("Erreur favoris:", err);
+                    toast.error("Une erreur est survenue.");
+                },
+                onFinish: () => {
+                    if (!auth.user) {
+                        setIsFavorited(!newState);
+                    }
+                }
+            }
+        );
+    };
 
     const handleAddToCart = () => {
         if (isOutOfStock) return;
@@ -92,12 +140,16 @@ export const ProductCard = ({ product }: ProductCardProps) => {
                             </Badge>
                         )}
                     </div>
-
                     <button
-                        className="group/heart flex h-9 w-9 items-center justify-center rounded-full bg-white/80 text-stone-400 backdrop-blur-md transition-all hover:bg-white hover:text-red-500 hover:scale-110 active:scale-95"
-                        aria-label="Ajouter aux favoris"
+                        onClick={toggleFavorite}
+                        className={`group/heart flex h-9 w-9 items-center justify-center rounded-full bg-white/80 backdrop-blur-md transition-all hover:bg-white hover:scale-110 active:scale-95 ${isFavorited ? 'text-red-500' : 'text-stone-400 hover:text-red-500'
+                            }`}
+                        aria-label={isFavorited ? "Retirer des favoris" : "Ajouter aux favoris"}
                     >
-                        <Heart className="h-5 w-5 transition-transform group-hover/heart:fill-current" />
+                        <Heart
+                            className={`h-5 w-5 transition-transform ${isFavorited ? "fill-current" : "group-hover/heart:fill-current"
+                                }`}
+                        />
                     </button>
                 </div>
 

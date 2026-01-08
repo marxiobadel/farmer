@@ -115,7 +115,7 @@ export const Footer = () => {
                             </div>)}
                         {settings?.address && (
                             <div className="flex items-start gap-3">
-                                <MapPin className="h-5 w-5 text-primary mt-0.5" />
+                                <MapPin className="h-7 w-7 text-primary mt-0.5" />
                                 <p>{settings.address}</p>
                             </div>)}
                     </div>

@@ -206,6 +206,7 @@ export default function ProductShow({ product, related }: PageProps) {
             isAvailable: availableQty > 0,
             variants: p.variants,
             availableQty: p.quantity,
+            is_favorited: p.is_favorited,
             slug: p.slug,
             badge: undefined
         }

@@ -22,6 +22,7 @@ class ZoneResource extends JsonResource
             'name' => $this->name,
             'latitude' => $this->latitude,
             'longitude' => $this->longitude,
+            'country_id' => $this->country_id,
             'country' => $this->whenLoaded('country', function () {
                 return new CountryResource($this->country);
             }),
