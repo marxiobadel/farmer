@@ -7,10 +7,10 @@ import { Package, CreditCard, User, MapPin, ChevronRight, Clock, Box, TrendingUp
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Order, SharedData } from "@/types";
-import { cn } from "@/lib/utils";
 import products from "@/routes/products";
 import ProfileLayout from "@/layouts/profile/layout";
 import profile from "@/routes/profile";
+import StatusBadge from "@/components/ecommerce/status-badge";
 
 interface Stats {
     orders_count: number;
@@ -94,7 +94,7 @@ export default function ProfileDashboard({ recentOrders, stats }: PageProps) {
                             Commandes récentes
                         </h2>
                         <Link
-                            href={'#'}
+                            href={profile.orders().url}
                             className="text-sm font-medium text-primary hover:text-primary/80 flex items-center gap-1 hover:underline underline-offset-4 transition-all"
                         >
                             Voir l'historique <ArrowUpRight className="h-4 w-4" />
@@ -119,11 +119,11 @@ export default function ProfileDashboard({ recentOrders, stats }: PageProps) {
                                             {recentOrders.map((order) => (
                                                 <tr key={order.id} className="group hover:bg-stone-50/60 transition-colors cursor-pointer">
                                                     <td className="px-6 py-4 font-medium text-stone-900">
-                                                        <div className="flex items-center gap-3">
+                                                        <div className="w-max flex items-center gap-3">
                                                             <div className="h-8 w-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-500 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
                                                                 <Box className="h-4 w-4" />
                                                             </div>
-                                                            #{order.id}
+                                                            #{order.id.toString().padStart(6, '0')}
                                                         </div>
                                                     </td>
                                                     <td className="px-6 py-4 text-stone-500">
@@ -220,40 +220,5 @@ export default function ProfileDashboard({ recentOrders, stats }: PageProps) {
                 </div>
             </ProfileLayout>
         </AppLayout>
-    );
-}
-
-// Badge de statut stylisé
-function StatusBadge({ status }: { status: string }) {
-    const config: Record<string, { label: string, className: string }> = {
-        pending: {
-            label: "En attente",
-            className: "bg-amber-50 text-amber-700 border-amber-200/50"
-        },
-        processing: {
-            label: "En cours",
-            className: "bg-blue-50 text-blue-700 border-blue-200/50"
-        },
-        shipped: {
-            label: "Expédiée",
-            className: "bg-purple-50 text-purple-700 border-purple-200/50"
-        },
-        delivered: {
-            label: "Livrée",
-            className: "bg-emerald-50 text-emerald-700 border-emerald-200/50"
-        },
-        cancelled: {
-            label: "Annulée",
-            className: "bg-red-50 text-red-700 border-red-200/50"
-        },
-    };
-
-    const current = config[status] || { label: status, className: "bg-gray-100 text-gray-700" };
-
-    return (
-        <span className={cn("inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border", current.className)}>
-            <span className={cn("w-1.5 h-1.5 rounded-full mr-1.5 bg-current opacity-60")} />
-            {current.label}
-        </span>
     );
 }

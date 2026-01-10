@@ -26,7 +26,7 @@ class ProfileController extends Controller
             'recentOrders' => OrderResource::collection($recentOrders),
             'stats' => [
                 'orders_count' => $user->orders()->count(),
-                'total_spent' => $user->orders()->where('status', '!=', 'cancelled')->sum('total'),
+                'total_spent' => $user->orders()->where('status', '=', 'completed')->sum('total'),
             ]
         ]);
     }
@@ -46,7 +46,9 @@ class ProfileController extends Controller
 
     public function showOrder(Order $order)
     {
-        return Inertia::render('admin/orders/order-show', [
+        abort_if($order->user_id !== auth()->id(), 403, 'Vous n\'êtes pas autorisé à voir cette commande.');
+
+        return Inertia::render('front/profile/order-show', [
             'order' => new OrderResource($order->load(['user', 'carrier', 'items.product', 'items.variant'])),
         ]);
     }
