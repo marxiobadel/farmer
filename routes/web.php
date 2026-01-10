@@ -71,6 +71,13 @@ Route::middleware(['auth'])->group(function () {
         ->controller(\App\Http\Controllers\Front\ProfileController::class)
         ->group(function () {
             Route::get('/', 'index')->name('index');
+            Route::get('orders', 'orders')->name('orders');
+            Route::get('orders/{order}', 'showOrder')->name('orders.show');
+            Route::get('informations', 'edit')->name('edit');
+            Route::patch('informations', 'update')->name('update');
+            Route::get('addresses', 'addresses')->name('addresses');
+            Route::post('addresses', 'storeAddress')->name('addresses.store');
+            Route::get('security', 'security')->name('password.edit');
         });
 
     Route::prefix('admin')->middleware(['can:access-admin'])->group(function () {

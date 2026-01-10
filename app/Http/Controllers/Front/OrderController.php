@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Front;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\CheckoutRequest;
 use App\Http\Resources\AddressResource;
 use App\Http\Resources\CountryResource;
 use App\Http\Resources\OrderResource;
@@ -11,11 +12,15 @@ use App\Http\Resources\ZoneResource;
 use App\Models\Country;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\StockMovement;
 use App\Models\Zone;
 use App\Services\CartService;
-use Illuminate\Http\Request;
+use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Number;
+use Illuminate\Support\Str;
 
 class OrderController extends Controller
 {
@@ -42,16 +47,139 @@ class OrderController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(CheckoutRequest $request)
     {
-        // Logique de création de commande (omise pour la simplicité)
+        $data = $request->validated();
+        $user = Auth::user();
+
+        $cart = $this->cartService->getCart();
+
+        if ($cart->items->isEmpty()) {
+            return back()->with('error', 'Votre panier est vide.');
+        }
+
+        $contactInfo = [
+            'firstname' => $data['firstname'],
+            'lastname' => $data['lastname'],
+            'phone' => $data['phone'],
+        ];
+
+        $shippingSnapshot = array_merge($data['shipping_address'], $contactInfo);
+
+        if ($data['use_billing_address']) {
+            $billingSnapshot = $shippingSnapshot;
+        } else {
+            $data['billing_address']['alias'] = $data['shipping_address']['alias'];
+            $data['billing_address']['state'] = $data['shipping_address']['state'];
+            $data['billing_address']['postal_code'] = $data['shipping_address']['postal_code'];
+            $data['billing_address']['country_id'] = $data['shipping_address']['country_id'];
+
+            $billingSnapshot = array_merge($data['billing_address'], $contactInfo);
+        }
+
+        if ($user && ($data['save_address'] ?? false)) {
+            $user->addresses()->create($shippingSnapshot);
+        }
+
+        $cartMetrics = $cart->items->reduce(function ($carry, $item) {
+            $product = $item->product;
+
+            // Calculs basés sur les dimensions (cm) et poids (kg)
+            $volume = (($product->length ?? 0) * ($product->width ?? 0) * ($product->height ?? 0)) * $item->quantity;
+            $weight = ($product->weight ?? 0) * $item->quantity;
+            $price = $item->price * $item->quantity;
+
+            return [
+                'weight' => $carry['weight'] + $weight,
+                'price' => $carry['price'] + $price,
+                'volume' => $carry['volume'] + $volume,
+            ];
+        }, ['weight' => 0, 'price' => 0, 'volume' => 0]);
+
+        $shippingCost = $this->calculateShippingCost(
+            $data['carrier_id'],
+            $this->getZoneIdFromRequest($request),
+            $cartMetrics
+        );
+
+        $grandTotal = $cartMetrics['price'] + $shippingCost;
+
+        DB::beginTransaction();
+
+        try {
+            $order = Order::create([
+                'user_id' => $user ? $user->id : null,
+                'carrier_id' => $data['carrier_id'],
+                'status' => 'pending',
+                'total' => $grandTotal,
+                'shipping_address' => $shippingSnapshot,
+                'invoice_address' => $billingSnapshot,
+            ]);
+
+            foreach ($cart->items as $item) {
+                $order->items()->create([
+                    'product_id' => $item->product_id,
+                    'variant_id' => $item->variant_id,
+                    'quantity' => $item->quantity,
+                    'price' => $item->price,
+                ]);
+
+                // Gestion du Stock (Décrémentation)
+                StockMovement::create([
+                    'product_id' => $item->product_id,
+                    'variant_id' => $item->variant_id,
+                    'user_id' => $user ? $user->id : null,
+                    'quantity' => -($item->quantity), // Sortie de stock
+                    'type' => 'sale',
+                    'reference_type' => Order::class,
+                    'reference_id' => $order->id,
+                    'note' => "Commande client #{$order->id}",
+                ]);
+            }
+
+            $paymentMethod = $data['payment_method'];
+            $paymentStatus = ($paymentMethod === 'cash') ? 'pending' : 'pending';
+
+            $paymentDetails = isset($data['payment_phone']) ? ['phone' => $data['payment_phone']] : null;
+
+            $order->payments()->create([
+                'user_id' => $user ? $user->id : null,
+                'reference' => 'PAY-' . strtoupper(Str::random(12)),
+                'method' => $paymentMethod,
+                'provider' => $this->getProviderForMethod($paymentMethod),
+                'amount' => $grandTotal,
+                'currency' => Number::defaultCurrency(),
+                'status' => $paymentStatus,
+                'details' => $paymentDetails,
+            ]);
+
+            $this->cartService->clear();
+
+            DB::commit();
+
+            // Ici, vous pourriez déclencher un Event pour envoyer l'email de confirmation
+            // Event::dispatch(new OrderCreated($order));
+
+            return redirect()->route('orders.success', $order)
+                ->with('success', 'Votre commande a été enregistrée avec succès !');
+        } catch (Exception $e) {
+            DB::rollBack();
+            report($e);
+
+            return back()->with('error', 'Une erreur est survenue lors de la commande : ' . $e->getMessage());
+        }
     }
 
     public function success(Order $order)
     {
-        if (Auth::check() && $order->user_id !== Auth::id()) {
-            abort(403);
+        // Sécurité : Vérifier que la commande appartient bien à l'utilisateur ou à la session
+        if (Auth::check()) {
+            if ($order->user_id !== Auth::id()) {
+                abort(403);
+            }
         }
+        // Si invité, on pourrait vérifier un token de session stocké lors du store,
+        // mais pour l'instant on laisse accessible si on a l'ID (ou on sécurisera plus tard).
 
         return inertia('front/orders/success', [
             'order' => new OrderResource($order->load(['user', 'carrier', 'items.product', 'items.variant'])),

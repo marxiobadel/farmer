@@ -143,6 +143,8 @@ export const paymentStatus = [
 
 export const paymentMethods = [
     { label: "Cash", value: "cash" },
+    { label: "Orange Money", value: "orange_money" },
+    { label: "MTN Money", value: "mtn_money" },
 ];
 
 // --- Styles Helpers ---

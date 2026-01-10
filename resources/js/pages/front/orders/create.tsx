@@ -40,16 +40,17 @@ export default function CheckoutCreate({ cart, zones, countries, user_addresses,
             : 'new'
     );
 
-    const [selectedZoneId, setSelectedZoneId] = useState<string>("");
     const [useBillingAddress, setUseBillingAddress] = useState(false);
     const [saveAddress, setSaveAddress] = useState(false);
 
     // --- FORMULAIRE ---
     const form = useForm({
-        email: auth.user?.email || "",
         firstname: auth.user?.firstname || "",
         lastname: auth.user?.lastname || "",
         phone: auth.user?.phone || "",
+
+        // AJOUT : zone_id intégré au formulaire
+        zone_id: "",
 
         shipping_address: {
             alias: "",
@@ -83,7 +84,10 @@ export default function CheckoutCreate({ cart, zones, countries, user_addresses,
                     firstname: auth.user?.firstname || "",
                     lastname: auth.user?.lastname || "",
                     phone: auth.user?.phone || "",
-                    shipping_address: { alias: "", address: "", city: "", state: "", postal_code: "", country_id: "" }
+                    shipping_address: { alias: "", address: "", city: "", state: "", postal_code: "", country_id: "" },
+                    // On ne reset pas forcément la zone ici pour laisser le choix à l'utilisateur,
+                    // ou on peut la reset si on veut forcer une nouvelle sélection :
+                    // zone_id: ""
                 }));
             }
         } else {
@@ -92,13 +96,14 @@ export default function CheckoutCreate({ cart, zones, countries, user_addresses,
             if (addr) {
                 // On essaie de retrouver la Zone correspondant au Pays de l'adresse
                 const matchingZone = zones.find(z => String(z.country_id) === String(addr.country_id));
-                if (matchingZone) setSelectedZoneId(String(matchingZone.id));
 
                 form.setData(data => ({
                     ...data,
                     firstname: addr.firstname,
                     lastname: addr.lastname,
                     phone: addr.phone,
+                    // Si une zone correspond à l'adresse, on la sélectionne automatiquement
+                    zone_id: matchingZone ? String(matchingZone.id) : data.zone_id,
                     shipping_address: {
                         alias: addr.alias || "",
                         address: addr.address,
@@ -132,21 +137,23 @@ export default function CheckoutCreate({ cart, zones, countries, user_addresses,
         }, { weight: 0, price: 0, volume: 0 });
     }, [cart, products]);
 
-    // --- LOGIQUE : Zone Sélectionnée ---
+    // --- LOGIQUE : Zone Sélectionnée (Dérivée du formulaire) ---
     const selectedZone = useMemo(() => {
-        if (!selectedZoneId) return null;
-        return zones.find(z => String(z.id) === String(selectedZoneId)) || null;
-    }, [selectedZoneId, zones]);
+        if (!form.data.zone_id) return null;
+        return zones.find(z => String(z.id) === String(form.data.zone_id)) || null;
+    }, [form.data.zone_id, zones]);
 
     // Sync Zone -> Form Country (Si c'est une nouvelle adresse)
     useEffect(() => {
         if (selectedZone && selectedZone.country_id && selectedAddressId === 'new') {
-            form.setData('shipping_address', {
-                ...form.data.shipping_address,
-                country_id: String(selectedZone.country_id)
-            });
-            // Reset du transporteur car la zone a changé
-            form.setData('carrier_id', "");
+            form.setData(data => ({
+                ...data,
+                carrier_id: "", // Reset du transporteur car la zone a changé
+                shipping_address: {
+                    ...data.shipping_address,
+                    country_id: String(selectedZone.country_id)
+                }
+            }));
         }
     }, [selectedZone, selectedAddressId]);
 
@@ -226,6 +233,8 @@ export default function CheckoutCreate({ cart, zones, countries, user_addresses,
         }));
 
         form.post(orders.store().url, {
+            preserveScroll: 'errors',
+            preserveState: true,
             onError: () => toast.error("Veuillez vérifier les informations du formulaire.")
         });
     };
@@ -335,7 +344,7 @@ export default function CheckoutCreate({ cart, zones, countries, user_addresses,
                                             {/* Champ Alias (Visible seulement si création pour user connecté) */}
                                             {isNewAddress && auth.user && (
                                                 <div>
-                                                    <Label>Alias (Optionnel)</Label>
+                                                    <Label>Alias</Label>
                                                     <Input
                                                         value={form.data.shipping_address.alias}
                                                         onChange={e => form.setData('shipping_address', { ...form.data.shipping_address, alias: e.target.value })}
@@ -354,10 +363,10 @@ export default function CheckoutCreate({ cart, zones, countries, user_addresses,
                                                 <Label>Zone de livraison</Label>
                                                 {/* Le choix de la zone est crucial : il détermine les transporteurs et le pays */}
                                                 <Select
-                                                    value={selectedZoneId}
+                                                    value={form.data.zone_id}
                                                     onValueChange={(val) => {
                                                         if (!isNewAddress) return;
-                                                        setSelectedZoneId(val);
+                                                        form.setData('zone_id', val);
                                                     }}
                                                     disabled={!isNewAddress}
                                                 >
@@ -368,7 +377,7 @@ export default function CheckoutCreate({ cart, zones, countries, user_addresses,
                                                         {zones.map(z => <SelectItem key={z.id} value={String(z.id)}>{z.name}</SelectItem>)}
                                                     </SelectContent>
                                                 </Select>
-                                                <InputError message={form.errors['shipping_address.country_id']} />
+                                                <InputError message={form.errors['zone_id'] || form.errors['shipping_address.country_id']} />
                                             </div>
                                             <div className="md:col-span-2">
                                                 <Label>Adresse (Rue, Quartier)</Label>
@@ -404,10 +413,11 @@ export default function CheckoutCreate({ cart, zones, countries, user_addresses,
                                                             variant="outline"
                                                             role="combobox"
                                                             className="w-full justify-between"
+                                                            disabled={true} // Le pays est déterminé par la zone
                                                         >
                                                             {form.data.shipping_address.country_id
                                                                 ? (countries.find((c) => String(c.id) === form.data.shipping_address.country_id)?.name ?? "—")
-                                                                : "Aucun pays"}
+                                                                : "Défini par la zone"}
                                                             <ChevronsUpDown className="ml-2 h-4 w-4 opacity-50" />
                                                         </Button>
                                                     </PopoverTrigger>
@@ -443,8 +453,6 @@ export default function CheckoutCreate({ cart, zones, countries, user_addresses,
                                                         </Command>
                                                     </PopoverContent>
                                                 </Popover>
-
-
                                             </div>
                                             <div>
                                                 <Label>Code Postal (Optionnel)</Label>
@@ -491,8 +499,8 @@ export default function CheckoutCreate({ cart, zones, countries, user_addresses,
                                         Mode de livraison
                                     </CardTitle>
                                 </CardHeader>
-                                <CardContent className="px-4 sm:px-6pt-6">
-                                    {!selectedZoneId ? (
+                                <CardContent className="px-4 sm:px-6 pt-6">
+                                    {!form.data.zone_id ? (
                                         <div className="flex flex-col items-center justify-center py-8 text-stone-500 bg-stone-50/50 rounded-lg border border-dashed border-stone-200">
                                             <MapPin className="h-8 w-8 mb-3 opacity-20" />
                                             <p className="text-sm">Veuillez d'abord sélectionner votre zone de livraison ci-dessus.</p>
@@ -635,7 +643,7 @@ export default function CheckoutCreate({ cart, zones, countries, user_addresses,
                                                 <div key={item.id} className="flex gap-4 group">
                                                     <div className="h-16 w-16 shrink-0 rounded-lg border border-stone-200 overflow-hidden bg-white shadow-sm">
                                                         <img
-                                                            src={item.product?.default_image || item.image || `https://placehold.co/128?text=${encodeURIComponent(item?.product?.name || 'Produit')}`}
+                                                            src={item.image || item.product?.default_image || `https://placehold.co/128?text=${encodeURIComponent(item?.product?.name || 'Produit')}`}
                                                             alt={item.name}
                                                             className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />
                                                     </div>
