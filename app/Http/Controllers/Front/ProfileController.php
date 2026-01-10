@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Front;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\AddressResource;
 use App\Http\Resources\OrderResource;
+use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -40,6 +41,13 @@ class ProfileController extends Controller
 
         return Inertia::render('front/profile/orders', [
             'orders' => OrderResource::collection($orders),
+        ]);
+    }
+
+    public function showOrder(Order $order)
+    {
+        return Inertia::render('admin/orders/order-show', [
+            'order' => new OrderResource($order->load(['user', 'carrier', 'items.product', 'items.variant'])),
         ]);
     }
 

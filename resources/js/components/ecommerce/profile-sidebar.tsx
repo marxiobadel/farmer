@@ -9,6 +9,7 @@ import {
     ShieldCheck
 } from "lucide-react";
 import { logout } from "@/routes";
+import profile from "@/routes/profile";
 
 interface MenuItem {
     title: string;
@@ -29,21 +30,21 @@ export default function ProfileSidebar({ className }: { className?: string }) {
     const items: MenuItem[] = [
         {
             title: "Tableau de bord",
-            href: '/profile',
+            href: profile.index().url,
             icon: LayoutDashboard,
-            active: isExact('/profile') || isExact('/mon-compte'),
+            active: isExact('/profile'),
         },
         {
             title: "Mes commandes",
-            href: '/',
+            href: profile.orders().url,
             icon: Package,
-            active: isActive('/profile/commandes') || isActive('/mon-compte/commandes'),
+            active: isActive('/profile/orders'),
         },
         {
             title: "Informations personnelles",
-            href: '/',
+            href: profile.edit().url,
             icon: User,
-            active: isActive('/profile/edit') || isActive('/user/profile'),
+            active: isActive('/profile/informations'),
         },
         {
             title: "Carnet d'adresses",
@@ -53,9 +54,9 @@ export default function ProfileSidebar({ className }: { className?: string }) {
         },
         {
             title: "Sécurité & Connexion",
-            href: '/user/password',
+            href: profile.password.edit().url,
             icon: ShieldCheck,
-            active: isActive('/user/password'),
+            active: isActive('/profile/security'),
             disabled: false
         },
     ];
