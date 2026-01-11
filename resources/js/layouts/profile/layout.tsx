@@ -5,6 +5,8 @@ import ProfileSidebar from "@/components/ecommerce/profile-sidebar";
 import { contact } from "@/routes";
 import products from "@/routes/products";
 import { PropsWithChildren } from "react";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Menu } from "lucide-react";
 
 export default function ProfileLayout({ children }: PropsWithChildren) {
     const { auth } = usePage<SharedData>().props;
@@ -22,7 +24,7 @@ export default function ProfileLayout({ children }: PropsWithChildren) {
                             </div>
                         </div>
                         <div>
-                            <h1 className="text-3xl font-bold tracking-tight text-stone-900">
+                            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-stone-900">
                                 Bonjour, {auth.user.firstname}
                             </h1>
                             <p className="mt-1 text-base text-stone-500">
@@ -42,7 +44,29 @@ export default function ProfileLayout({ children }: PropsWithChildren) {
 
                 <div className="lg:grid lg:grid-cols-12 lg:gap-x-12">
                     {/* Sidebar Navigation */}
-                    <aside className="lg:col-span-3 mb-8 lg:mb-0">
+                    {/* --- VERSION MOBILE : SHADCN SHEET --- */}
+                    <div className="lg:hidden mb-6">
+                        <Sheet>
+                            <SheetTrigger asChild>
+                                <Button variant="outline" className="w-full justify-start gap-2 bg-white/50 backdrop-blur-xl border-stone-200/60">
+                                    <Menu className="h-4 w-4" />
+                                    Menu du profil
+                                </Button>
+                            </SheetTrigger>
+                            <SheetContent side="left" className="w-[300px] sm:w-[350px] overflow-y-auto">
+                                <div className="px-4 py-4">
+                                    <h3 className="mb-4 text-lg font-semibold tracking-tight text-stone-900">
+                                        Mon Compte
+                                    </h3>
+                                    {/* On réutilise le composant Sidebar ici */}
+                                    <ProfileSidebar />
+                                </div>
+                            </SheetContent>
+                        </Sheet>
+                    </div>
+
+                    {/* --- VERSION DESKTOP : STICKY SIDEBAR --- */}
+                    <aside className="hidden lg:block lg:col-span-3">
                         <div className="sticky top-8">
                             <ProfileSidebar className="bg-white/50 backdrop-blur-xl border border-stone-200/60 rounded-2xl p-4" />
                         </div>

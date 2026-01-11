@@ -7,6 +7,8 @@ use App\Http\Resources\AddressResource;
 use App\Http\Resources\OrderResource;
 use App\Models\Order;
 use App\Models\User;
+use App\Settings\GeneralSettings;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -53,6 +55,26 @@ class ProfileController extends Controller
         return Inertia::render('front/profile/order-show', [
             'order' => new OrderResource($order->load(['user', 'carrier', 'items.product', 'items.variant'])),
         ]);
+    }
+
+    public function downloadInvoice(GeneralSettings $settings, Order $order)
+    {
+        $order->load(['user', 'items.product', 'items.variant', 'carrier']);
+
+        $data = [
+            'order' => $order,
+            'company' => [
+                'name' => config('app.name'),
+                'address' => $settings->address,
+                'phone' => $settings->phone,
+                'email' => $settings->email,
+                'logo' => public_path('images/logo_with_bg.png'),
+            ],
+        ];
+
+        $pdf = Pdf::loadView('pdf.invoice', $data);
+
+        return $pdf->download('facture-'.$order->id.'.pdf');
     }
 
     public function edit(Request $request)

@@ -73,6 +73,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/', 'index')->name('index');
             Route::get('orders', 'orders')->name('orders');
             Route::get('orders/{order}', 'showOrder')->name('orders.show');
+            Route::get('orders/{order}/invoice', 'downloadInvoice')->name('orders.invoice');
             Route::get('informations', 'edit')->name('edit');
             Route::post('informations', 'update')->name('update');
             Route::get('addresses', 'addresses')->name('addresses');

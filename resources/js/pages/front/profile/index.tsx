@@ -185,10 +185,10 @@ export default function ProfileDashboard({ recentOrders, stats }: PageProps) {
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between p-3 rounded-lg bg-stone-50/50 border border-stone-100/50">
                                     <div className="flex flex-col">
-                                        <span className="text-xs font-medium text-stone-500 uppercase tracking-wider">Email</span>
+                                        <span className="text-xs font-medium text-stone-500 uppercase tracking-wider">E-mail</span>
                                         <span className="text-sm font-semibold text-stone-900 truncate max-w-[200px]">{auth.user.email}</span>
                                     </div>
-                                    <ShieldCheck className="h-4 w-4 text-green-500" />
+                                    <ShieldCheck className={`h-4 w-4 text-${auth.user.email_verified_at === null ? 'red' : 'green'}-500`} />
                                 </div>
                                 <div className="flex items-center justify-between p-3 rounded-lg bg-stone-50/50 border border-stone-100/50">
                                     <div className="flex flex-col">
