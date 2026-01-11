@@ -30,7 +30,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
-import { cn, inputClassNames } from "@/lib/utils";
+import { cn, getPaymentStatusColor, inputClassNames } from "@/lib/utils";
 
 interface PageProps {
     order: Order;
@@ -69,12 +69,6 @@ export default function Show({ order }: PageProps) {
     const statusLabel = orderDeliveryStatus.find(s => s.value === order.status)?.label || order.status;
 
     const statusColorClass = colorMap[order.status] || "bg-gray-100 text-gray-800 border-gray-200";
-
-    const getPaymentStatusColor = (status: string) => {
-        return status === 'completed' || status === 'paid'
-            ? "text-green-600 bg-green-50 border-green-200"
-            : "text-amber-600 bg-amber-50 border-amber-200";
-    };
 
     return (
         <AppLayout breadcrumbs={isMobile ? [] : breadcrumbs}>

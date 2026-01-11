@@ -116,3 +116,9 @@ export async function urlToFile(imageUrl: string, filename = "image.jpg"): Promi
 
     return new File([blob], `${filename}.${extension}`, { type: blob.type });
 }
+
+export const getPaymentStatusColor = (status: string) => {
+    return status === 'completed' || status === 'paid'
+        ? "text-green-600 bg-green-50 border-green-200"
+        : "text-amber-600 bg-amber-50 border-amber-200";
+};

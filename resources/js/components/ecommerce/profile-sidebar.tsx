@@ -41,16 +41,16 @@ export default function ProfileSidebar({ className }: { className?: string }) {
             active: isActive('/profile/orders'),
         },
         {
-            title: "Informations personnelles",
+            title: "Mes données",
             href: profile.edit().url,
             icon: User,
             active: isActive('/profile/informations'),
         },
         {
             title: "Carnet d'adresses",
-            href: '/',
+            href: profile.addresses().url,
             icon: MapPin,
-            active: isActive('/profile/adresses'),
+            active: isActive('/profile/addresses'),
         },
         {
             title: "Sécurité & Connexion",

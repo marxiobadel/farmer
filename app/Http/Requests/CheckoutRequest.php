@@ -39,10 +39,10 @@ class CheckoutRequest extends FormRequest
 
             // Si use_billing_address est false, alors l'objet billing_address est requis
             'billing_address' => ['exclude_if:use_billing_address,true', 'required', 'array'],
-            'billing_address.address' => ['exclude_if:use_billing_address,true', 'required', 'string', 'max:255'],
-            'billing_address.city' => ['exclude_if:use_billing_address,true', 'required', 'string', 'max:100'],
+            'billing_address.address' => ['exclude_if:use_billing_address,false', 'required', 'string', 'max:255'],
+            'billing_address.city' => ['exclude_if:use_billing_address,false', 'required', 'string', 'max:100'],
             'billing_address.postal_code' => ['nullable', 'string', 'max:20'],
-            'billing_address.country_id' => ['exclude_if:use_billing_address,true', 'nullable', 'exists:countries,id'],
+            'billing_address.country_id' => ['exclude_if:use_billing_address,false', 'nullable', 'exists:countries,id'],
 
             // --- Options et Logistique ---
             'save_address' => ['boolean'], // Checkbox "Enregistrer dans mon carnet"

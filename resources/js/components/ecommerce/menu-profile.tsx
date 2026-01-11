@@ -12,6 +12,7 @@ import { useMobileNavigation } from "@/hooks/use-mobile-navigation";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "../ui/sheet";
 import { ScrollArea } from "../ui/scroll-area";
 import products from "@/routes/products";
+import { useInitials } from "@/hooks/use-initials";
 
 export const navItems = [
     { label: "Nos Produits", href: products.index().url },
@@ -22,6 +23,7 @@ export const navItems = [
 
 export const MenuProfile = () => {
     const { name, auth } = usePage<SharedData>().props;
+    const getInitials = useInitials();
 
     const cleanup = useMobileNavigation();
 
@@ -39,11 +41,11 @@ export const MenuProfile = () => {
                         <Button variant="ghost" className="relative h-9 w-9 rounded-full">
                             <Avatar className="h-9 w-9">
                                 {/* Image de l'avatar (remplacez src par l'URL de l'utilisateur si connecté) */}
-                                <AvatarImage src={auth?.user?.avatar_url || ''} alt="@user" />
+                                <AvatarImage className="object-cover" src={auth.user ? auth.user.avatar_url : ''} alt="@user" />
 
                                 {/* Fallback : s'affiche si l'image ne charge pas ou si pas d'image */}
                                 <AvatarFallback className="bg-primary/10 text-primary font-medium">
-                                    M
+                                    {auth.user ? getInitials(auth.user.fullname) : "M"}
                                 </AvatarFallback>
                             </Avatar>
                         </Button>
@@ -55,7 +57,7 @@ export const MenuProfile = () => {
                         </div>
                         <Separator className="my-2" />
                         <div className="grid gap-2">
-                            {auth?.user ? (
+                            {auth.user ? (
                                 <>
                                     <Button asChild variant="ghost" className="w-full">
                                         <Link href={profile.index()} className="w-full justify-start gap-2 h-9 px-2 font-normal">
@@ -137,7 +139,7 @@ export const MenuProfile = () => {
                             </p>
                         </div>
                         <div className="grid gap-3">
-                            {auth?.user ?
+                            {auth.user ?
                                 <>
                                     <Button asChild variant="outline" className="w-full">
                                         <Link href={profile.index()} className="w-full justify-start gap-3 h-10 rounded-lg text-base font-medium">

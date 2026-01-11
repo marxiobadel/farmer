@@ -1,4 +1,4 @@
-import { Head, Link } from "@inertiajs/react";
+import { Head, Link, router } from "@inertiajs/react";
 import AppLayout from "@/layouts/app-layout";
 import { useCurrencyFormatter } from "@/hooks/use-currency";
 import { Order, PaginationMeta } from "@/types";
@@ -11,8 +11,9 @@ import { fr } from "date-fns/locale";
 import StatusBadge from "@/components/ecommerce/status-badge";
 import profile from "@/routes/profile";
 import products from "@/routes/products";
+import DataTablePagination from "@/components/datatable-pagination";
 
-// Interface pour la réponse paginée (à adapter selon votre structure exacte)
+// Interface pour la réponse paginée
 interface OrdersProps {
     orders: {
         data: Order[];
@@ -23,6 +24,22 @@ interface OrdersProps {
 
 export default function Orders({ orders }: OrdersProps) {
     const formatCurrency = useCurrencyFormatter();
+
+    const onPageChange = (page: number) => {
+        router.get(
+            window.location.pathname,
+            { page },
+            { preserveScroll: true, preserveState: true }
+        );
+    };
+
+    const onPerPageChange = (perPage: number) => {
+        router.get(
+            window.location.pathname,
+            { page: 1, per_page: perPage },
+            { preserveScroll: true, preserveState: true }
+        );
+    };
 
     return (
         <AppLayout layout="guest">
@@ -37,7 +54,8 @@ export default function Orders({ orders }: OrdersProps) {
 
                     <Card className="border-stone-200/60 shadow-none bg-white overflow-hidden">
                         {orders.data.length > 0 ? (
-                            <div className="overflow-x-auto">
+                            <>
+                                <div className="overflow-x-auto">
                                     <table className="w-full text-sm text-left">
                                         <thead className="text-xs text-stone-500 uppercase bg-stone-50/80 border-b border-stone-100">
                                             <tr>
@@ -83,6 +101,16 @@ export default function Orders({ orders }: OrdersProps) {
                                         </tbody>
                                     </table>
                                 </div>
+                                <div className="p-4 border-t border-stone-100">
+                                    <DataTablePagination
+                                        meta={orders.meta}
+                                        perPage={orders.meta.per_page}
+                                        onPageChange={onPageChange}
+                                        onPerPageChange={onPerPageChange}
+                                        perPageOptions={[10, 20, 50]}
+                                    />
+                                </div>
+                            </>
                         ) : (
                             <div className="flex flex-col items-center justify-center py-16 text-center px-4">
                                 <div className="h-16 w-16 rounded-full bg-stone-100 flex items-center justify-center mb-4">
@@ -101,14 +129,6 @@ export default function Orders({ orders }: OrdersProps) {
                             </div>
                         )}
                     </Card>
-
-                    {/* Pagination simple si nécessaire */}
-                    {orders.data.length > 0 && orders.meta && orders.meta.last_page > 1 && (
-                        <div className="flex justify-center pt-4">
-                            {/* Insérer ici votre composant de pagination si disponible, sinon des liens simples */}
-                            <p className="text-xs text-stone-400">Affichage de {orders.data.length} sur {orders.meta.total} commandes</p>
-                        </div>
-                    )}
                 </div>
             </ProfileLayout>
         </AppLayout>

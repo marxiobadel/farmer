@@ -16,10 +16,11 @@ import {
     PackageCheck,
     CalendarClock
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, getPaymentStatusColor } from "@/lib/utils";
 import profile from "@/routes/profile";
 import StatusBadge from "@/components/ecommerce/status-badge";
 import { contact } from "@/routes";
+import admin from "@/routes/admin";
 
 interface ShowProps {
     order: Order;
@@ -83,9 +84,16 @@ export default function Show({ order }: ShowProps) {
                                 </div>
                             </div>
                             <div className="flex gap-2">
-                                <Button variant="outline" className="border-stone-200">
-                                    <Download className="h-4 w-4 mr-2" />
-                                    Facture
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    asChild
+                                >
+                                    {/* Utilisez un lien direct pour forcer le téléchargement sans passer par Inertia */}
+                                    <a href={admin.orders.invoice(order.id).url} target="_blank" rel="noopener noreferrer">
+                                        <Download className="h-4 w-4 mr-2" />
+                                        Facture
+                                    </a>
                                 </Button>
                             </div>
                         </div>
@@ -184,8 +192,10 @@ export default function Show({ order }: ShowProps) {
                                         </div>
                                         <div className="flex items-center justify-between">
                                             <span className="text-stone-500">Statut</span>
-                                            <Badge variant="outline" className={order.payments?.[0]?.status === 'completed' ? 'text-green-700 bg-green-50 border-green-200' : 'text-stone-600'}>
-                                                {order.payments?.[0]?.status || order.status}
+                                            <Badge variant="outline" className={getPaymentStatusColor(order.payments?.[0]?.status)}>
+                                                {order.payments?.[0]?.status === 'completed' ? 'Payé' :
+                                                    order.payments?.[0]?.status === 'pending' ? 'En attente' :
+                                                        order.payments?.[0]?.status === 'failed' ? 'Échoué' : order.payments?.[0]?.status}
                                             </Badge>
                                         </div>
                                     </CardContent>

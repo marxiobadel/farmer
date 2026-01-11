@@ -129,8 +129,8 @@
                     <strong>Facturé à :</strong><br>
                     {{ $order->user->firstname }} {{ $order->user->lastname }}<br>
                     @if($order->invoice_address)
-                        {{ $order->invoice_address['address'] }}<br>
-                        {{ $order->invoice_address['city'] }}
+                        {{ $order->invoice_address['address'] ?? '' }}<br>
+                        {{ $order->invoice_address['city'] ?? '' }}
                     @else
                         {{ $order->user->email }}
                     @endif
