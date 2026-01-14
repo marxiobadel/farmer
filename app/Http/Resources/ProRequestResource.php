@@ -4,7 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class TestimonialResource extends JsonResource
+class ProRequestResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -19,15 +19,16 @@ class TestimonialResource extends JsonResource
 
         return [
             'id' => $this->id,
-            'name' => $this->name,
-            'position' => $this->position,
-            'company' => $this->company,
-            'rating' => $this->rating,
+            'company_name' => $this->company_name,
+            'niu' => $this->niu,
+            'contact_name' => $this->contact_name,
+            'email' => $this->email,
+            'phone' => $this->phone,
+            'activity_sector' => $this->activity_sector,
+            'address' => $this->address,
             'message' => $this->message,
-            'is_approved' => $this->is_approved,
-            'user_id' => $this->user_id,
-            'product_id' => $this->product_id,
-            'user' => $this->user ? new UserResource($this->user) : null,
+            'status' => $this->status,
+            'user' => new UserResource($this->user),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

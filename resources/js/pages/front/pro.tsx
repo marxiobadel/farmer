@@ -50,16 +50,24 @@ export default function ProPage() {
         post(pro.store().url, {
             preserveScroll: 'errors',
             preserveState: true,
-            onSuccess: () => {
+            onSuccess: (page) => {
                 reset();
                 toast.success("Demande envoyée !", {
-                    description: "Un conseiller Pro vous recontactera très bientôt."
+                    description: "Un conseiller Pro vous recontactera très bientôt.",
+                    duration: 10000
                 });
+                console.log(page);
             },
-            onError: () => {
-                toast.error("Erreur", {
-                    description: "Veuillez vérifier les informations de votre entreprise."
-                });
+            onError: (error) => {
+                if (error.error) {
+                    toast.warning("Avertissement", {
+                        description: error.error[0]
+                    });
+                } else {
+                    toast.error("Erreur", {
+                        description: "Veuillez vérifier les informations de votre entreprise."
+                    });
+                }
             }
         });
     };
@@ -260,7 +268,7 @@ export default function ProPage() {
                                 <div className="grid sm:grid-cols-2 gap-5">
                                     <div className="space-y-2">
                                         <Label>Secteur d'activité *</Label>
-                                        <Select onValueChange={val => setData('activity_sector', val)}>
+                                        <Select onValueChange={val => setData('activity_sector', val)} value={data.activity_sector}>
                                             <SelectTrigger className="bg-stone-50 border-stone-200">
                                                 <SelectValue placeholder="Choisir..." />
                                             </SelectTrigger>

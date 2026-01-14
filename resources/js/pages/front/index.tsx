@@ -15,46 +15,18 @@ interface HomeCategory extends Category {
     products: Product[];
 }
 
-interface Props {
+interface PageProps {
     categories: HomeCategory[];
     canRegister: boolean;
 }
 
-export default function Index({ categories, canRegister }: Props) {
+export default function Index({ categories, canRegister }: PageProps) {
     const [selectedCategory, setSelectedCategory] = useState<string>("Tous");
 
     const allProducts = useMemo(() => {
-        return categories.flatMap(cat =>
-            cat.products.map(prod => {
-                let displayPrice = prod.base_price;
-                let variantName = null;
-                let image = prod.default_image;
-                let availableQty = prod.quantity;
-
-                // Logique de sélection de la variante
-                if (prod.variants && prod.variants.length > 0) {
-                    const selectedVariant = prod.variants.find(v => v.is_default) || prod.variants[0];
-
-                    // Mise à jour du prix
-                    displayPrice = selectedVariant.price;
-
-                    // Extraction du nom de la variante (ex: "Gros Calibre")
-                    if (selectedVariant.options && selectedVariant.options.length > 0) {
-                        variantName = selectedVariant.options.map(opt => opt.option).join(' / ');
-                    }
-
-                    image = selectedVariant.image;
-                    availableQty = selectedVariant.quantity;
-                }
-
-                return {
-                    ...prod,
-                    base_price: displayPrice,
-                    variant_name: variantName, // On passe le nom séparément
-                    category_name: cat.name,
-                    image,
-                    availableQty
-                };
+        return categories.flatMap(category =>
+            category.products.map(prod => {
+                return { ...prod, category_name: category.name };
             })
         );
     }, [categories]);

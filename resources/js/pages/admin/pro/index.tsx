@@ -1,5 +1,5 @@
 import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem, PaginationMeta, User, Product, Testimonial } from '@/types';
+import type { BreadcrumbItem, PaginationMeta, ProRequest } from '@/types';
 import { Head, router } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 import { ColumnDef, getCoreRowModel, getSortedRowModel, useReactTable } from "@tanstack/react-table";
@@ -7,22 +7,21 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from "@/components/ui/checkbox";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
-import { ArrowUpDown, Edit, MoreHorizontal, Trash2, Plus, Search, CheckCircle } from 'lucide-react';
+import { ArrowUpDown, Edit, MoreHorizontal, Trash2, Search } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from 'sonner';
 import { dateTimeFormatOptions } from '@/lib/utils';
 import ConfirmDeleteDialog from '@/components/confirm-delete-dialog';
 import DataTablePagination from '@/components/datatable-pagination';
 import DataTable from '@/components/datatable';
-import TestimonialForm from './form';
 import { dashboard } from '@/routes';
 import admin from '@/routes/admin';
+import ProForm from './form';
+import { businessTypes, proStatus } from '@/data';
 
 interface PageProps {
-    products: Product[];
-    users: User[];
-    testimonials: {
-        data: Testimonial[];
+    proRequests: {
+        data: ProRequest[];
         meta: PaginationMeta;
     };
     filters: {
@@ -33,10 +32,16 @@ interface PageProps {
     }
 }
 
-export default function Index({ testimonials, products, users, filters }: PageProps) {
+const colorMap: Record<string, string> = {
+    pending: "bg-orange-100 text-orange-800",
+    approved: "bg-green-200 text-green-900",
+    rejected: "bg-red-300 text-red-900",
+};
+
+export default function Index({ proRequests, filters }: PageProps) {
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Tableau de bord', href: dashboard().url },
-        { title: "Témoignages", href: admin.testimonials.index().url },
+        { title: "Comptes Pro", href: '#' },
     ];
 
     const isMobile = useIsMobile();
@@ -44,14 +49,13 @@ export default function Index({ testimonials, products, users, filters }: PagePr
     const [search, setSearch] = useState(filters.search ?? "");
     const [sort, setSort] = useState("");
     const [perPage, setPerPage] = useState<number>(filters.per_page ?? 10);
-    const [deleteTestimonial, setDeleteTestimonial] = useState<Testimonial | null>(null);
+    const [deletePro, setDeletePro] = useState<ProRequest | null>(null);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
 
-    const [creatingTestimonial, setCreatingTestimonial] = useState(false);
-    const [editingTestimonial, setEditingTestimonial] = useState<Testimonial | null>(null);
+    const [editingPro, setEditingPro] = useState<ProRequest | null>(null);
 
-    const toggleSort = (column: keyof Testimonial) => {
+    const toggleSort = (column: keyof ProRequest) => {
         let dir: "asc" | "desc" | "" = "asc";
         if (sort === column) dir = "desc";
         else if (sort === "-" + column) dir = "";
@@ -61,30 +65,30 @@ export default function Index({ testimonials, products, users, filters }: PagePr
     }
 
     const applyFilters = (newFilters: Partial<PageProps["filters"]> & { page?: number }) => {
-        router.get(admin.testimonials.index().url, {
+        router.get(admin.proRequests.index().url, {
             search,
             sort,
             per_page: perPage,
-            page: testimonials.meta.current_page,
+            page: proRequests.meta.current_page,
             ...newFilters,
         }, { preserveState: true, replace: true });
     }
 
-    const handleEdit = (testimonial: Testimonial) => setEditingTestimonial(testimonial);
+    const handleEdit = (proRequest: ProRequest) => setEditingPro(proRequest);
 
-    const handleDelete = (testimonial: Testimonial) => {
-        setDeleteTestimonial(testimonial);
+    const handleDelete = (proRequest: ProRequest) => {
+        setDeletePro(proRequest);
         setIsDialogOpen(true);
     };
 
     const handleBulkDelete = () => {
         if (Object.keys(rowSelection).length > 0) {
-            setDeleteTestimonial(null);
+            setDeletePro(null);
             setIsDialogOpen(true);
         }
     };
 
-    const columns = useMemo<ColumnDef<Testimonial>[]>(() => [
+    const columns = useMemo<ColumnDef<ProRequest>[]>(() => [
         {
             id: "select",
             header: ({ table }) => (
@@ -109,13 +113,18 @@ export default function Index({ testimonials, products, users, filters }: PagePr
         },
         {
             accessorKey: "user",
-            header: () => 'Nom',
+            header: () => 'Client',
             cell: ({ row }) => row.original.user?.fullname || 'Anonyme',
         },
         {
-            accessorKey: "rating",
-            header: () => 'Note',
-            cell: ({ row }) => row.original.rating + '/5',
+            accessorKey: "company_name",
+            header: () => 'Entreprise',
+            cell: ({ row }) => row.original.company_name,
+        },
+        {
+            accessorKey: "activity_sector",
+            header: () => "Secteur d'activité",
+            cell: ({ row }) => businessTypes.find(b => b.value === row.original.activity_sector)?.label || 'Anonyme',
         },
         {
             accessorKey: "message",
@@ -137,14 +146,25 @@ export default function Index({ testimonials, products, users, filters }: PagePr
             },
         },
         {
-            accessorKey: 'is_approved',
-            header: "Approuvé",
+            accessorKey: "status",
+            header: () => (
+                <Button variant="ghost" onClick={() => toggleSort("status")}>
+                    Statut <ArrowUpDown className="ml-2 h-4 w-4" />
+                </Button>
+            ),
             cell: ({ row }) => {
-                if (row.original.is_approved)
-                    return <CheckCircle size={18} className={`text-green-600`} />
-                else
-                    return <CheckCircle size={18} />
-            }
+                const status = row.original.status;
+
+                const colorClass = colorMap[status] ?? "bg-muted text-muted-foreground";
+
+                const label = proStatus.find(s => s.value === status)?.label ?? status;
+
+                return (
+                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${colorClass}`}>
+                        {label}
+                    </span>
+                );
+            },
         },
         {
             accessorKey: "created_at",
@@ -155,18 +175,6 @@ export default function Index({ testimonials, products, users, filters }: PagePr
             ),
             cell: ({ row }) => {
                 const date = new Date(row.original.created_at);
-                return date.toLocaleString("fr-FR", dateTimeFormatOptions);
-            }
-        },
-        {
-            accessorKey: "updated_at",
-            header: () => (
-                <Button variant="ghost" onClick={() => toggleSort("updated_at")}>
-                    Modifié le <ArrowUpDown className="ml-2 h-4 w-4" />
-                </Button>
-            ),
-            cell: ({ row }) => {
-                const date = new Date(row.original.updated_at);
                 return date.toLocaleString("fr-FR", dateTimeFormatOptions);
             }
         },
@@ -194,7 +202,7 @@ export default function Index({ testimonials, products, users, filters }: PagePr
     ], [sort]);
 
     const table = useReactTable({
-        data: testimonials.data,
+        data: proRequests.data,
         columns,
         getCoreRowModel: getCoreRowModel(),
         getSortedRowModel: getSortedRowModel(),
@@ -209,24 +217,19 @@ export default function Index({ testimonials, products, users, filters }: PagePr
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Témoignages" />
+            <Head title="Comptes Pro" />
             <div className="space-y-6 p-4 sm:p-6 lg:p-8">
                 {/* Header */}
-                <div className="flex justify-end flex-wrap">
-                    <Button className="ml-2" onClick={() => setCreatingTestimonial(true)}>
-                        <Plus className="h-4 w-4" /> Ajouter un témoignage
-                    </Button>
-                </div>
                 <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight">Témoignages</h1>
-                        <p className="text-sm text-muted-foreground">Gérez les témoignages de vos utilisateurs.</p>
+                        <h1 className="text-2xl font-bold tracking-tight">Comptes Pro</h1>
+                        <p className="text-sm text-muted-foreground">Gérez les comptes professionnels.</p>
                     </div>
                     <div className="flex gap-2 w-full md:w-auto">
                         <div className='relative'>
                             <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <Input
-                                placeholder={isMobile ? "Rechercher..." : "Rechercher un témoignage..."}
+                                placeholder={isMobile ? "Rechercher..." : "Rechercher un compte..."}
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                                 onKeyDown={(e) => e.key === "Enter" && applyFilters({ page: 1 })}
@@ -242,17 +245,17 @@ export default function Index({ testimonials, products, users, filters }: PagePr
                 </div>
 
                 {/* Table */}
-                <DataTable<Testimonial>
-                    data={testimonials.data}
+                <DataTable<ProRequest>
+                    data={proRequests.data}
                     columns={columns}
                     rowSelection={rowSelection}
                     onRowSelectionChange={handleRowSelectionChange}
-                    emptyMessage="Aucun témoignage trouvé."
+                    emptyMessage="Aucun compte trouvé."
                 />
 
                 {/* Pagination */}
                 <DataTablePagination
-                    meta={testimonials.meta}
+                    meta={proRequests.meta}
                     perPage={perPage}
                     onPageChange={(page) => applyFilters({ page })}
                     onPerPageChange={(val) => {
@@ -261,21 +264,10 @@ export default function Index({ testimonials, products, users, filters }: PagePr
                     }}
                 />
             </div>
-            <TestimonialForm
-                open={creatingTestimonial || !!editingTestimonial}
-                onClose={() => {
-                    setCreatingTestimonial(false);
-                    setEditingTestimonial(null);
-                }}
-                testimonial={editingTestimonial}
-                submitUrl={
-                    editingTestimonial
-                        ? admin.testimonials.update(editingTestimonial.id).url
-                        : admin.testimonials.store().url
-                }
-                method={editingTestimonial ? "PUT" : "POST"}
-                users={users}
-                products={products}
+            <ProForm
+                open={!!editingPro}
+                onClose={() => setEditingPro(null)}
+                proRequest={editingPro}
             />
 
             {/* AlertDialog */}
@@ -283,11 +275,11 @@ export default function Index({ testimonials, products, users, filters }: PagePr
                 open={isDialogOpen}
                 onOpenChange={setIsDialogOpen}
                 title="Confirmer la suppression"
-                message={deleteTestimonial
+                message={deletePro
                     ? `Voulez-vous vraiment supprimer ? Cette action est irréversible.`
                     : `Voulez-vous vraiment supprimer ${Object.keys(rowSelection).length} témoignage(s) ? Cette action est irréversible.`}
                 onConfirm={() => {
-                    const ids = deleteTestimonial ? [deleteTestimonial.id]
+                    const ids = deletePro ? [deletePro.id]
                         : Object.keys(rowSelection).map(k => {
                             const row = table.getRowModel().rows[Number(k)];
                             return row.original.id;
@@ -296,7 +288,7 @@ export default function Index({ testimonials, products, users, filters }: PagePr
                     if (ids.length === 0) return;
 
                     router.post(
-                        admin.testimonials.destroy().url, { ids },
+                        admin.proRequests.destroy().url, { ids },
                         {
                             preserveState: true,
                             onSuccess: () => {
@@ -304,7 +296,7 @@ export default function Index({ testimonials, products, users, filters }: PagePr
                                     <div className="flex flex-col">
                                         <span className="font-semibold text-foreground">Succès</span>
                                         <span className="text-sm text-muted-foreground">
-                                            Les témoignages sélectionnées ont été supprimées.
+                                            Les comptes sélectionnées ont été supprimées.
                                         </span>
                                     </div>
                                 );
@@ -322,7 +314,7 @@ export default function Index({ testimonials, products, users, filters }: PagePr
                         }
                     );
                     setRowSelection({});
-                    setDeleteTestimonial(null);
+                    setDeletePro(null);
                     setIsDialogOpen(false);
                 }}
             />

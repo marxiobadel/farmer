@@ -15,7 +15,7 @@ interface ProductCardProps {
 }
 
 export const ProductCard = ({ product }: ProductCardProps) => {
-    const { auth } = usePage<SharedData>().props;
+    const { auth, settings } = usePage<SharedData>().props;
 
     const [adding, setAdding] = useState(false);
 
@@ -154,7 +154,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
                 </div>
 
                 {/* Quick Add Button (Slide Up Interaction via Variants) */}
-                {product.isAvailable && (
+                {product.isAvailable && settings.show_price && (
                     <motion.div
                         className="absolute inset-x-0 bottom-0 p-4 z-20"
                         // L'animation est pilotée par le "whileHover" du parent
@@ -197,7 +197,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
                         <Link href={products.show(product.slug)} className="focus:outline-none">
                             <span className="absolute inset-0 z-0" aria-hidden="true" />
                             {product.name}
-                            {product.variant_name && (
+                            {settings.show_price && product.variant_name && (
                                 <span className="ml-1 text-sm text-stone-500 font-medium">
                                     ({product.variant_name})
                                 </span>
@@ -207,25 +207,24 @@ export const ProductCard = ({ product }: ProductCardProps) => {
                 </div>
 
                 {/* Prix et Action Mobile */}
-                <div className="mt-5 flex items-end justify-between border-t border-stone-100 pt-4">
-                    <div>
-                        <p className="text-[10px] uppercase font-semibold text-stone-400 tracking-wide mb-0.5">Prix TTC</p>
-                        <div className="flex items-baseline gap-1">
-                            <span className="text-2xl font-extrabold text-stone-900 tracking-tight">
-                                {product.price.toLocaleString("fr-FR")}
-                            </span>
-                            <span className="text-sm font-bold text-stone-500">{product.currency}</span>
+                {settings.show_price && (
+                    <div className="mt-5 flex items-end justify-end border-t border-stone-100 pt-4">
+                        <div>
+                            <p className="text-[10px] uppercase font-semibold text-stone-400 tracking-wide mb-0.5">Prix TTC</p>
+                            <div className="flex items-baseline gap-1">
+                                <span className="text-2xl font-extrabold text-stone-900 tracking-tight">
+                                    {product.price.toLocaleString("fr-FR")}
+                                </span>
+                                <span className="text-sm font-bold text-stone-500">{product.currency}</span>
+                            </div>
                         </div>
-                    </div>
 
-                    {/* Fallback Icon pour Mobile (visible uniquement si pas de hover souris) */}
-                    <button
-                        disabled={isOutOfStock || adding}
-                        onClick={handleAddToCart}
-                        className="z-10 lg:hidden flex h-10 w-10 items-center justify-center rounded-full bg-stone-100 text-stone-900">
-                        <ShoppingBasket className="h-5 w-5" />
-                    </button>
-                </div>
+                        {/* Fallback Icon pour Mobile (visible uniquement si pas de hover souris) */}
+                        <div
+                            className="z-10 lg:hidden flex h-10 w-10 items-center justify-center rounded-full bg-stone-100 text-stone-900">
+                            <ShoppingBasket className="h-5 w-5" />
+                        </div>
+                    </div>)}
             </div>
         </motion.div>
     );

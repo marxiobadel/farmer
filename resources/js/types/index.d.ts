@@ -40,6 +40,7 @@ export interface SharedData {
         budget: string;
         registration: string;
         taxpayer_number: string;
+        show_price: boolean;
     };
     cart?: Cart;
     defaultCurrency: string;
@@ -399,6 +400,22 @@ export interface Carrier {
 
     rates?: CarrierRate[];
     zones?: Zone[];
+}
+
+export interface ProRequest {
+    id: number;
+    company_name: string;
+    niu: string;
+    contact_name: string;
+    email: string;
+    phone: string;
+    activity_sector: string;
+    address: string;
+    message: string;
+    user: User;
+    status: string;
+    created_at: string;
+    updated_at: string;
 }
 
 export type Role = 'visitor' | 'superadmin' | 'admin' | 'customer' | string;

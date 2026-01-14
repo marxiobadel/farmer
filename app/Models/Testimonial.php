@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 
 class Testimonial extends Model
 {
@@ -16,6 +17,17 @@ class Testimonial extends Model
         'is_approved',
         'user_id',
     ];
+
+    protected static function booted(): void
+    {
+        static::saved(function ($testimonial) {
+            Cache::forget('front_testimonials_active');
+        });
+
+        static::deleted(function ($testimonial) {
+            Cache::forget('front_testimonials_active');
+        });
+    }
 
     public function user()
     {

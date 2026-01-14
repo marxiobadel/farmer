@@ -11,6 +11,7 @@ import { FormEventHandler } from "react";
 import contact from "@/routes/contact";
 import { SharedData } from "@/types";
 import { privacy } from "@/routes";
+import GoogleMap from "@/components/ecommerce/google-map";
 
 const fadeInUp: Variants = {
     hidden: { opacity: 0, y: 30 },
@@ -272,17 +273,8 @@ export default function Contact() {
                         </motion.div>
                     </div>
                     {/* Carte Google Maps Embed */}
-                    <div className="mt-10 md:mt-20 rounded-2xl overflow-hidden h-64 bg-stone-100 border border-stone-200 relative group">
-                        <iframe
-                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3980.5!2d11.5!3d3.8!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zM8KwNDgnMDAuMCJOIDExwrAzMCswMC4wIkU!5e0!3m2!1sfr!2scm!4v1620000000000!5m2!1sfr!2scm"
-                            width="100%"
-                            height="100%"
-                            style={{ border: 0 }}
-                            allowFullScreen
-                            loading="lazy"
-                            referrerPolicy="no-referrer-when-downgrade"
-                            className="grayscale hover:grayscale-0 transition-all duration-700 opacity-80 hover:opacity-100"
-                        />
+                    <div className="mt-10 md:mt-20 rounded-2xl overflow-hidden bg-stone-100 border border-stone-200 relative group">
+                        <GoogleMap />
                     </div>
                 </div>
             </div>

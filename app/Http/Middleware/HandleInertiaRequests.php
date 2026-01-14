@@ -67,6 +67,7 @@ class HandleInertiaRequests extends Middleware
                 'budget' => $settings->budget,
                 'registration' => $settings->registration,
                 'taxpayer_number' => $settings->taxpayer_number,
+                'show_price' => $settings->show_price,
             ],
         ];
 

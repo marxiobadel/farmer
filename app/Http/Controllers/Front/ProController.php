@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Front;
 use App\Http\Controllers\Controller;
 use App\Models\ProRequest;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class ProController extends Controller
@@ -26,6 +27,10 @@ class ProController extends Controller
             'address' => 'required|string',
             'message' => 'nullable|string',
         ]);
+
+        if (Auth::user()->proRequests()->count() > 0) {
+            return back()->withErrors(__("Vous n'êtes plus autorisé à vous octroyer un espace pro."), 'error');
+        }
 
         ProRequest::create($validated);
 

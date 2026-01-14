@@ -72,7 +72,7 @@ export function AppSidebarHeader({ breadcrumbs = [] }: { breadcrumbs?: Breadcrum
                         <DropdownMenuTrigger asChild>
                             <button className="flex items-center gap-2 focus:outline-none">
                                 <Avatar className="h-8 w-8">
-                                    <AvatarImage src={auth.user?.avatar_url} alt={auth.user?.lastname || 'user'} />
+                                    <AvatarImage className="object-cover" src={auth.user?.avatar_url} alt={auth.user?.lastname || 'user'} />
                                     <AvatarFallback>{getInitials(auth.user?.lastname || 'user')}</AvatarFallback>
                                 </Avatar>
                                 <div className="flex flex-col items-start text-left">

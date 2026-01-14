@@ -24,15 +24,8 @@ class ProductController extends Controller
             $query->whereRelation('categories', 'slug', '=', $request->string('category'));
         }
 
-        if ($request->filled('min_price')) {
-            $query->where('base_price', '>=', $request->input('min_price'));
-        }
-
-        if ($request->filled('max_price')) {
-            $query->where('base_price', '<=', $request->input('max_price'));
-        }
-
         // On récupère le prix du variant par défaut (ou le premier) via une sous-requête
+        // Utile uniquement pour le tri (sort)
         $variantPriceSubquery = "(
             SELECT price FROM product_variants
             WHERE product_variants.product_id = products.id
@@ -40,9 +33,6 @@ class ProductController extends Controller
             LIMIT 1
         )";
 
-        // COALESCE renvoie la première valeur non-nulle.
-        // Si le produit a des variants, $variantPriceSubquery renvoie un prix, on l'utilise.
-        // Sinon, il renvoie NULL, et on utilise products.base_price.
         $effectivePriceSql = "COALESCE($variantPriceSubquery, products.base_price)";
 
         switch ($request->input('sort')) {
@@ -55,7 +45,7 @@ class ProductController extends Controller
             case 'oldest':
                 $query->oldest();
                 break;
-            default: // 'newest' par défaut
+            default:
                 $query->latest();
                 break;
         }
@@ -64,19 +54,10 @@ class ProductController extends Controller
 
         $categories = Category::active()->forProduct()->orderBy('name')->get();
 
-        // Stats pour le slider prix (basé sur le base_price pour la performance globale)
-        $priceStats = Product::published()
-            ->selectRaw('min(base_price) as min, max(base_price) as max')
-            ->first();
-
         return Inertia::render('front/products/index', [
-            'products' => Inertia::scroll(ProductResource::collection($products)),
-            'categories' => CategoryResource::collection($categories),
-            'filters' => $request->all(),
-            'priceRange' => [
-                'min' => $priceStats->min ?? 0,
-                'max' => $priceStats->max ?? 10000,
-            ],
+            'products' => fn () => ProductResource::collection($products),
+            'categories' => fn () => CategoryResource::collection($categories),
+            'filters' => $request->all()
         ]);
     }
 

@@ -112,18 +112,6 @@ class OrderController extends Controller
         ]);
     }
 
-    /**
-     * Load the shared data for both create/edit forms.
-     */
-    private function loadOrderFormData(): array
-    {
-        return Concurrency::driver('sync')->run([
-            fn () => Product::with('variants.options')->latest()->get(),
-            fn () => User::with('addresses')->latest('firstname')->get(),
-            fn () => Zone::with('rates.carrier')->get(),
-        ]);
-    }
-
     public function show(Order $order)
     {
         return Inertia::render('admin/orders/show', [

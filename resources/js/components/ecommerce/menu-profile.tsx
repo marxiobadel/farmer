@@ -15,6 +15,7 @@ import products from "@/routes/products";
 import { useInitials } from "@/hooks/use-initials";
 
 export const navItems = [
+    { label: "Accueil", href: '/' },
     { label: "Nos Produits", href: products.index().url },
     { label: "Elevage", href: farming().url },
     { label: "À propos", href: about().url },

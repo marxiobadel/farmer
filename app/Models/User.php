@@ -121,4 +121,9 @@ class User extends Authenticatable implements HasMedia
     {
         $this->notify(new VerifyEmailNotification);
     }
+
+    public function proRequests()
+    {
+        return $this->hasMany(ProRequest::class);
+    }
 }

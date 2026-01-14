@@ -141,6 +141,12 @@ export const paymentStatus = [
     { label: "Retourné", value: "refunded" },
 ];
 
+export const proStatus = [
+    { label: "En attente", value: "pending" },
+    { label: "Acceptée", value: "approved" },
+    { label: "Rejetée", value: "rejected" },
+];
+
 export const paymentMethods = [
     { label: "Cash", value: "cash" },
     { label: "Orange Money", value: "orange_money" },

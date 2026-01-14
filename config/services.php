@@ -41,6 +41,8 @@ return [
         'appearance',
         'two-factor',
         'password',
+        'products',
+        'orders',
     ],
 
     'app_settings' => [

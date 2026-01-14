@@ -3,6 +3,7 @@ import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import notify from '@sounds/notify.mp3';
 import { toPng } from 'html-to-image';
+import { Product } from '@/types';
 
 export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
@@ -122,3 +123,48 @@ export const getPaymentStatusColor = (status: string) => {
         ? "text-green-600 bg-green-50 border-green-200"
         : "text-amber-600 bg-amber-50 border-amber-200";
 };
+
+export const adaptProductToCard = (product: Product) => {
+    let price = product.base_price;
+    let variantName: string | null = null;
+    let image = product.default_image;
+    let availableQty = product.quantity;
+
+    if (product.variants && product.variants.length > 0) {
+        const variant =
+            product.variants.find(v => v.is_default) || product.variants[0];
+
+        price = Number(variant.price);
+        image = variant.image || image;
+        availableQty = variant.quantity;
+
+        if (variant.options?.length > 0) {
+            variantName = variant.options
+                .map(opt => opt.option)
+                .join(' / ');
+        }
+    }
+
+    return {
+        id: product.id.toString(),
+        name: product.name,
+        category: ('category_name' in product && typeof product.category_name === 'string'
+            ? product.category_name
+            : product.categories?.[0]?.name) ?? 'Boutique',
+        variant_name: variantName,
+        price,
+        currency: 'FCFA',
+        origin: product.origin || 'Ferme Locale',
+        image:
+            image ||
+            `https://placehold.co/300?text=${encodeURIComponent(
+                product.name
+            )}`,
+        isAvailable: availableQty > 0,
+        variants: product.variants,
+        availableQty,
+        is_favorited: product.is_favorited,
+        slug: product.slug,
+        badge: undefined,
+    };
+}

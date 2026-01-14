@@ -1,5 +1,6 @@
 import { Product } from "@/types";
 import { ProductCard } from "./product-card";
+import { adaptProductToCard } from "@/lib/utils";
 
 interface ProductGridProps {
     products: Product[];
@@ -18,26 +19,9 @@ export const ProductGrid = ({ products, selectedCategoryName }: ProductGridProps
 
             {products.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-10">
-                    {products.map((product) => (
+                    {products.map(adaptProductToCard).map((product) => (
                         <div key={product.id}>
-                            <ProductCard
-                                product={{
-                                    id: String(product.id),
-                                    name: product.name,
-                                    variant_name: (product as any).variant_name,
-                                    category: selectedCategoryName === "Tous" ? (product as any).category_name : selectedCategoryName,
-                                    price: product.base_price,
-                                    currency: "FCFA",
-                                    origin: product.origin || "Ferme Locale",
-                                    image: (product as any).image || `https://placehold.co/300?text=${encodeURIComponent(product.name)}`,
-                                    isAvailable: (product as any).availableQty > 0,
-                                    slug: product.slug,
-                                    variants: product.variants,
-                                    availableQty: product.quantity,
-                                    is_favorited: product.is_favorited,
-                                    badge: undefined
-                                }}
-                            />
+                            <ProductCard product={product} />
                         </div>
                     ))}
                 </div>

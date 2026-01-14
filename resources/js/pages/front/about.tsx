@@ -4,6 +4,9 @@ import { motion, Variants } from "framer-motion";
 import { Award, Heart, Leaf, Users, CheckCircle, Sprout } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { contact } from "@/routes";
+import { HeroVideoDialog } from "@/components/ui/hero-video-dialog";
+import { NumberTicker } from "@/components/ui/number-ticker";
+import products from "@/routes/products";
 
 // Animation variants
 const fadeInUp: Variants = {
@@ -63,7 +66,7 @@ export default function About() {
                                 variants={fadeInUp}
                                 className="text-4xl font-bold tracking-tight text-white sm:text-6xl font-serif"
                             >
-                                Nourrir l'Afrique avec <br/> <span className="text-primary">Excellence et Passion</span>
+                                Nourrir l'Afrique avec <br /> <span className="text-primary">Excellence et Passion</span>
                             </motion.h1>
 
                             <motion.p
@@ -88,7 +91,7 @@ export default function About() {
                             transition={{ duration: 0.8 }}
                         >
                             <h2 className="text-3xl font-bold tracking-tight text-stone-900 sm:text-4xl mb-6">
-                                Plus qu'une ferme, <br/> un écosystème.
+                                Plus qu'une ferme, <br /> un écosystème.
                             </h2>
                             <div className="space-y-6 text-lg text-stone-600">
                                 <p>
@@ -126,24 +129,29 @@ export default function About() {
                             transition={{ duration: 0.8 }}
                             className="relative"
                         >
-                            <div className="aspect-[4/3] rounded-2xl bg-stone-100 overflow-hidden shadow-xl border border-stone-200">
+                            <div className="aspect-[4/3] rounded-2xl overflow-hidden">
                                 {/* Simuler une image */}
-                                <div className="w-full h-full bg-stone-200 flex items-center justify-center text-stone-400">
-                                    <span className="flex flex-col items-center gap-2">
-                                        <Sprout className="h-12 w-12" />
-                                        <span>Photo de la ferme</span>
-                                    </span>
+                                <div className="w-full h-full flex items-center justify-center text-stone-400">
+                                    <HeroVideoDialog
+                                        className="block"
+                                        animationStyle="from-center"
+                                        videoSrc="https://www.youtube.com/embed/1mecNDckaLM"
+                                        thumbnailSrc="/images/brown-chickens-farm.jpg"
+                                        thumbnailAlt="MontView Video"
+                                    />
                                 </div>
                             </div>
                             {/* Élément décoratif flottant */}
-                            <div className="absolute -bottom-6 -left-6 bg-white p-6 rounded-xl shadow-lg border border-stone-100 max-w-xs">
+                            <div className="absolute left-[30%] -bottom-6 sm:-left-6 bg-white p-6 rounded-xl shadow-lg border border-stone-100 max-w-xs">
                                 <div className="flex items-center gap-4">
                                     <div className="bg-primary/10 p-3 rounded-full text-primary">
                                         <Users className="h-6 w-6" />
                                     </div>
                                     <div>
                                         <p className="text-sm text-stone-500">Clients satisfaits</p>
-                                        <p className="text-xl font-bold text-stone-900">+1 500</p>
+                                        <p className="text-xl font-bold text-stone-900">
+                                            +<NumberTicker value={1500} />
+                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -211,7 +219,7 @@ export default function About() {
                 <div className="max-w-7xl mx-auto px-6 lg:px-8 text-center">
                     <h2 className="text-2xl font-bold text-stone-900 mb-6">Envie de goûter à la différence ?</h2>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                        <Link href="/">
+                        <Link href={products.index()}>
                             <Button size="lg" className="bg-primary hover:bg-primary/90 text-white rounded-full px-8">
                                 Voir nos produits
                             </Button>

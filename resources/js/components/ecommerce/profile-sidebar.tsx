@@ -6,7 +6,8 @@ import {
     LogOut,
     LayoutDashboard,
     MapPin,
-    ShieldCheck
+    ShieldCheck,
+    Sparkles
 } from "lucide-react";
 import { logout } from "@/routes";
 import profile from "@/routes/profile";
@@ -39,6 +40,12 @@ export default function ProfileSidebar({ className }: { className?: string }) {
             href: profile.orders().url,
             icon: Package,
             active: isActive('/profile/orders'),
+        },
+        {
+            title: "Espace Pro",
+            href: profile.espacePro().url,
+            icon: Sparkles,
+            active: isActive('/profile/espace-pro'),
         },
         {
             title: "Mes données",

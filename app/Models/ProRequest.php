@@ -22,7 +22,7 @@ class ProRequest extends Model
 
     protected static function booted(): void
     {
-        static::created(function ($proRequest) {
+        static::creating(function ($proRequest) {
             $proRequest->user_id = Auth::id();
         });
     }

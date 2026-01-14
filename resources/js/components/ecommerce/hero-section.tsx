@@ -4,6 +4,8 @@ import { motion } from "framer-motion";
 import { BlobBackground, HenIllustration } from "./illustrations";
 import { router } from "@inertiajs/react";
 import pro from "@/routes/pro";
+import products from "@/routes/products";
+import { NumberTicker } from "../ui/number-ticker";
 
 export const HeroSection = () => {
     return (
@@ -47,8 +49,11 @@ export const HeroSection = () => {
                         </p>
 
                         <div className="flex flex-col sm:flex-row gap-4 pt-2">
-                            <Button size="lg" className="bg-primary hover:bg-primary/90 text-white h-14 px-8 text-lg rounded-full shadow-lg shadow-primary/25 transition-all hover:scale-105">
-                                Voir nos offres
+                            <Button
+                                onClick={() => router.visit(products.index().url)}
+                                size="lg"
+                                className="bg-primary hover:bg-primary/90 text-white h-14 px-8 text-lg rounded-full shadow-lg shadow-primary/25 transition-all hover:scale-105">
+                                Voir nos produits
                                 <ArrowRight className="ml-2 h-5 w-5" />
                             </Button>
                             <Button
@@ -113,7 +118,9 @@ export const HeroSection = () => {
                                 transition={{ delay: 1.2, duration: 0.5 }}
                                 className="absolute bottom-10 left-0 z-20 bg-white/90 backdrop-blur-md rounded-2xl p-4 shadow-xl border border-stone-100"
                             >
-                                <p className="text-3xl font-bold text-primary">50k+</p>
+                                <p className="text-3xl font-bold text-primary">
+                                    <NumberTicker value={50} className="text-primary" />k+
+                                </p>
                                 <p className="text-sm font-medium text-stone-600">Œufs / mois</p>
                             </motion.div>
                         </div>

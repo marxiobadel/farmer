@@ -1,5 +1,5 @@
 import AppLayout from "@/layouts/app-layout";
-import { Head, router, Link, usePage } from "@inertiajs/react";
+import { Head, router, Link } from "@inertiajs/react";
 import { useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Search, SlidersHorizontal, X, ShoppingBag } from "lucide-react";
@@ -21,28 +21,13 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Slider } from "@/components/ui/slider";
 import { ProductCard } from "@/components/ecommerce/product-card";
 import { debounce } from "lodash";
 import productsRoutes from "@/routes/products";
-import { SharedData } from "@/types";
+import { Category, Product } from "@/types";
+import { adaptProductToCard } from "@/lib/utils";
 
 // --- TYPES ---
-interface Category {
-    id: number;
-    name: string;
-    slug: string;
-}
-
-interface Product {
-    id: number;
-    name: string;
-    slug: string;
-    base_price: number;
-    image_url: string;
-    category?: string;
-    // Ajoutez d'autres champs selon votre Resource
-}
 
 interface MetaLink {
     url: string | null;
@@ -67,24 +52,12 @@ interface Props {
         search?: string;
         category?: string;
         sort?: string;
-        min_price?: string;
-        max_price?: string;
-    };
-    priceRange: {
-        min: number;
-        max: number;
     };
 }
 
-export default function ShopIndex({ products, categories, filters, priceRange }: Props) {
-    const { defaultCurrency } = usePage<SharedData>().props;
-
-    // États locaux pour la gestion fluide des inputs
+export default function ShopIndex({ products, categories, filters }: Props) {
+    // États locaux pour la gestion fluide de l'input de recherche
     const [search, setSearch] = useState(filters.search || "");
-    const [price, setPrice] = useState([
-        Number(filters.min_price) || priceRange.min,
-        Number(filters.max_price) || priceRange.max
-    ]);
 
     // Fonction principale de mise à jour des filtres URL
     const updateParams = useCallback((newParams: Record<string, any>) => {
@@ -94,18 +67,14 @@ export default function ShopIndex({ products, categories, filters, priceRange }:
         }, {
             preserveState: true,
             preserveScroll: true,
-            replace: true
+            replace: true, // Utiliser replace pour ne pas empiler l'historique
+            except: ['categories'] // Ne pas recharger les catégories
         });
     }, [filters]);
 
-    // Debounce pour la recherche et le slider prix (éviter trop de requêtes)
+    // Debounce pour la recherche uniquement
     const debouncedSearch = useCallback(
         debounce((value: string) => updateParams({ search: value || null, page: 1 }), 500),
-        []
-    );
-
-    const debouncedPrice = useCallback(
-        debounce((val: number[]) => updateParams({ min_price: val[0], max_price: val[1], page: 1 }), 500),
         []
     );
 
@@ -115,47 +84,78 @@ export default function ShopIndex({ products, categories, filters, priceRange }:
         debouncedSearch(e.target.value);
     };
 
-    const handlePriceChange = (val: number[]) => {
-        setPrice(val);
-        debouncedPrice(val);
-    };
-
     const clearFilters = () => {
         setSearch("");
-        setPrice([priceRange.min, priceRange.max]);
         router.get(productsRoutes.index().url);
     };
+
+    const adaptedProducts = products.data.map(adaptProductToCard);
 
     return (
         <AppLayout layout="guest">
             <Head title="Nos Produits" />
 
             {/* --- HERO SECTION --- */}
-            <div className="bg-stone-900 relative overflow-hidden isolate h-64 flex items-center">
-                <div className="absolute inset-0 -z-10 bg-gradient-to-r from-stone-950 to-stone-900" />
-                {/* Pattern décoratif */}
-                <svg className="absolute inset-0 -z-10 h-full w-full stroke-white/10 [mask-image:radial-gradient(100%_100%_at_top_right,white,transparent)]" aria-hidden="true">
-                    <defs>
-                        <pattern id="shop-pattern" width={200} height={200} x="50%" y={-1} patternUnits="userSpaceOnUse">
-                            <path d="M.5 200V.5H200" fill="none" />
-                        </pattern>
-                    </defs>
-                    <rect width="100%" height="100%" strokeWidth={0} fill="url(#shop-pattern)" />
-                </svg>
+            <div className="relative bg-stone-900 overflow-hidden isolate">
+                {/* Fond décoratif (Gradient et Pattern uniquement, pas d'image) */}
+                <div className="absolute inset-0 -z-10">
+                    <div className="absolute inset-0 bg-gradient-to-br from-stone-900 via-stone-800 to-stone-900 opacity-90" />
+                    <svg className="absolute inset-0 h-full w-full stroke-white/10 [mask-image:radial-gradient(100%_100%_at_top_right,white,transparent)]" aria-hidden="true">
+                        <defs>
+                            <pattern id="shop-pattern" width={200} height={200} x="50%" y={-1} patternUnits="userSpaceOnUse">
+                                <path d="M.5 200V.5H200" fill="none" />
+                            </pattern>
+                        </defs>
+                        <rect width="100%" height="100%" strokeWidth={0} fill="url(#shop-pattern)" />
+                    </svg>
+                </div>
 
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full relative z-10">
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5 }}
-                    >
-                        <h1 className="text-4xl font-bold tracking-tight text-white font-serif mb-2">
-                            La Boutique <span className="text-primary">Fermière</span>
-                        </h1>
-                        <p className="text-stone-400 text-lg max-w-2xl">
-                            Des produits frais, locaux et de qualité supérieure, livrés chez vous.
-                        </p>
-                    </motion.div>
+                <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-20 sm:py-24 lg:py-32 relative z-10">
+                    <div className="mx-auto max-w-2xl text-center">
+                        <motion.div
+                            initial="hidden"
+                            animate="visible"
+                            variants={{
+                                hidden: { opacity: 0 },
+                                visible: { opacity: 1, transition: { staggerChildren: 0.2 } }
+                            }}
+                        >
+                            {/* Badge */}
+                            <motion.div
+                                variants={{
+                                    hidden: { opacity: 0, y: 30 },
+                                    visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
+                                }}
+                                className="flex justify-center mb-6"
+                            >
+                                <span className="rounded-full bg-primary/10 px-3 py-1 text-sm font-semibold leading-6 text-primary ring-1 ring-inset ring-primary/20">
+                                    Direct Producteur
+                                </span>
+                            </motion.div>
+
+                            {/* Titre */}
+                            <motion.h1
+                                variants={{
+                                    hidden: { opacity: 0, y: 30 },
+                                    visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
+                                }}
+                                className="text-4xl font-bold tracking-tight text-white sm:text-6xl font-serif"
+                            >
+                                La Boutique <span className="text-primary">Fermière</span>
+                            </motion.h1>
+
+                            {/* Description */}
+                            <motion.p
+                                variants={{
+                                    hidden: { opacity: 0, y: 30 },
+                                    visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
+                                }}
+                                className="mt-6 text-lg leading-8 text-stone-300"
+                            >
+                                Des produits frais, locaux et de qualité supérieure, livrés chez vous.
+                            </motion.p>
+                        </motion.div>
+                    </div>
                 </div>
             </div>
 
@@ -209,23 +209,7 @@ export default function ShopIndex({ products, categories, filters, priceRange }:
                                 </div>
                             </div>
 
-                            {/* Prix Slider */}
-                            <div className="bg-white p-5 rounded-2xl border border-stone-200">
-                                <h3 className="font-bold text-stone-900 mb-6 font-serif">Budget ({defaultCurrency})</h3>
-                                <Slider
-                                    defaultValue={[priceRange.min, priceRange.max]}
-                                    min={priceRange.min}
-                                    max={priceRange.max}
-                                    step={100}
-                                    value={price}
-                                    onValueChange={handlePriceChange}
-                                    className="mb-6"
-                                />
-                                <div className="flex items-center justify-between text-sm text-stone-600 font-medium">
-                                    <span>{price[0].toLocaleString()} F</span>
-                                    <span>{price[1].toLocaleString()} F</span>
-                                </div>
-                            </div>
+                            {/* Suppression du widget Prix Slider ici */}
                         </aside>
 
                         {/* --- MAIN CONTENT --- */}
@@ -247,15 +231,15 @@ export default function ShopIndex({ products, categories, filters, priceRange }:
                                                 <SheetTitle>Filtres</SheetTitle>
                                                 <SheetDescription>Affinez votre recherche</SheetDescription>
                                             </SheetHeader>
-                                            <div className="mt-8 space-y-6">
+                                            <div className="mt-4 px-4 space-y-6">
                                                 <Input
                                                     placeholder="Rechercher..."
                                                     value={search}
                                                     onChange={handleSearchChange}
                                                 />
-                                                <div className="space-y-2">
+                                                <div className="space-y-4">
                                                     <label className="text-sm font-medium">Catégories</label>
-                                                    <div className="grid gap-2">
+                                                    <div className="grid gap-2 mt-4">
                                                         {categories.map(cat => (
                                                             <Button
                                                                 key={cat.id}
@@ -298,7 +282,7 @@ export default function ShopIndex({ products, categories, filters, priceRange }:
                             </div>
 
                             {/* Active Filters Chips */}
-                            {(filters.category || filters.search || filters.min_price) && (
+                            {(filters.category || filters.search) && (
                                 <div className="flex flex-wrap gap-2 mb-6">
                                     {filters.category && (
                                         <Badge variant="secondary" className="px-3 py-1 flex gap-2 items-center bg-white border border-stone-200">
@@ -306,12 +290,7 @@ export default function ShopIndex({ products, categories, filters, priceRange }:
                                             <button onClick={() => updateParams({ category: null })}><X className="h-3 w-3" /></button>
                                         </Badge>
                                     )}
-                                    {filters.min_price && (
-                                        <Badge variant="secondary" className="px-3 py-1 flex gap-2 items-center bg-white border border-stone-200">
-                                            Prix: {filters.min_price}F - {filters.max_price}F
-                                            <button onClick={() => updateParams({ min_price: null, max_price: null })}><X className="h-3 w-3" /></button>
-                                        </Badge>
-                                    )}
+                                    {/* Suppression du badge min_price/max_price */}
                                     <button onClick={clearFilters} className="text-xs text-stone-500 underline hover:text-stone-800 ml-2">
                                         Tout effacer
                                     </button>
@@ -319,9 +298,14 @@ export default function ShopIndex({ products, categories, filters, priceRange }:
                             )}
 
                             {/* Product Grid */}
-                            {products.data.length > 0 ? (
+                            {adaptedProducts.length > 0 ? (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-
+                                    {adaptedProducts.map(adaptedProduct => (
+                                        <div key={adaptedProduct.id}>
+                                            {/* @ts-ignore - Les types correspondent via l'adaptateur mais TS peut être strict */}
+                                            <ProductCard product={adaptedProduct} />
+                                        </div>
+                                    ))}
                                 </div>
                             ) : (
                                 <div className="text-center py-24 bg-white rounded-2xl border border-dashed border-stone-200">
@@ -353,8 +337,8 @@ export default function ShopIndex({ products, categories, filters, priceRange }:
                                                 preserveScroll
                                                 preserveState
                                                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors border ${link.active
-                                                        ? "bg-primary text-white border-primary"
-                                                        : "bg-white text-stone-600 border-stone-200 hover:bg-stone-50"
+                                                    ? "bg-primary text-white border-primary"
+                                                    : "bg-white text-stone-600 border-stone-200 hover:bg-stone-50"
                                                     }`}
                                                 dangerouslySetInnerHTML={{ __html: link.label }}
                                             />

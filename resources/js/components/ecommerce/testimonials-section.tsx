@@ -1,29 +1,17 @@
 import { motion } from "framer-motion";
 import { Quote } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
-const testimonials = [
-    {
-        content: "Depuis que nous utilisons les œufs Montview pour nos pâtisseries, la qualité de nos gâteaux a fait un bond. Les jaunes sont d'une couleur incroyable !",
-        author: "Amadou K.",
-        role: "Chef Pâtissier, Le Palais Gourmand",
-        image: "https://i.pravatar.cc/150?u=a",
-    },
-    {
-        content: "Un fournisseur fiable. Les livraisons sont toujours à l'heure, et le taux de casse est quasi inexistant grâce à leur conditionnement soigné.",
-        author: "Sarah M.",
-        role: "Gérante, Supermarché Eco",
-        image: "https://i.pravatar.cc/150?u=s",
-    },
-    {
-        content: "J'achète mes poules de réforme ici chaque année. Elles sont en excellente santé et bien dodues. La meilleure ferme de la région.",
-        author: "Jean-Paul B.",
-        role: "Revendeur Volailles",
-        image: "https://i.pravatar.cc/150?u=j",
-    }
-];
+import { usePage } from "@inertiajs/react";
+import { SharedData, Testimonial } from "@/types";
+import { formatName } from "@/lib/utils";
+import { useInitials } from "@/hooks/use-initials";
 
 export const TestimonialsSection = () => {
+    const props = usePage<SharedData>().props;
+    const testimonials = (props.testimonials as Testimonial[]) || [];
+
+    const getInitials = useInitials();
+
     return (
         <section className="bg-stone-900 py-16 sm:py-20 md:py-24 relative overflow-hidden">
             {/* Background Pattern */}
@@ -53,17 +41,17 @@ export const TestimonialsSection = () => {
                             <div>
                                 <Quote className="h-8 w-8 text-primary/40 mb-4" />
                                 <p className="text-lg leading-relaxed text-stone-300">
-                                    "{testimonial.content}"
+                                    "{testimonial.message}"
                                 </p>
                             </div>
                             <div className="mt-8 flex items-center gap-x-4">
                                 <Avatar>
-                                    <AvatarImage src={testimonial.image} />
-                                    <AvatarFallback className="bg-primary text-white">{testimonial.author[0]}</AvatarFallback>
+                                    <AvatarImage className="object-cover" src={testimonial.user?.avatar_url ?? ''} />
+                                    <AvatarFallback className="bg-primary text-white">{getInitials(testimonial.user?.fullname ?? 'M')}</AvatarFallback>
                                 </Avatar>
                                 <div>
-                                    <div className="font-semibold text-white">{testimonial.author}</div>
-                                    <div className="text-sm leading-6 text-stone-400">{testimonial.role}</div>
+                                    <div className="font-semibold text-white">{formatName(testimonial.user?.fullname ?? '')}</div>
+                                    <div className="text-sm leading-6 text-stone-400">{testimonial.position ?? testimonial.user?.email}</div>
                                 </div>
                             </div>
                         </motion.div>

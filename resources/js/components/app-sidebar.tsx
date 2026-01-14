@@ -5,7 +5,7 @@ import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, Sid
 import { dashboard } from '@/routes';
 import type { NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { Boxes, FileQuestion, LayoutGrid, MessageCircle, ShoppingBag, User2, Star, Truck, Box } from 'lucide-react';
+import { Boxes, FileQuestion, LayoutGrid, MessageCircle, ShoppingBag, User2, Star, Truck, Box, UserCheck } from 'lucide-react';
 import AppLogo from './app-logo';
 import admin from '@/routes/admin';
 
@@ -40,6 +40,11 @@ const manageNavItems: NavItem[] = [
         title: 'Utilisateurs',
         href: admin.users.index().url,
         icon: User2,
+    },
+    {
+        title: 'Comptes Pro',
+        href: admin.proRequests.index().url,
+        icon: UserCheck,
     },
     {
         title: 'Transporteurs',

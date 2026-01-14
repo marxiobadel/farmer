@@ -4,8 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Carrier;
 use App\Models\CarrierRate;
+use App\Models\Product;
+use App\Models\User;
 use App\Models\Zone;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Concurrency;
 
 abstract class Controller
 {
@@ -97,5 +100,17 @@ abstract class Controller
             'cash' => 'manual',
             default => 'manual',
         };
+    }
+
+    /**
+     * Load the shared data for both create/edit forms.
+     */
+    protected function loadOrderFormData(): array
+    {
+        return Concurrency::driver('sync')->run([
+            fn () => Product::with('variants.options')->latest()->get(),
+            fn () => User::with('addresses')->latest('firstname')->get(),
+            fn () => Zone::with('rates.carrier')->get(),
+        ]);
     }
 }

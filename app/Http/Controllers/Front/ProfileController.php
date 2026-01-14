@@ -4,13 +4,20 @@ namespace App\Http\Controllers\Front;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\AddressResource;
+use App\Http\Resources\CartResource;
+use App\Http\Resources\CountryResource;
 use App\Http\Resources\OrderResource;
+use App\Http\Resources\ProductResource;
+use App\Http\Resources\ZoneResource;
+use App\Models\Cart;
+use App\Models\Country;
 use App\Models\Order;
 use App\Models\User;
 use App\Settings\GeneralSettings;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Illuminate\Validation\Rule;
 
@@ -119,8 +126,13 @@ class ProfileController extends Controller
 
     public function addresses(Request $request)
     {
+        $countries = Cache::rememberForever('countries', function () {
+            return Country::orderBy('name')->get(['id', 'iso', 'nicename', 'name', 'phonecode']);
+        });
+
         return Inertia::render('front/profile/addresses', [
             'addresses' => AddressResource::collection($request->user()->addresses),
+            'countries' => fn() => CountryResource::collection($countries),
         ]);
     }
 
@@ -128,6 +140,24 @@ class ProfileController extends Controller
     {
         return Inertia::render('front/profile/password', [
             'status' => session('status'),
+        ]);
+    }
+
+    public function espacePro()
+    {
+        $currentUser = Auth::user();
+
+        [$products, $users, $zones] = $this->loadOrderFormData();
+
+        $cart = Cart::firstOrCreate(['user_id' => $currentUser->id]);
+        $cart->load('items.product', 'items.variant');
+
+        return Inertia::render('front/profile/pro', [
+            'hasProSpace' => $currentUser->proRequests()->count() > 0,
+            'products' => ProductResource::collection($products),
+            'zones' => ZoneResource::collection($zones),
+            'addresses' => AddressResource::collection($currentUser->addresses),
+            'cart' => new CartResource($cart),
         ]);
     }
 }

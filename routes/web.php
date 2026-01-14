@@ -8,11 +8,13 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\FaqController;
 use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\PaymentController;
+use App\Http\Controllers\Admin\ProController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\StockMovementController;
 use App\Http\Controllers\Admin\TestimonialController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\ZoneController;
+use App\Http\Controllers\Front\AddressController;
 use App\Http\Controllers\Front\IndexController;
 use App\Http\Controllers\Front\NewsletterController;
 use App\Http\Controllers\Settings\ProfileController;
@@ -77,9 +79,11 @@ Route::middleware(['auth'])->group(function () {
             Route::get('informations', 'edit')->name('edit');
             Route::post('informations', 'update')->name('update');
             Route::get('addresses', 'addresses')->name('addresses');
-            Route::post('addresses', 'storeAddress')->name('addresses.store');
             Route::get('security', 'security')->name('password.edit');
+            Route::get('espace-pro', 'espacePro')->name('espacePro');
         });
+
+    Route::resource('addresses', AddressController::class)->only(['destroy', 'store', 'update']);
 
     Route::prefix('admin')->middleware(['can:access-admin'])->group(function () {
         Route::redirect('/', '/admin/dashboard', 301);
@@ -133,6 +137,9 @@ Route::middleware(['auth'])->group(function () {
 
             Route::resource('faqs', FaqController::class)->except(['show', 'edit', 'destroy']);
             Route::post('faqs/destroy', [FaqController::class, 'destroy'])->name('faqs.destroy');
+
+            Route::resource('proRequests', ProController::class)->only(['show', 'index', 'update']);
+            Route::post('proRequests/destroy', [ProController::class, 'destroy'])->name('proRequests.destroy');
 
             Route::redirect('/settings', '/admin/settings/general', 301);
             Route::prefix('settings')->name('settings.')

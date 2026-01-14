@@ -40,6 +40,7 @@ class UpdateRequest extends FormRequest
                     'youtube' => 'nullable|url|max:255',
                 ];
             case 'general':
+            case 'products':
             default:
                 return [];
         }

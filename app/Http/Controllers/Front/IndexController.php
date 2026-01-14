@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Front;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\FaqResource;
 use App\Http\Resources\HomeCategoryResource;
+use App\Http\Resources\TestimonialResource;
 use App\Models\Category;
 use App\Models\Faq;
+use App\Models\Testimonial;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
@@ -39,9 +41,16 @@ class IndexController extends Controller
                 })
         );
 
+        $testimonials = Cache::remember(
+            'front_testimonials_active',
+            60 * 60 * 24,
+            fn() => Testimonial::with('user')->approved()->inRandomOrder()->take(3)->get()
+        );
+
         return Inertia::render('front/index', [
             'canRegister' => Features::enabled(Features::registration()),
             'categories' => HomeCategoryResource::collection($categories),
+            'testimonials' => TestimonialResource::collection($testimonials),
         ]);
     }
 

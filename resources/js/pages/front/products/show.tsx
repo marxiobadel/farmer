@@ -4,7 +4,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useCurrencyFormatter } from '@/hooks/use-currency';
-import { cn } from '@/lib/utils';
+import { adaptProductToCard, cn } from '@/lib/utils';
 import { Product } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -16,17 +16,6 @@ import FavoriteButton from '@/components/ecommerce/favorite-button';
 import carts from '@/routes/carts';
 
 // Adaptateur pour le composant ProductCard qui utilise un type légèrement différent
-interface ProductCardData {
-    id: string;
-    name: string;
-    category: string;
-    price: number;
-    currency: string;
-    origin: string;
-    image: string;
-    isAvailable: boolean;
-    slug: string;
-}
 
 interface PageProps {
     product: Product;
@@ -173,44 +162,7 @@ export default function ProductShow({ product, related }: PageProps) {
     };
 
     // Transformation pour les produits similaires (Adapter le type Product global vers le type ProductCard local si besoin)
-    const relatedProducts: ProductCardData[] = related.map((p) => {
-        let displayPrice = p.base_price;
-        let variantName = null;
-        let image = p.default_image;
-        let availableQty = p.quantity;
-
-        if (p.variants && p.variants.length > 0) {
-            const selectedVariant = p.variants.find(v => v.is_default) || p.variants[0];
-
-            // Mise à jour du prix
-            displayPrice = selectedVariant.price;
-
-            // Extraction du nom de la variante (ex: "Gros Calibre")
-            if (selectedVariant.options && selectedVariant.options.length > 0) {
-                variantName = selectedVariant.options.map(opt => opt.option).join(' / ');
-            }
-
-            image = selectedVariant.image;
-            availableQty = selectedVariant.quantity;
-        }
-
-        return {
-            id: p.id.toString(),
-            name: p.name,
-            category: p.categories?.[0]?.name || "Boutique",
-            variant_name: variantName,
-            price: displayPrice,
-            currency: "FCFA", // ou defaultCurrency
-            origin: p.origin || 'Ferme Locale',
-            image: image || `https://placehold.co/300?text=${encodeURIComponent(p.name)}`,
-            isAvailable: availableQty > 0,
-            variants: p.variants,
-            availableQty: p.quantity,
-            is_favorited: p.is_favorited,
-            slug: p.slug,
-            badge: undefined
-        }
-    });
+    const relatedProducts = related.map(adaptProductToCard);
 
     return (
         <AppLayout layout="guest">

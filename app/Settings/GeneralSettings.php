@@ -30,6 +30,8 @@ class GeneralSettings extends Settings
 
     public string $taxpayer_number;
 
+    public bool $show_price;
+
     public static function group(): string
     {
         return 'general';

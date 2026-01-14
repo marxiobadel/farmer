@@ -66,6 +66,8 @@ class ProfileController extends Controller
                 foreach (config('services.app_settings') as $field) {
                     $settings->{$field} = (string) ($request->input($field) ?? '');
                 }
+            } elseif ($page === 'products') {
+                $settings->show_price = $request->boolean('show_price');
             }
 
             $settings->save();

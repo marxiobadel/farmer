@@ -7,6 +7,7 @@ const baseMenu = [
     { id: 'general', label: 'Général' },
     { id: 'account', label: 'Mon compte' },
     { id: 'appearance', label: 'Apparence' },
+    { id: 'products', label: 'Produits' },
     { id: 'two-factor', label: 'Authentification 2FA' },
     { id: 'password', label: 'Mot de passe' },
 ];

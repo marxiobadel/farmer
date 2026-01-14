@@ -1,6 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { cgv, faqs, farming, legal, privacy } from "@/routes";
 import newsletter from "@/routes/newsletter";
+import products from "@/routes/products";
+import profile from "@/routes/profile";
 import { SharedData } from "@/types";
 import { Link, useForm, usePage } from "@inertiajs/react";
 import { Facebook, Instagram, Mail, Phone, MapPin, Youtube, Twitter, Linkedin } from "lucide-react";
@@ -74,9 +76,9 @@ export const Footer = () => {
                     <h4 className="font-bold text-stone-100 mb-6">Navigation</h4>
                     <ul className="space-y-4 text-sm">
                         <li>
-                            <a href="#" className="hover:text-primary hover:pl-1 transition-all duration-200 block">
+                            <Link href={products.index()} className="hover:text-primary hover:pl-1 transition-all duration-200 block">
                                 Nos Produits
-                            </a>
+                            </Link>
                         </li>
                         <li>
                             <Link href={farming()} className="hover:text-primary hover:pl-1 transition-all duration-200 block">
@@ -84,9 +86,9 @@ export const Footer = () => {
                             </Link>
                         </li>
                         <li>
-                            <a href="#" className="hover:text-primary hover:pl-1 transition-all duration-200 block">
+                            <Link href={profile.espacePro()} className="hover:text-primary hover:pl-1 transition-all duration-200 block">
                                 Espace Pro
-                            </a>
+                            </Link>
                         </li>
                         <li>
                             <Link href={faqs()} className="hover:text-primary hover:pl-1 transition-all duration-200 block">
@@ -115,7 +117,7 @@ export const Footer = () => {
                             </div>)}
                         {settings?.address && (
                             <div className="flex items-start gap-3">
-                                <MapPin className="h-7 w-7 text-primary mt-0.5" />
+                                <MapPin className="h-5 w-5 text-primary mt-0.5" />
                                 <p>{settings.address}</p>
                             </div>)}
                     </div>
