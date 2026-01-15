@@ -9,6 +9,7 @@ import { CarrierInput, RateInput } from "../create";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
+import { coefficients } from "@/data";
 
 type ServerErrors<T = unknown> = { [K in keyof T]?: string } & { [key: string]: string | undefined };
 
@@ -188,18 +189,26 @@ const RateForm: React.FC<RateFormProps> = ({
                             </Popover>
                         )}
                     />
+                    <FormFieldWrapper
+                        control={control}
+                        name={`rates.${index}.rate_price`}
+                        label="Prix *"
+                        type="number"
+                        placeholder="Prix du transport"
+                        onValueChange={(v) => updateRate("rate_price", v)}
+                        error={errors[`rates.${index}.rate_price`]}
+                    />
+                    <FormFieldWrapper
+                        control={control}
+                        name={`rates.${index}.coefficient`}
+                        label="Coefficient *"
+                        type="select"
+                        placeholder="Choisir un coefficient"
+                        options={coefficients}
+                        onValueChange={(v) => updateRate("coefficient", v)}
+                        error={errors[`rates.${index}.coefficient`]}
+                    />
                 </div>
-
-                {/* RATE PRICE */}
-                <FormFieldWrapper
-                    control={control}
-                    name={`rates.${index}.rate_price`}
-                    label="Prix"
-                    type="number"
-                    placeholder="Prix du transport"
-                    onValueChange={(v) => updateRate("rate_price", v)}
-                    error={errors[`rates.${index}.rate_price`]}
-                />
             </AccordionContent>
         </AccordionItem>
     );

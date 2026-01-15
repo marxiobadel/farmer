@@ -96,6 +96,7 @@ class CarrierController extends Controller
                         'min_volume' => $rateData['min_volume'] ?? null,
                         'max_volume' => $rateData['max_volume'] ?? null,
                         'rate_price' => $rateData['rate_price'],
+                        'coefficient' => $rateData['coefficient'] ?? '1',
                         'delivery_time' => $rateData['delivery_time'] ?? null,
                         'zone_id' => $rateData['zone_id'] ?? null,
                     ]);
@@ -140,6 +141,7 @@ class CarrierController extends Controller
                         'min_volume' => $rateData['min_volume'] ?? null,
                         'max_volume' => $rateData['max_volume'] ?? null,
                         'rate_price' => $rateData['rate_price'],
+                        'coefficient' => $rateData['coefficient'] ?? '1',
                         'delivery_time' => $rateData['delivery_time'] ?? null,
                         'zone_id' => $rateData['zone_id'] ?? null,
                     ]);

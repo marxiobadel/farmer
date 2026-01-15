@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCurrencyFormatter } from "@/hooks/use-currency";
 import { Check, Loader2, MapPin, Truck, Wallet, AlertCircle, Box, Scale, Coins, Plus, Building, Home, ChevronsUpDown } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { calculateTotalQty, cn } from "@/lib/utils";
 import InputError from "@/components/input-error";
 import { toast } from "sonner";
 import { Address, CarrierRate, Cart, Country, SharedData, Zone, Product } from "@/types";
@@ -63,8 +63,6 @@ export default function CheckoutCreate({ cart, zones, countries, user_addresses,
         billing_address: {
             address: "",
             city: "",
-            postal_code: "",
-            country_id: "" as string | null,
         },
         use_billing_address: false,
         save_address: false,
@@ -210,8 +208,14 @@ export default function CheckoutCreate({ cart, zones, countries, user_addresses,
             });
         }
 
+        const totalQty = calculateTotalQty(cart.items);
+
         if (matchedRate) {
-            return basePrice + Number(matchedRate.rate_price);
+            if (matchedRate.coefficient === 'quantity') {
+                return basePrice + Number(matchedRate.rate_price) * totalQty;
+            } else {
+                return basePrice + Number(matchedRate.rate_price);
+            }
         }
 
         return basePrice;
@@ -351,6 +355,7 @@ export default function CheckoutCreate({ cart, zones, countries, user_addresses,
                                                         className="bg-white mt-1.5"
                                                         placeholder="Ex: Maison, Bureau..."
                                                     />
+                                                    <InputError message={form.errors['shipping_address.alias']} />
                                                 </div>
                                             )}
                                         </div>
@@ -404,6 +409,7 @@ export default function CheckoutCreate({ cart, zones, countries, user_addresses,
                                                     onChange={e => form.setData('shipping_address', { ...form.data.shipping_address, state: e.target.value })}
                                                     className="bg-white mt-1.5"
                                                 />
+                                                <InputError message={form.errors['shipping_address.state']} />
                                             </div>
                                             <div className="flex flex-col gap-1">
                                                 <Label>Pays</Label>
@@ -453,6 +459,7 @@ export default function CheckoutCreate({ cart, zones, countries, user_addresses,
                                                         </Command>
                                                     </PopoverContent>
                                                 </Popover>
+                                                <InputError message={form.errors['shipping_address.country_id']} />
                                             </div>
                                             <div>
                                                 <Label>Code Postal (Optionnel)</Label>
@@ -461,6 +468,7 @@ export default function CheckoutCreate({ cart, zones, countries, user_addresses,
                                                     onChange={e => form.setData('shipping_address', { ...form.data.shipping_address, postal_code: e.target.value })}
                                                     className="bg-white mt-1.5"
                                                 />
+                                                <InputError message={form.errors['shipping_address.postal_code']} />
                                             </div>
                                         </div>
 
@@ -484,7 +492,9 @@ export default function CheckoutCreate({ cart, zones, countries, user_addresses,
                                             <Label className="mb-2 block">Adresse de facturation</Label>
                                             <div className="grid gap-4">
                                                 <Input placeholder="Adresse complète" value={form.data.billing_address.address} onChange={e => form.setData('billing_address', { ...form.data.billing_address, address: e.target.value })} className="bg-white" />
+                                                <InputError message={form.errors['billing_address.address']} />
                                                 <Input placeholder="Ville" value={form.data.billing_address.city} onChange={e => form.setData('billing_address', { ...form.data.billing_address, city: e.target.value })} className="bg-white" />
+                                                <InputError message={form.errors['billing_address.city']} />
                                             </div>
                                         </div>
                                     )}

@@ -49,6 +49,7 @@ export default function Edit({ carrier, zones }: PageProps) {
                 min_volume: rate.min_volume?.toString() ?? "",
                 max_volume: rate.max_volume?.toString() ?? "",
                 rate_price: rate.rate_price?.toString() ?? "",
+                coefficient: rate.coefficient?.toString() ?? "",
                 delivery_time: rate.delivery_time ?? "",
                 zone_id: rate.zone_id ?? null,
             })) ?? [],
@@ -185,6 +186,7 @@ export default function Edit({ carrier, zones }: PageProps) {
                                             min_volume: '',
                                             max_volume: '',
                                             rate_price: '',
+                                            coefficient: '1',
                                             delivery_time: '',
                                             zone_id: null
                                         })}

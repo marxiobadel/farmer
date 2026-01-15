@@ -38,6 +38,7 @@ class CarrierRequest extends FormRequest
             'rates.*.min_volume' => ['nullable', 'numeric', 'min:0'],
             'rates.*.max_volume' => ['nullable', 'numeric', 'min:0'],
             'rates.*.rate_price' => ['required', 'numeric', 'min:0'],
+            'rates.*.coefficient' => ['required', 'string'],
             'rates.*.delivery_time' => ['nullable', 'string', 'max:255'],
             'rates.*.zone_id' => ['nullable', 'integer', 'exists:zones,id'],
         ];
@@ -99,6 +100,7 @@ class CarrierRequest extends FormRequest
 
             'rates.*.zone_id.integer' => 'La zone sélectionnée est invalide.',
             'rates.*.zone_id.exists' => "La zone sélectionnée n'existe pas.",
+            'rates.*.coefficient' => "Le coefficient est requis.",
         ];
     }
 }

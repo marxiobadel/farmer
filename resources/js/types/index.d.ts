@@ -379,6 +379,7 @@ export interface CarrierRate {
     min_volume?: number | null;
     max_volume?: number | null;
     rate_price: number;
+    coefficient?: string;
     delivery_time?: string | null;
     carrier_id: number;
     carrier: Carrier;

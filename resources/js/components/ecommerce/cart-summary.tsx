@@ -35,8 +35,8 @@ export function CartSummary({ items, onUpdateQuantity, onRemove }: CartSummaryPr
         <div className="space-y-4">
             {/* En-tête (Masqué sur mobile, visible sur desktop) */}
             <div className="hidden md:grid grid-cols-12 gap-4 font-semibold text-sm text-gray-500 border-b pb-2">
-                <div className="col-span-6">Produit / Variante</div>
-                <div className="col-span-2 text-center">Quantité</div>
+                <div className="col-span-5">Produit / Variante</div>
+                <div className="col-span-3 text-center">Quantité</div>
                 <div className="col-span-2 text-right">Prix Unit.</div>
                 <div className="col-span-2 text-right">Sous-total</div>
             </div>
@@ -49,12 +49,12 @@ export function CartSummary({ items, onUpdateQuantity, onRemove }: CartSummaryPr
                         className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center bg-gray-50 p-3 rounded border"
                     >
                         {/* Colonne 1 : Nom (6 parts) */}
-                        <div className="col-span-1 md:col-span-6">
+                        <div className="col-span-1 md:col-span-4">
                             <span className="font-medium text-sm text-gray-900">{item.name}</span>
                         </div>
 
                         {/* Colonne 2 : Quantité (2 parts) */}
-                        <div className="col-span-1 md:col-span-2 flex items-center justify-between md:justify-center space-x-2">
+                        <div className="col-span-1 md:col-span-4 flex items-center justify-between md:justify-center space-x-2">
                             <span className="md:hidden text-sm text-gray-500">Qté:</span>
                             <Input
                                 type="number"

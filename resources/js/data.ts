@@ -148,7 +148,7 @@ export const proStatus = [
 ];
 
 export const paymentMethods = [
-    { label: "Cash", value: "cash" },
+    { label: "Cash (à la livraison)", value: "cash" },
     { label: "Orange Money", value: "orange_money" },
     { label: "MTN Money", value: "mtn_money" },
 ];
@@ -180,4 +180,9 @@ export const businessTypes = [
     { value: "bakery", label: "Boulangerie / Pâtisserie" },
     { value: "reseller", label: "Supermarché / Revendeur" },
     { value: "other", label: "Autre" },
+];
+
+export const coefficients = [
+    { label: "Multiplié par 1", value: "1" },
+    { label: "Multiplié par la quantité", value: "quantity" }
 ];

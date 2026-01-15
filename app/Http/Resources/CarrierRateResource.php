@@ -18,7 +18,7 @@ class CarrierRateResource extends JsonResource
             'max_volume' => $this->max_volume,
             'rate_price' => $this->rate_price,
             'delivery_time' => $this->delivery_time,
-
+            'coefficient' => $this->coefficient,
             'carrier_id' => $this->carrier_id,
             'zone_id' => $this->zone_id,
 

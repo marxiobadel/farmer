@@ -76,6 +76,9 @@ Route::middleware(['auth'])->group(function () {
             Route::get('orders', 'orders')->name('orders');
             Route::get('orders/{order}', 'showOrder')->name('orders.show');
             Route::get('orders/{order}/invoice', 'downloadInvoice')->name('orders.invoice');
+            Route::post('carts/add', 'addToCart')->name('carts.add');
+            Route::patch('carts/items/{cartItem}', 'updateCartItem')->name('carts.items.update');
+            Route::delete('carts/items/{cartItem}', 'removeCartItem')->name('carts.items.remove');
             Route::get('informations', 'edit')->name('edit');
             Route::post('informations', 'update')->name('update');
             Route::get('addresses', 'addresses')->name('addresses');

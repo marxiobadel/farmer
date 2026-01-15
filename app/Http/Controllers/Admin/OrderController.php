@@ -152,10 +152,13 @@ class OrderController extends Controller
             ];
         }, ['weight' => 0, 'price' => 0, 'volume' => 0]);
 
+        $totalQty = $this->calculateTotalQty($cart->items);
+
         $shippingCost = $this->calculateShippingCost(
             $data['carrier_id'],
             $data['zone_id'],
-            $cartMetrics
+            $cartMetrics,
+            $totalQty
         );
 
         $grandTotal = $cartMetrics['price'] + $shippingCost;

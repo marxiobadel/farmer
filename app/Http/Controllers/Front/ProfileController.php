@@ -10,6 +10,7 @@ use App\Http\Resources\OrderResource;
 use App\Http\Resources\ProductResource;
 use App\Http\Resources\ZoneResource;
 use App\Models\Cart;
+use App\Models\CartItem;
 use App\Models\Country;
 use App\Models\Order;
 use App\Models\User;
@@ -159,5 +160,50 @@ class ProfileController extends Controller
             'addresses' => AddressResource::collection($currentUser->addresses),
             'cart' => new CartResource($cart),
         ]);
+    }
+
+    public function addToCart(Request $request)
+    {
+        $currentUser = Auth::user();
+        $cart = Cart::firstOrCreate(['user_id' => $currentUser->id]);
+
+        $request->validate([
+            'product_id' => 'required|exists:products,id',
+            'variant_id' => 'nullable|exists:product_variants,id',
+            'price' => 'required|numeric',
+        ]);
+
+        // Vérifier si l'item existe déjà pour éviter les doublons
+        $existingItem = $cart->items()
+            ->where('product_id', '=', $request->product_id)
+            ->where('variant_id', '=', $request->variant_id)
+            ->first();
+
+        if ($existingItem) {
+            $existingItem->increment('quantity');
+        } else {
+            $cart->items()->create([
+                'product_id' => $request->product_id,
+                'variant_id' => $request->variant_id,
+                'price' => $request->price,
+                'quantity' => 1,
+            ]);
+        }
+
+        return redirect()->back();
+    }
+
+    public function updateCartItem(Request $request, CartItem $cartItem)
+    {
+        $cartItem->update(['quantity' => $request->quantity]);
+
+        return redirect()->back();
+    }
+
+    public function removeCartItem(CartItem $cartItem)
+    {
+        $cartItem->delete();
+
+        return redirect()->back();
     }
 }

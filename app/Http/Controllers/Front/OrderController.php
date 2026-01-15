@@ -66,15 +66,19 @@ class OrderController extends Controller
 
         $shippingSnapshot = array_merge($data['shipping_address'], $contactInfo);
 
-        if ($data['use_billing_address']) {
-            $billingSnapshot = $shippingSnapshot;
+        if (!$data['use_billing_address']) {
+            $billingSnapshot = [...$shippingSnapshot];
         } else {
-            $data['billing_address']['alias'] = $data['shipping_address']['alias'];
-            $data['billing_address']['state'] = $data['shipping_address']['state'];
-            $data['billing_address']['postal_code'] = $data['shipping_address']['postal_code'];
-            $data['billing_address']['country_id'] = $data['shipping_address']['country_id'];
+            $billingArray = [
+                'alias' => $data['shipping_address']['alias'],
+                'state' => $data['shipping_address']['state'],
+                'address' => $data['billing_address']['address'],
+                'city' => $data['billing_address']['city'],
+                'postal_code' => $data['shipping_address']['postal_code'],
+                'country_id' => $data['shipping_address']['country_id'],
+            ];
 
-            $billingSnapshot = array_merge($data['billing_address'], $contactInfo);
+            $billingSnapshot = array_merge($billingArray, $contactInfo);
         }
 
         if ($user && ($data['save_address'] ?? false)) {
@@ -96,10 +100,13 @@ class OrderController extends Controller
             ];
         }, ['weight' => 0, 'price' => 0, 'volume' => 0]);
 
+        $totalQty = $this->calculateTotalQty($cart->items);
+
         $shippingCost = $this->calculateShippingCost(
             $data['carrier_id'],
             $this->getZoneIdFromRequest($request),
-            $cartMetrics
+            $cartMetrics,
+            $totalQty
         );
 
         $grandTotal = $cartMetrics['price'] + $shippingCost;

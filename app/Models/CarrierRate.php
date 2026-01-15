@@ -16,6 +16,7 @@ class CarrierRate extends Model
         'min_volume',
         'max_volume',
         'rate_price',
+        'coefficient',
         'delivery_time',
     ];
 

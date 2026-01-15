@@ -7,22 +7,24 @@ import { orderDeliveryStatus, paymentMethods } from "@/data";
 import AppLayout from "@/layouts/app-layout";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import type { BreadcrumbItem, CarrierRate, Cart, Product, User, Zone } from "@/types";
+import type { BreadcrumbItem, Cart, Product, User, Zone } from "@/types";
 
 // Composants
-import { CartSummary } from "./components/cart-summary";
-import { ProductSelector } from "./components/product-selector";
-import { ProductVariantsTable } from "./components/variants-table";
-import { UserSelector } from "./components/user-selector";
+import { CartSummary } from "../../../components/ecommerce/cart-summary";
+import { ProductVariantsTable } from "../../../components/ecommerce/variants-table";
+import { UserSelector } from "../../../components/ecommerce/user-selector";
 import admin from "@/routes/admin";
-import { AddressSelector } from "./components/address-selector";
+import { AddressSelector } from "../../../components/ecommerce/address-selector";
 import { dashboard } from "@/routes";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { ZoneSelector } from "./components/zone-selector";
-import { CarrierSelector } from "./components/carrier-selector";
+import { ZoneSelector } from "../../../components/ecommerce/zone-selector";
+import { CarrierSelector } from "../../../components/ecommerce/carrier-selector";
 import { useCurrencyFormatter } from "@/hooks/use-currency";
-import { useMemo } from "react";
 import { useEventBus } from "@/context/event-bus-context";
+import { calculateTotalQty, formattedCartItems } from "@/lib/utils";
+import { useCartMetrics } from "@/hooks/use-cart-metrics";
+import { useShippingCost } from "@/hooks/use-shipping-cost";
+import { ProductSelector } from "@/components/ecommerce/product-selector";
 
 interface PageProps {
     products: Product[];
@@ -146,117 +148,12 @@ export default function Create({ products, users, cart, zones }: PageProps) {
         });
     };
 
-    const formattedCartItems = cart?.items.map(item => ({
-        unique_id: String(item.id),
-        product_id: item.product_id,
-        variant_id: item.variant_id,
-        name: item.variant
-            ? `${item.product?.name} - ${item.variant.map((o: any) => o.option).join(" / ")}`
-            : item.product?.name,
-        quantity: item.quantity,
-        price: item.price
-    })) || [];
-
     // 1. Calcul complet des métriques du panier (Poids, Prix, Volume)
-    const cartMetrics = useMemo(() => {
-        if (!cart) return { weight: 0, price: 0, volume: 0 };
-
-        return cart.items.reduce((acc, item) => {
-            const product = products.find(p => p.id === item.product_id);
-
-            // Calcul du volume (L x l x h) * quantité
-            // On suppose que les dimensions sont dans la même unité (ex: cm)
-            const itemVolume = (
-                (product?.length || 0) * (product?.width || 0) * (product?.height || 0)
-            ) * item.quantity;
-
-            return {
-                weight: acc.weight + ((product?.weight || 0) * item.quantity),
-                price: acc.price + (item.price * item.quantity),
-                volume: acc.volume + itemVolume
-            };
-        }, { weight: 0, price: 0, volume: 0 });
-    }, [cart, products]);
+    const cartMetrics = useCartMetrics(cart, products);
 
     // 2. Calcul des frais selon le type de pricing (fixed, weight, price, volume)
-    const shippingCost = useMemo(() => {
-        if (!selectedCarrierId || !selectedZone) return 0;
-
-        // Récupérer les rates spécifiques au transporteur dans cette zone
-        const carrierRates = zoneRates.filter(r => String(r.carrier_id) === String(selectedCarrierId));
-
-        // Si pas de rates et que ce n'est pas "fixed", on ne peut pas calculer (sauf si base_price suffit)
-        // Mais récupérons d'abord le transporteur via la relation incluse dans le premier rate
-        // OU (plus robuste) on cherche dans la liste complete des carriers si vous l'avez,
-        // sinon on suppose que carrierRates[0].carrier contient les infos.
-        // NOTE: Si carrierRates est vide, il faut trouver l'info du carrier ailleurs (props)
-        // ou supposer que "fixed" n'a pas besoin de rates.
-
-        // Pour cet exemple, supposons que nous avons accès à l'objet Carrier complet.
-        // Si vous ne l'avez pas dans 'zones', il faut le trouver dans une liste de carriers.
-        // Ici je l'extrais du premier rate trouvé, ou je le cherche dans selectedZone.rates
-        const carrierInfo = carrierRates.length > 0
-            ? carrierRates[0].carrier
-            : null;
-
-        if (!carrierInfo) return 0;
-
-        // A. Vérifier la gratuité (Free Shipping) - S'applique à tous les types
-        if (carrierInfo.free_shipping_min && cartMetrics.price >= carrierInfo.free_shipping_min) {
-            return 0;
-        }
-
-        const basePrice = Number(carrierInfo.base_price || 0);
-        const type = carrierInfo.pricing_type; // 'fixed', 'weight', 'price', 'volume'
-
-        // B. Cas : Prix Fixe
-        if (type === 'fixed') {
-            return basePrice;
-        }
-
-        // C. Cas : Tranches (Weight, Price, Volume)
-        let matchedRate: CarrierRate | undefined;
-
-        switch (type) {
-            case 'weight':
-                matchedRate = carrierRates.find(rate => {
-                    const min = Number(rate.min_weight || 0);
-                    const max = rate.max_weight !== null ? Number(rate.max_weight) : Infinity;
-                    return cartMetrics.weight >= min && cartMetrics.weight <= max;
-                });
-                break;
-
-            case 'price':
-                matchedRate = carrierRates.find(rate => {
-                    const min = Number(rate.min_price || 0);
-                    const max = rate.max_price !== null ? Number(rate.max_price) : Infinity;
-                    return cartMetrics.price >= min && cartMetrics.price <= max;
-                });
-                break;
-
-            case 'volume':
-                matchedRate = carrierRates.find(rate => {
-                    const min = Number(rate.min_volume || 0);
-                    const max = rate.max_volume !== null ? Number(rate.max_volume) : Infinity;
-                    return cartMetrics.volume >= min && cartMetrics.volume <= max;
-                });
-                break;
-
-            default:
-                // Par défaut (ou si 'weight' est le défaut)
-                return basePrice;
-        }
-
-        // Si une tranche est trouvée, on ajoute son prix au prix de base
-        if (matchedRate) {
-            return basePrice + Number(matchedRate.rate_price);
-        }
-
-        // Si aucune tranche ne correspond (ex: trop lourd), on retourne juste le base_price
-        // ou on pourrait retourner null pour bloquer la commande.
-        return basePrice;
-
-    }, [selectedCarrierId, selectedZone, zoneRates, cartMetrics]);
+    const totalQty = calculateTotalQty(cart.items);
+    const shippingCost = useShippingCost(selectedCarrierId, selectedZone, zoneRates, cartMetrics, totalQty);
 
     const finalTotal = cartMetrics.price + shippingCost;
 
@@ -309,7 +206,7 @@ export default function Create({ products, users, cart, zones }: PageProps) {
                                     Panier ({cart?.items.length || 0})
                                 </h2>
                                 <CartSummary
-                                    items={formattedCartItems}
+                                    items={formattedCartItems(cart)}
                                     onUpdateQuantity={handleUpdateQuantity}
                                     onRemove={handleRemoveItem}
                                 />

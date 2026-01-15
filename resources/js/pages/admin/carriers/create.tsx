@@ -30,6 +30,7 @@ export interface RateInput {
     min_volume: string;
     max_volume: string;
     rate_price: string;
+    coefficient: string;
     delivery_time: string;
     zone_id: string | null | number,
 }
@@ -98,7 +99,7 @@ export default function Create({ zones }: PageProps) {
 
     return (
         <AppLayout breadcrumbs={isMobile ? [] : breadcrumbs}>
-            <Head title="Ajouter un produit" />
+            <Head title="Ajouter un transporteur" />
             <div className="p-4 sm:p-6 lg:p-8 ">
                 <div className="mb-6">
                     <h1 className="text-3xl font-bold text-gray-900">
@@ -195,6 +196,7 @@ export default function Create({ zones }: PageProps) {
                                             min_volume: '',
                                             max_volume: '',
                                             rate_price: '',
+                                            coefficient: '1',
                                             delivery_time: '',
                                             zone_id: null
                                         })}

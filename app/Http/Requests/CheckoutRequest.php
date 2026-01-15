@@ -30,7 +30,7 @@ class CheckoutRequest extends FormRequest
             'shipping_address.alias' => ['required', 'string', 'max:50'],
             'shipping_address.address' => ['required', 'string', 'max:255'], // Rue / Quartier
             'shipping_address.city' => ['required', 'string', 'max:100'],
-            'shipping_address.state' => ['nullable', 'string', 'max:100'],
+            'shipping_address.state' => ['required', 'string', 'max:100'],
             'shipping_address.postal_code' => ['nullable', 'string', 'max:20'],
             'shipping_address.country_id' => ['required', 'exists:countries,id'],
 
@@ -38,11 +38,9 @@ class CheckoutRequest extends FormRequest
             'use_billing_address' => ['required', 'boolean'],
 
             // Si use_billing_address est false, alors l'objet billing_address est requis
-            'billing_address' => ['exclude_if:use_billing_address,true', 'required', 'array'],
+            'billing_address' => ['exclude_if:use_billing_address,false', 'required', 'array'],
             'billing_address.address' => ['exclude_if:use_billing_address,false', 'required', 'string', 'max:255'],
             'billing_address.city' => ['exclude_if:use_billing_address,false', 'required', 'string', 'max:100'],
-            'billing_address.postal_code' => ['nullable', 'string', 'max:20'],
-            'billing_address.country_id' => ['exclude_if:use_billing_address,false', 'nullable', 'exists:countries,id'],
 
             // --- Options et Logistique ---
             'save_address' => ['boolean'], // Checkbox "Enregistrer dans mon carnet"
@@ -66,9 +64,12 @@ class CheckoutRequest extends FormRequest
         return [
             'carrier_id.required' => 'Veuillez sélectionner un mode de livraison.',
             'payment_phone.required_if' => 'Le numéro de téléphone est requis pour le paiement mobile.',
+            'shipping_address.alias.required' => 'Le champ alias est requis.',
+            'shipping_address.state.required' => 'Le champ région est requis.',
             'shipping_address.country_id.required' => 'Veuillez sélectionner un pays de livraison.',
             'shipping_address.city.required' => 'Le champ ville est obligatoire.',
             'shipping_address.address.required' => 'Le champ adresse est obligatoire.',
+            'shipping_address.postal_code.required' => 'Le code postal est obligatoire.',
             'payment_phone.required' => 'Le numéro de téléphone de paiement est requis.',
         ];
     }

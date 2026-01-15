@@ -36,6 +36,7 @@ class ZoneResource extends JsonResource
                 'min_volume' => $rate->min_volume,
                 'max_volume' => $rate->max_volume,
                 'rate_price' => $rate->rate_price,
+                'coefficient' => $rate->coefficient,
                 'delivery_time' => $rate->delivery_time,
                 'carrier' => [
                     'id' => $rate->carrier->id,

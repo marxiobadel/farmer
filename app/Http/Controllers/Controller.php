@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Concurrency;
 
 abstract class Controller
 {
-    protected function calculateShippingCost($carrierId, $zoneId, $metrics)
+    protected function calculateShippingCost($carrierId, $zoneId, $metrics, $totalQty = 1)
     {
         // 1. Get Rates for this Zone/Carrier
         $rates = CarrierRate::where('carrier_id', '=', $carrierId)
@@ -70,10 +70,19 @@ abstract class Controller
         }
 
         if ($matchedRate) {
-            $ratePrice = $matchedRate->rate_price;
+            if ($matchedRate->coefficient === 'quantity') {
+                return $basePrice + ($matchedRate->rate_price * $totalQty);
+            } else {
+                return $basePrice + $matchedRate->rate_price;
+            }
         }
 
-        return $basePrice + $ratePrice;
+        return $basePrice;
+    }
+
+    protected function calculateTotalQty($items): int
+    {
+        return $items->reduce(fn ($carry, $item) => $carry + $item->quantity, 0);
     }
 
     protected function getZoneIdFromRequest(Request $request)

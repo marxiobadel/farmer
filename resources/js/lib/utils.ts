@@ -3,7 +3,7 @@ import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import notify from '@sounds/notify.mp3';
 import { toPng } from 'html-to-image';
-import { Product } from '@/types';
+import { Cart, CartItem, Product } from '@/types';
 
 export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
@@ -168,3 +168,22 @@ export const adaptProductToCard = (product: Product) => {
         badge: undefined,
     };
 }
+
+export const formattedCartItems = (cart: Cart) => {
+    return cart?.items.map(item => ({
+        unique_id: String(item.id),
+        product_id: item.product_id,
+        variant_id: item.variant_id,
+        name: item.variant
+            ? `${item.product?.name} - ${item.variant.map((o: any) => o.option).join(" / ")}`
+            : item.product?.name,
+        quantity: item.quantity,
+        price: item.price
+    })) || [];
+}
+
+export const calculateTotalQty = (items: CartItem[]): number => {
+    return items.reduce((total, item) => {
+        return total + item.quantity;
+    }, 0);
+};
