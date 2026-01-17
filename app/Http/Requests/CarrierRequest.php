@@ -100,7 +100,7 @@ class CarrierRequest extends FormRequest
 
             'rates.*.zone_id.integer' => 'La zone sélectionnée est invalide.',
             'rates.*.zone_id.exists' => "La zone sélectionnée n'existe pas.",
-            'rates.*.coefficient' => "Le coefficient est requis.",
+            'rates.*.coefficient' => 'Le coefficient est requis.',
         ];
     }
 }

@@ -28,7 +28,7 @@ class MobileMoney
         $this->clientSecret = config('services.momo.client_secret');
         $this->accessKey = config('services.momo.access_key');
         $this->secretAccessKey = config('services.momo.secret_access_key');
-        $this->notifUrl = '';
+        $this->notifUrl = route('mtn.notify');
     }
 
     /**
@@ -36,24 +36,13 @@ class MobileMoney
      */
     private function apiCall(string $method, string $url, array $options = [])
     {
-        try {
-            $response = Http::send($method, $url, $options);
+        $response = Http::send($method, $url, $options);
 
-            if ($response->failed()) {
-                return [
-                    'status' => 'error',
-                    'code' => $response->status(),
-                    'body' => $response->body(),
-                ];
-            }
-
-            return $response->json();
-        } catch (\Exception $e) {
-            return [
-                'status' => 'exception',
-                'message' => $e->getMessage(),
-            ];
+        if ($response->failed()) {
+            throw new \Exception($this->extractErrorMessage($response));
         }
+
+        return $response->json();
     }
 
     /**
@@ -105,7 +94,7 @@ class MobileMoney
             'customerkey' => $this->accessKey,
             'PaiementMethod' => 'MTN_CMR',
             'notifUrl' => $this->notifUrl,
-            'description' => __('Paiement via Mobile Money'),
+            'description' => __('Paiement via MTN Mobile Money'),
         ];
 
         $payload = ['API_MUT' => array_merge($body, $data)];
@@ -139,5 +128,21 @@ class MobileMoney
             ],
             'json' => $body,
         ]);
+    }
+
+    private function extractErrorMessage($response): string
+    {
+        $body = trim($response->body());
+
+        $json = json_decode($body, true);
+
+        if (json_last_error() === JSON_ERROR_NONE && is_array($json)) {
+            return $json['message']
+                ?? $json['error_description']
+                ?? $json['error']
+                ?? $body;
+        }
+
+        return $body;
     }
 }

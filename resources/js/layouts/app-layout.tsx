@@ -1,8 +1,10 @@
 import AppLayout from '@/layouts/app/app-sidebar-layout';
 import guestLayout from '@/layouts/app/app-header-layout';
-import { type BreadcrumbItem } from '@/types';
-import { type ReactNode } from 'react';
+import type { SharedData, BreadcrumbItem } from '@/types';
+import { useEffect, type ReactNode } from 'react';
 import { Toaster } from 'sonner';
+import { usePage } from '@inertiajs/react';
+import { handleSystemThemeChange, initializeTheme, mediaQuery } from '@/hooks/use-appearance';
 
 interface AppLayoutProps {
     children: ReactNode;
@@ -12,6 +14,16 @@ interface AppLayoutProps {
 
 export default ({ children, layout = 'app', breadcrumbs, ...props }: AppLayoutProps) => {
     const AppLayoutTemplate = layout === 'guest' ? guestLayout : AppLayout;
+
+    const { isAdminSection } = usePage<SharedData>().props;
+
+    useEffect(() => {
+        initializeTheme(isAdminSection);
+
+        return () => {
+            mediaQuery()?.removeEventListener('change', handleSystemThemeChange);
+        };
+    }, [isAdminSection]);
 
     return (
         <AppLayoutTemplate breadcrumbs={breadcrumbs} {...props}>

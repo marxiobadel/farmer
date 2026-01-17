@@ -17,7 +17,7 @@ class ProductController extends Controller
         $query = Product::published()->with(['categories', 'variants']);
 
         if ($request->filled('search')) {
-            $query->whereAny(['name', 'short_description', 'description'], 'like', '%' . $request->string('search') . '%');
+            $query->whereAny(['name', 'short_description', 'description'], 'like', '%'.$request->string('search').'%');
         }
 
         if ($request->filled('category')) {
@@ -26,12 +26,12 @@ class ProductController extends Controller
 
         // On récupère le prix du variant par défaut (ou le premier) via une sous-requête
         // Utile uniquement pour le tri (sort)
-        $variantPriceSubquery = "(
+        $variantPriceSubquery = '(
             SELECT price FROM product_variants
             WHERE product_variants.product_id = products.id
             ORDER BY is_default DESC, id ASC
             LIMIT 1
-        )";
+        )';
 
         $effectivePriceSql = "COALESCE($variantPriceSubquery, products.base_price)";
 
@@ -57,7 +57,7 @@ class ProductController extends Controller
         return Inertia::render('front/products/index', [
             'products' => fn () => ProductResource::collection($products),
             'categories' => fn () => CategoryResource::collection($categories),
-            'filters' => $request->all()
+            'filters' => $request->all(),
         ]);
     }
 
@@ -77,8 +77,8 @@ class ProductController extends Controller
             ->get();
 
         return Inertia::render('front/products/show', [
-            'product' => fn() => new ProductResource($product),
-            'related' => fn() => ProductResource::collection($related),
+            'product' => fn () => new ProductResource($product),
+            'related' => fn () => ProductResource::collection($related),
             'isFavorited' => $user ? $user->hasFavorited($product) : false,
         ]);
     }
@@ -87,7 +87,7 @@ class ProductController extends Controller
     {
         $user = auth()->user();
 
-        if (!$user) {
+        if (! $user) {
             return back()->with('message', 'Unauthenticated.');
         }
 
@@ -101,7 +101,7 @@ class ProductController extends Controller
         $query = Product::published()->with(['categories', 'variants.options']);
 
         if ($request->filled('q')) {
-            $query->whereAny(['name', 'short_description', 'description'], 'like', '%' . $request->string('q') . '%');
+            $query->whereAny(['name', 'short_description', 'description'], 'like', '%'.$request->string('q').'%');
         }
 
         $products = $query->oldest('name')->take(5)->get();

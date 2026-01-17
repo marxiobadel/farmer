@@ -15,17 +15,22 @@ use App\Models\Product;
 use App\Models\StockMovement;
 use App\Models\Zone;
 use App\Services\CartService;
+use App\Services\MobileMoney;
+use App\Services\OrangeMoney;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Number;
-use Illuminate\Support\Str;
 
 class OrderController extends Controller
 {
-    public function __construct(protected CartService $cartService)
-    {}
+    public function __construct(
+        protected CartService $cartService,
+        MobileMoney $mobileMoney,
+        OrangeMoney $orangeMoney)
+    {
+        parent::__construct($mobileMoney, $orangeMoney);
+    }
 
     public function create()
     {
@@ -55,7 +60,10 @@ class OrderController extends Controller
         $cart = $this->cartService->getCart();
 
         if ($cart->items->isEmpty()) {
-            return back()->with('error', 'Votre panier est vide.');
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Le panier est vide.',
+            ]);
         }
 
         $contactInfo = [
@@ -66,7 +74,7 @@ class OrderController extends Controller
 
         $shippingSnapshot = array_merge($data['shipping_address'], $contactInfo);
 
-        if (!$data['use_billing_address']) {
+        if (! $data['use_billing_address']) {
             $billingSnapshot = [...$shippingSnapshot];
         } else {
             $billingArray = [
@@ -144,21 +152,8 @@ class OrderController extends Controller
                 ]);
             }
 
-            $paymentMethod = $data['payment_method'];
-            $paymentStatus = ($paymentMethod === 'cash') ? 'pending' : 'pending';
-
-            $paymentDetails = isset($data['payment_phone']) ? ['phone' => $data['payment_phone']] : null;
-
-            $order->payments()->create([
-                'user_id' => $user ? $user->id : null,
-                'reference' => 'PAY-' . strtoupper(Str::random(12)),
-                'method' => $paymentMethod,
-                'provider' => $this->getProviderForMethod($paymentMethod),
-                'amount' => $grandTotal,
-                'currency' => Number::defaultCurrency(),
-                'status' => $paymentStatus,
-                'details' => $paymentDetails,
-            ]);
+            // C. Create Payment Record
+            $response = $this->payment($order, $data);
 
             $this->cartService->clear();
 
@@ -167,13 +162,15 @@ class OrderController extends Controller
             // Ici, vous pourriez déclencher un Event pour envoyer l'email de confirmation
             // Event::dispatch(new OrderCreated($order));
 
-            return redirect()->route('orders.success', $order)
-                ->with('success', 'Votre commande a été enregistrée avec succès !');
+            return response()->json($response);
         } catch (Exception $e) {
             DB::rollBack();
             report($e);
 
-            return back()->with('error', 'Une erreur est survenue lors de la commande : ' . $e->getMessage());
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Erreur lors de la création de la commande : '.$e->getMessage(),
+            ]);
         }
     }
 

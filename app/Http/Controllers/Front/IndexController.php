@@ -21,8 +21,7 @@ class IndexController extends Controller
         $categories = Cache::remember(
             'front_products_categories_oldest',
             60 * 60 * 24,
-            fn() =>
-            Category::forProduct()
+            fn () => Category::forProduct()
                 ->active()
                 ->orderBy('name')
                 ->get()
@@ -44,7 +43,7 @@ class IndexController extends Controller
         $testimonials = Cache::remember(
             'front_testimonials_active',
             60 * 60 * 24,
-            fn() => Testimonial::with('user')->approved()->inRandomOrder()->take(3)->get()
+            fn () => Testimonial::with('user')->approved()->inRandomOrder()->take(3)->get()
         );
 
         return Inertia::render('front/index', [

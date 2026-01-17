@@ -9,9 +9,7 @@ use Illuminate\Http\Request;
 
 class CartController extends Controller
 {
-    public function __construct(protected CartService $cartService)
-    {
-    }
+    public function __construct(protected CartService $cartService) {}
 
     public function index()
     {
@@ -41,7 +39,7 @@ class CartController extends Controller
         $currentCart = $this->cartService->getCart();
 
         if ($cartItem->cart_id !== $currentCart->id) {
-            abort(403, "Action non autorisée.");
+            abort(403, 'Action non autorisée.');
         }
 
         // 2. Validation
@@ -51,7 +49,7 @@ class CartController extends Controller
 
         // 3. Mise à jour
         $cartItem->update([
-            'quantity' => $validated['quantity']
+            'quantity' => $validated['quantity'],
         ]);
 
         // 4. Retour (Inertia rechargera automatiquement les props)
@@ -64,7 +62,7 @@ class CartController extends Controller
         $currentCart = $this->cartService->getCart();
 
         if ($cartItem->cart_id !== $currentCart->id) {
-            abort(403, "Action non autorisée.");
+            abort(403, 'Action non autorisée.');
         }
 
         // 2. Suppression

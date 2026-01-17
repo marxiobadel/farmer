@@ -52,6 +52,7 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user() ? new AuthUserResource($request->user()) : null,
             ],
+            'isAdminSection' => $request->is('admin*'),
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'defaultCurrency' => Number::defaultCurrency(),
             'settings' => [

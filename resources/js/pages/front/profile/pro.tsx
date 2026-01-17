@@ -20,6 +20,9 @@ import { CarrierSelector } from "@/components/ecommerce/carrier-selector";
 import { paymentMethods } from "@/data";
 import { Button } from "@/components/ui/button";
 import profile from "@/routes/profile";
+import { useState } from "react";
+import axiosInstance from "@/bootstrap";
+import { LoaderCircle } from "lucide-react";
 
 interface PageProps {
     hasProSpace: boolean;
@@ -31,6 +34,8 @@ interface PageProps {
 export default function Index({ hasProSpace, products, cart, zones, addresses }: PageProps) {
     const formatCurrency = useCurrencyFormatter();
 
+    const [processing, setProcessing] = useState(false);
+
     const form = useForm({
         defaultValues: {
             shipping_address_id: null as string | null,
@@ -38,6 +43,7 @@ export default function Index({ hasProSpace, products, cart, zones, addresses }:
             zone_id: null as number | null,
             carrier_id: null as string | null,
             method: "cash",
+            payment_phone: "",
             current_product_id: null as number | null,
         }
     });
@@ -47,6 +53,7 @@ export default function Index({ hasProSpace, products, cart, zones, addresses }:
     const selectedZone = zones.find((z) => z.id === selectedZoneId);
 
     const selectedCarrierId = watch("carrier_id");
+    const selectedMethod = watch("method");
 
     const zoneRates = selectedZone?.rates || [];
 
@@ -76,7 +83,7 @@ export default function Index({ hasProSpace, products, cart, zones, addresses }:
         );
     };
 
-    const onSubmit = (data: any) => {
+    const onSubmit = async (data: any) => {
         if (!data.shipping_address_id) {
             form.setError("shipping_address_id", { message: "Veuillez sélectionner une adresse de livraison." });
             toast.error("Adresse manquante !");
@@ -108,17 +115,26 @@ export default function Index({ hasProSpace, products, cart, zones, addresses }:
 
         delete data.current_product_id;
 
-        router.post('admin.orders.store().url', { ...data, cart_id: cart.id }, {
-            preserveState: true,
-            onSuccess: () => { },
-            onError: (errors) => {
-                if (errors.error) {
-                    toast.error('Erreur !', { description: errors.error });
-                } else {
-                    toast.error('Erreur !', { description: `Une erreur est survenue, vérifiez le formulaire.` });
-                }
-            },
-        });
+        try {
+            setProcessing(true);
+
+            const response = await axiosInstance.post(profile.orders.store().url, data);
+
+            if (response.data.status === 'success') {
+                router.reload({
+                    onSuccess: () => {
+                        form.reset();
+                        toast.success('Succès !', {description: response.data.message ?? 'Commande réussie.'});
+                    }
+                });
+            } else {
+                toast.error('Erreur !', {description: response.data.message ?? 'Quelque chose a mal tourné.'});
+            }
+        } catch (error) {
+            console.error("Erreur lors de la création de commande:", error);
+        } finally {
+            setProcessing(false);
+        }
     };
 
     // 1. Calcul complet des métriques du panier (Poids, Prix, Volume)
@@ -269,6 +285,14 @@ export default function Index({ hasProSpace, products, cart, zones, addresses }:
                                     type="select"
                                     options={paymentMethods}
                                 />
+                                {(selectedMethod === 'orange_money' || selectedMethod === 'mtn_money') &&
+                                    <FormFieldWrapper
+                                        control={control}
+                                        name="payment_phone"
+                                        label="Téléphone"
+                                        placeholder="Ex: 651417852"
+                                        onValueChange={(val) => setValue("payment_phone", val)}
+                                    />}
                                 <div className="space-y-4 mt-4">
                                     {/* Sous-total */}
                                     <div className="flex justify-between text-sm">
@@ -296,7 +320,7 @@ export default function Index({ hasProSpace, products, cart, zones, addresses }:
                                                 if (!info) return "-";
 
                                                 switch (info.pricing_type) {
-                                                    case 'weight': return `Poids : ${cartMetrics.weight} kg`;
+                                                    case 'weight': return `${cartMetrics.weight} colis`;
                                                     case 'volume': return `Volume : ${cartMetrics.volume} cm³`; // ou cm3
                                                     case 'price': return `Montant : ${cartMetrics.price}`;
                                                     case 'fixed': return "Forfait fixe";
@@ -318,9 +342,14 @@ export default function Index({ hasProSpace, products, cart, zones, addresses }:
                                         type="submit"
                                         className="w-full"
                                         size="lg"
-                                        disabled={!cart || cart.items.length === 0}
+                                        disabled={!cart || cart.items.length === 0 || processing}
                                     >
-                                        Créer la commande
+                                        <div className="flex items-center justify-center">
+                                            {processing && (
+                                                <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                                            )}
+                                            <span className="whitespace-nowrap">Créer la commande</span>
+                                        </div>
                                     </Button>
                                 </div>
                             </Card>

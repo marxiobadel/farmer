@@ -15,7 +15,7 @@ class AddressController extends Controller
         $validated = $request->validated();
 
         DB::transaction(function () use ($validated) {
-            if (!empty($validated['is_default']) && $validated['is_default'] == true) {
+            if (! empty($validated['is_default']) && $validated['is_default'] == true) {
                 Address::where('user_id', '=', auth()->id())
                     ->update(['is_default' => false]);
             }
@@ -33,7 +33,7 @@ class AddressController extends Controller
         $validated = $request->validated();
 
         DB::transaction(function () use ($validated, $address) {
-            if (!empty($validated['is_default']) && $validated['is_default'] == true) {
+            if (! empty($validated['is_default']) && $validated['is_default'] == true) {
                 Address::where('user_id', '=', auth()->id())
                     ->where('id', '!=', $address->id)
                     ->update(['is_default' => false]);

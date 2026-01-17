@@ -18,6 +18,7 @@ use App\Http\Controllers\Front\AddressController;
 use App\Http\Controllers\Front\IndexController;
 use App\Http\Controllers\Front\NewsletterController;
 use App\Http\Controllers\Settings\ProfileController;
+use App\Http\Controllers\WebhookController;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 
@@ -58,10 +59,13 @@ Route::prefix('carts')->name('carts.')
         Route::delete('items/{cartItem}', 'destroy')->name('items.destroy');
     });
 
-Route::resource('orders', \App\Http\Controllers\Front\OrderController::class)->only(['create', 'store']);
-Route::get('orders/{order}/success', [\App\Http\Controllers\Front\OrderController::class, 'success'])->name('orders.success');
+Route::post('orange/notify', [WebhookController::class, 'orangeMoney'])->name('orange.notify');
+Route::post('momo/notify', [WebhookController::class, 'mtnMoney'])->name('mtn.notify');
 
 Route::middleware(['auth'])->group(function () {
+    Route::resource('orders', \App\Http\Controllers\Front\OrderController::class)->only(['create', 'store']);
+    Route::get('orders/{order}/success', [\App\Http\Controllers\Front\OrderController::class, 'success'])->name('orders.success');
+
     Route::prefix('espace-pro')->name('pro.')
         ->controller(\App\Http\Controllers\Front\ProController::class)
         ->group(function () {
@@ -74,6 +78,7 @@ Route::middleware(['auth'])->group(function () {
         ->group(function () {
             Route::get('/', 'index')->name('index');
             Route::get('orders', 'orders')->name('orders');
+            Route::post('orders/store', 'storeOrder')->name('orders.store');
             Route::get('orders/{order}', 'showOrder')->name('orders.show');
             Route::get('orders/{order}/invoice', 'downloadInvoice')->name('orders.invoice');
             Route::post('carts/add', 'addToCart')->name('carts.add');
@@ -156,4 +161,4 @@ Route::middleware(['auth'])->group(function () {
     });
 });
 
-require __DIR__ . '/settings.php';
+require __DIR__.'/settings.php';

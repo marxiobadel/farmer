@@ -23,7 +23,7 @@ class ProController extends Controller
 
         if ($request->filled('search')) {
             $searchColumns = ['company_name', 'niu'];
-            $query->whereAny($searchColumns, 'like', '%' . $request->string('search') . '%');
+            $query->whereAny($searchColumns, 'like', '%'.$request->string('search').'%');
         }
 
         $allowed = ['company_name', 'created_at', 'updated_at'];
@@ -50,7 +50,7 @@ class ProController extends Controller
     public function update(Request $request, ProRequest $proRequest)
     {
         $validated = $request->validate([
-            'status' => 'required|in:pending,approved,rejected'
+            'status' => 'required|in:pending,approved,rejected',
         ]);
 
         $proRequest->update($validated);
@@ -69,7 +69,7 @@ class ProController extends Controller
 
             return redirect()->back()->with('success', 'Compte(s) supprimé(s) avec succès.');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Erreur : ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Erreur : '.$e->getMessage());
         }
     }
 }

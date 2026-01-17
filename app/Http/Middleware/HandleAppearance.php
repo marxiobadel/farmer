@@ -16,7 +16,11 @@ class HandleAppearance
      */
     public function handle(Request $request, Closure $next): Response
     {
-        View::share('appearance', $request->cookie('appearance') ?? 'system');
+        if ($request->is('admin*')) {
+            View::share('appearance', $request->cookie('appearance') ?? 'system');
+        } else {
+            View::share('appearance', 'light');
+        }
 
         return $next($request);
     }

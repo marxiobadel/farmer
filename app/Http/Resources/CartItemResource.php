@@ -23,7 +23,7 @@ class CartItemResource extends JsonResource
             'product_id' => $this->product_id,
             'variant_id' => $this->variant_id,
             'name' => $this->product?->name,
-            'variant' => $this->variant ? $this->variant->options->map(fn($o) => [
+            'variant' => $this->variant ? $this->variant->options->map(fn ($o) => [
                 'attribute' => $o->attribute->name,
                 'option' => $o->option->name,
             ]) : null,

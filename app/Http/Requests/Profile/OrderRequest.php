@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\Profile;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -20,17 +20,14 @@ class OrderRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'user_id' => ['required', 'integer', 'exists:users,id'],
-            'cart_id' => ['required', 'integer', 'exists:carts,id'],
-
             'shipping_address_id' => ['required', 'integer', 'exists:addresses,id'],
             'billing_address_id' => ['nullable', 'integer', 'exists:addresses,id'],
 
             'carrier_id' => ['required', 'integer', 'exists:carriers,id'],
             'zone_id' => ['required', 'integer', 'exists:zones,id'],
 
-            'status' => ['required', 'string'],
-            'method' => ['required', 'string', 'in:cash,om,momo,orange_money,mtn_money'],
+            'method' => ['required', 'string', 'in:cash,orange_money,mtn_money'],
+            'payment_phone' => ['nullable'],
         ];
     }
 }

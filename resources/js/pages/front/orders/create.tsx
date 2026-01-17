@@ -1,5 +1,5 @@
 import { useMemo, useEffect, useState } from "react";
-import { Head, useForm, usePage } from "@inertiajs/react";
+import { Head, router, useForm, usePage } from "@inertiajs/react";
 import AppLayout from "@/layouts/app-layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +17,7 @@ import { Address, CarrierRate, Cart, Country, SharedData, Zone, Product } from "
 import orders from "@/routes/orders";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import axiosInstance from "@/bootstrap";
 
 interface PageProps {
     products: Product[];
@@ -29,6 +30,8 @@ interface PageProps {
 export default function CheckoutCreate({ cart, zones, countries, user_addresses, products }: PageProps) {
     const { auth } = usePage<SharedData>().props;
     const formatCurrency = useCurrencyFormatter();
+
+    const [processing, setProcessing] = useState(false);
 
     // --- ETATS LOCAUX ---
 
@@ -68,7 +71,7 @@ export default function CheckoutCreate({ cart, zones, countries, user_addresses,
         save_address: false,
         carrier_id: "",
         payment_method: "orange_money",
-        payment_phone: auth.user?.phone || "",
+        payment_phone: "",
     });
 
     // --- LOGIQUE : Pré-remplissage au changement d'adresse ---
@@ -221,7 +224,7 @@ export default function CheckoutCreate({ cart, zones, countries, user_addresses,
         return basePrice;
     }, [form.data.carrier_id, selectedZone, cartMetrics]);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
         if (!form.data.carrier_id) {
@@ -236,11 +239,26 @@ export default function CheckoutCreate({ cart, zones, countries, user_addresses,
             save_address: saveAddress,
         }));
 
-        form.post(orders.store().url, {
-            preserveScroll: 'errors',
-            preserveState: true,
-            onError: () => toast.error("Veuillez vérifier les informations du formulaire.")
-        });
+        try {
+            setProcessing(true);
+
+            const response = await axiosInstance.post(orders.store().url, form.data);
+
+            if (response.data.status === 'success') {
+                router.visit(orders.success(response.data.order_id), {
+                    onSuccess: () => {
+                        form.reset();
+                        toast.success('Succès !', { description: response.data.message ?? 'Commande réussie.' });
+                    }
+                });
+            } else {
+                toast.error('Erreur !', { description: response.data.message ?? 'Quelque chose a mal tourné.' });
+            }
+        } catch (error) {
+            console.error("Erreur lors de la création de commande:", error);
+        } finally {
+            setProcessing(false);
+        }
     };
 
     const grandTotal = cartMetrics.price + shippingCost;
@@ -402,15 +420,6 @@ export default function CheckoutCreate({ cart, zones, countries, user_addresses,
                                                 />
                                                 <InputError message={form.errors['shipping_address.city']} />
                                             </div>
-                                            <div>
-                                                <Label>Région / État</Label>
-                                                <Input
-                                                    value={form.data.shipping_address.state}
-                                                    onChange={e => form.setData('shipping_address', { ...form.data.shipping_address, state: e.target.value })}
-                                                    className="bg-white mt-1.5"
-                                                />
-                                                <InputError message={form.errors['shipping_address.state']} />
-                                            </div>
                                             <div className="flex flex-col gap-1">
                                                 <Label>Pays</Label>
                                                 <Popover>
@@ -460,15 +469,6 @@ export default function CheckoutCreate({ cart, zones, countries, user_addresses,
                                                     </PopoverContent>
                                                 </Popover>
                                                 <InputError message={form.errors['shipping_address.country_id']} />
-                                            </div>
-                                            <div>
-                                                <Label>Code Postal (Optionnel)</Label>
-                                                <Input
-                                                    value={form.data.shipping_address.postal_code}
-                                                    onChange={e => form.setData('shipping_address', { ...form.data.shipping_address, postal_code: e.target.value })}
-                                                    className="bg-white mt-1.5"
-                                                />
-                                                <InputError message={form.errors['shipping_address.postal_code']} />
                                             </div>
                                         </div>
 
@@ -680,8 +680,8 @@ export default function CheckoutCreate({ cart, zones, countries, user_addresses,
                                             {/* Métrique Poids (si > 0) */}
                                             {cartMetrics.weight > 0 && (
                                                 <div className="flex justify-between items-center text-xs text-stone-400">
-                                                    <dt className="flex items-center gap-2"><Scale className="h-3.5 w-3.5" /> Poids total</dt>
-                                                    <dd>{cartMetrics.weight} kg</dd>
+                                                    <dt className="flex items-center gap-2"><Scale className="h-3.5 w-3.5" />Qté totale</dt>
+                                                    <dd>{cartMetrics.weight} colis</dd>
                                                 </div>
                                             )}
                                             {/* Métrique Volume (si > 0) */}
@@ -714,9 +714,9 @@ export default function CheckoutCreate({ cart, zones, countries, user_addresses,
                                             className="w-full mt-8 h-12 text-base font-bold shadow-sm shadow-primary/20 hover:shadow-primary/30 transition-all duration-300"
                                             size="lg"
                                             onClick={handleSubmit}
-                                            disabled={form.processing || !form.data.carrier_id}
+                                            disabled={processing || !form.data.carrier_id}
                                         >
-                                            {form.processing ? <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Traitement...</> : `Payer ${formatCurrency(grandTotal)}`}
+                                            {processing ? <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Traitement...</> : `Payer ${formatCurrency(grandTotal)}`}
                                         </Button>
 
                                         <div className="mt-5 flex items-center justify-center gap-2 text-xs text-stone-400">

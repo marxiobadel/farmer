@@ -14,20 +14,14 @@ use App\Mail\OrderDelivered;
 use App\Mail\OrderOutForDelivery;
 use App\Mail\OrderShipped;
 use App\Models\Address;
-use App\Models\Carrier;
-use App\Models\CarrierRate;
 use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\Order;
-use App\Models\Product;
 use App\Models\StockMovement;
-use App\Models\User;
-use App\Models\Zone;
 use App\Settings\GeneralSettings;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Concurrency;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Number;
@@ -137,20 +131,7 @@ class OrderController extends Controller
             ? Address::findOrFail($data['billing_address_id'])
             : $shippingAddress;
 
-        $cartMetrics = $cart->items->reduce(function ($carry, $item) {
-            $product = $item->product;
-
-            // Dimensions logic (assuming cm/kg)
-            $volume = (($product->length ?? 0) * ($product->width ?? 0) * ($product->height ?? 0)) * $item->quantity;
-            $weight = ($product->weight ?? 0) * $item->quantity;
-            $price = $item->price * $item->quantity;
-
-            return [
-                'weight' => $carry['weight'] + $weight,
-                'price' => $carry['price'] + $price,
-                'volume' => $carry['volume'] + $volume,
-            ];
-        }, ['weight' => 0, 'price' => 0, 'volume' => 0]);
+        $cartMetrics = $this->calculateMetrics($cart->items);
 
         $totalQty = $this->calculateTotalQty($cart->items);
 

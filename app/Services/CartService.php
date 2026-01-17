@@ -13,6 +13,7 @@ use Illuminate\Support\Str;
 class CartService
 {
     protected Cart $cart;
+
     protected string $cookieName = 'cart_guest_id';
 
     public function __construct()
@@ -143,6 +144,7 @@ class CartService
         if ($cartItem) {
             if ($quantity <= 0) {
                 $cartItem->delete();
+
                 return null;
             }
             $cartItem->quantity = $quantity;

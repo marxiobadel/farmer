@@ -27,7 +27,7 @@ const applyTheme = (appearance: Appearance) => {
     document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
 };
 
-const mediaQuery = () => {
+export const mediaQuery = () => {
     if (typeof window === 'undefined') {
         return null;
     }
@@ -35,16 +35,16 @@ const mediaQuery = () => {
     return window.matchMedia('(prefers-color-scheme: dark)');
 };
 
-const handleSystemThemeChange = () => {
+export const handleSystemThemeChange = () => {
     const currentAppearance = localStorage.getItem('appearance') as Appearance;
     applyTheme(currentAppearance || 'system');
 };
 
-export function initializeTheme() {
+export function initializeTheme(isAdminSection: boolean) {
     const savedAppearance =
         (localStorage.getItem('appearance') as Appearance) || 'system';
 
-    applyTheme(savedAppearance);
+    applyTheme(isAdminSection ? savedAppearance : 'light');
 
     // Add the event listener for system theme changes...
     mediaQuery()?.addEventListener('change', handleSystemThemeChange);

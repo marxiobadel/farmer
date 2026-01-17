@@ -62,7 +62,7 @@ class Category extends Model implements HasMedia
     public function coverUrl(): Attribute
     {
         return new Attribute(
-            get: fn() => $this->getFirstMediaUrl('cover', 'thumb')
+            get: fn () => $this->getFirstMediaUrl('cover', 'thumb')
         );
     }
 
