@@ -37,7 +37,7 @@ class OrderController extends Controller
         $currentUser = Auth::user();
 
         $addresses = $currentUser ? $currentUser->addresses()->get() : [];
-        $zones = Zone::with('rates.carrier')->get();
+        $zones = Zone::with(['rates.carrier' => fn ($q) => $q->where('is_active', '=', true)])->get();
         $products = Product::with('variants.options')->latest()->get();
 
         $countries = Cache::rememberForever('countries', function () {

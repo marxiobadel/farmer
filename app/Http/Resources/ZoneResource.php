@@ -26,7 +26,7 @@ class ZoneResource extends JsonResource
             'country' => $this->whenLoaded('country', function () {
                 return new CountryResource($this->country);
             }),
-            'rates' => $this->rates->map(fn ($rate) => [
+            'rates' => $this->rates->filter(fn($rate) => $rate->carrier !== null)->map(fn($rate) => [
                 'id' => $rate->id,
                 'carrier_id' => $rate->carrier_id,
                 'min_weight' => $rate->min_weight,
