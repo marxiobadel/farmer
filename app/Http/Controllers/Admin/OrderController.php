@@ -275,6 +275,8 @@ class OrderController extends Controller
                 'phone' => $settings->phone,
                 'email' => $settings->email,
                 'logo' => public_path('images/logo_with_bg.png'),
+                'sign' => public_path('images/sign.png'),
+                'cachet' => public_path('images/white-logo.jpg'),
             ],
         ];
 
@@ -307,7 +309,9 @@ class OrderController extends Controller
             'price' => 'required|numeric',
         ]);
 
-        // Vérifier si l'item existe déjà pour éviter les doublons
+        /**
+         * @var ?CartItem $existingItem
+         */
         $existingItem = $cart->items()
             ->where('product_id', '=', $request->product_id)
             ->where('variant_id', '=', $request->variant_id)

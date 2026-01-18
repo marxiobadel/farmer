@@ -29,7 +29,6 @@ class CheckoutRequest extends FormRequest
             'shipping_address' => ['required', 'array'],
             'shipping_address.alias' => ['required', 'string', 'max:50'],
             'shipping_address.address' => ['required', 'string', 'max:255'], // Rue / Quartier
-            'shipping_address.city' => ['required', 'string', 'max:100'],
             'shipping_address.state' => ['nullable', 'string', 'max:100'],
             'shipping_address.postal_code' => ['nullable', 'string', 'max:20'],
             'shipping_address.country_id' => ['required', 'exists:countries,id'],

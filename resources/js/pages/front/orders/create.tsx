@@ -56,9 +56,8 @@ export default function CheckoutCreate({ cart, zones, countries, user_addresses,
         zone_id: "",
 
         shipping_address: {
-            alias: "",
+            alias: "Maison",
             address: "", // Rue / Quartier
-            city: "",
             state: "",
             postal_code: "",
             country_id: "" as string | null,
@@ -85,7 +84,7 @@ export default function CheckoutCreate({ cart, zones, countries, user_addresses,
                     firstname: auth.user?.firstname || "",
                     lastname: auth.user?.lastname || "",
                     phone: auth.user?.phone || "",
-                    shipping_address: { alias: "", address: "", city: "", state: "", postal_code: "", country_id: "" },
+                    shipping_address: { alias: "Maison", address: "", state: "", postal_code: "", country_id: "" },
                     // On ne reset pas forcément la zone ici pour laisser le choix à l'utilisateur,
                     // ou on peut la reset si on veut forcer une nouvelle sélection :
                     // zone_id: ""
@@ -106,7 +105,7 @@ export default function CheckoutCreate({ cart, zones, countries, user_addresses,
                     // Si une zone correspond à l'adresse, on la sélectionne automatiquement
                     zone_id: matchingZone ? String(matchingZone.id) : data.zone_id,
                     shipping_address: {
-                        alias: addr.alias || "",
+                        alias: addr.alias || "Maison",
                         address: addr.address,
                         city: addr.city,
                         state: addr.state || "",
@@ -254,8 +253,21 @@ export default function CheckoutCreate({ cart, zones, countries, user_addresses,
             } else {
                 toast.error('Erreur !', { description: response.data.message ?? 'Quelque chose a mal tourné.' });
             }
-        } catch (error) {
-            console.error("Erreur lors de la création de commande:", error);
+        } catch (error: any) {
+            let message = 'Une erreur est survenue lors de la création de commande.';
+
+            if (error.response && error.response.data) {
+                message = error.response.data.message;
+            }
+
+            toast.error(
+                <div className="flex flex-col">
+                    <span className="font-semibold text-foreground">Erreur</span>
+                    <ul className="text-sm text-muted-foreground list-disc list-inside mt-1">
+                        {message}
+                    </ul>
+                </div>
+            );
         } finally {
             setProcessing(false);
         }
@@ -353,7 +365,7 @@ export default function CheckoutCreate({ cart, zones, countries, user_addresses,
                                                 />
                                                 <InputError message={form.errors.lastname} />
                                             </div>
-                                            <div className={cn(isNewAddress && auth.user ? "" : "md:col-span-2")}>
+                                            <div className={cn("md:col-span-2")}>
                                                 <Label>Téléphone</Label>
                                                 <Input
                                                     value={form.data.phone}
@@ -364,18 +376,6 @@ export default function CheckoutCreate({ cart, zones, countries, user_addresses,
                                                 <InputError message={form.errors.phone} />
                                             </div>
                                             {/* Champ Alias (Visible seulement si création pour user connecté) */}
-                                            {isNewAddress && auth.user && (
-                                                <div>
-                                                    <Label>Alias</Label>
-                                                    <Input
-                                                        value={form.data.shipping_address.alias}
-                                                        onChange={e => form.setData('shipping_address', { ...form.data.shipping_address, alias: e.target.value })}
-                                                        className="bg-white mt-1.5"
-                                                        placeholder="Ex: Maison, Bureau..."
-                                                    />
-                                                    <InputError message={form.errors['shipping_address.alias']} />
-                                                </div>
-                                            )}
                                         </div>
 
                                         <div className="border-t border-dashed border-stone-200 my-4" />
@@ -383,7 +383,7 @@ export default function CheckoutCreate({ cart, zones, countries, user_addresses,
                                         {/* Champs Adresse */}
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div className="md:col-span-2">
-                                                <Label>Zone de livraison</Label>
+                                                <Label>Ville (Zone de livraison)</Label>
                                                 {/* Le choix de la zone est crucial : il détermine les transporteurs et le pays */}
                                                 <Select
                                                     value={form.data.zone_id}
@@ -411,16 +411,8 @@ export default function CheckoutCreate({ cart, zones, countries, user_addresses,
                                                 />
                                                 <InputError message={form.errors['shipping_address.address']} />
                                             </div>
-                                            <div>
-                                                <Label>Ville</Label>
-                                                <Input
-                                                    value={form.data.shipping_address.city}
-                                                    onChange={e => form.setData('shipping_address', { ...form.data.shipping_address, city: e.target.value })}
-                                                    className="bg-white mt-1.5"
-                                                />
-                                                <InputError message={form.errors['shipping_address.city']} />
-                                            </div>
-                                            <div className="flex flex-col gap-1">
+
+                                            <div className="md:col-span-2 flex flex-col gap-1">
                                                 <Label>Pays</Label>
                                                 <Popover>
                                                     <PopoverTrigger asChild>

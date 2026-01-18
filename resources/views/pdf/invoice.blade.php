@@ -1,18 +1,21 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>Facture #{{ $order->id }}</title>
     <style>
         @page {
             margin: 0cm;
         }
+
         body {
             font-family: 'Helvetica', 'Arial', sans-serif;
             font-size: 13px;
             line-height: 1.6;
-            color: #334155; /* Slate 700 */
+            color: #334155;
+            /* Slate 700 */
             background-color: #ffffff;
             margin: 0;
             padding: 0;
@@ -25,12 +28,13 @@
             top: 0;
             bottom: 0;
             width: 8px;
-            background-color: rgb(236, 140, 0); /* Primary Green */
+            background-color: rgb(236, 140, 0);
+            /* Primary Green */
             z-index: 1000;
         }
 
         .container {
-            padding: 50px 40px;
+            padding: 30px 40px;
             position: relative;
         }
 
@@ -40,19 +44,23 @@
             margin-bottom: 50px;
             border-collapse: collapse;
         }
+
         .logo-img {
             max-height: 60px;
             object-fit: contain;
         }
+
         .invoice-title {
             font-size: 32px;
             font-weight: 800;
-            color: #0f172a; /* Slate 900 */
+            color: #0f172a;
+            /* Slate 900 */
             text-transform: uppercase;
             letter-spacing: -1px;
             margin: 0;
             text-align: right;
         }
+
         .invoice-ref {
             font-size: 14px;
             color: #64748b;
@@ -65,14 +73,17 @@
             width: 100%;
             margin-bottom: 50px;
         }
+
         .info-table {
             width: 100%;
             border-collapse: collapse;
         }
+
         .info-col {
             width: 48%;
             vertical-align: top;
         }
+
         .spacer-col {
             width: 4%;
         }
@@ -81,18 +92,21 @@
             font-size: 11px;
             text-transform: uppercase;
             letter-spacing: 1px;
-            color: #94a3b8; /* Slate 400 */
+            color: #94a3b8;
+            /* Slate 400 */
             font-weight: 700;
             margin-bottom: 10px;
             border-bottom: 1px solid #e2e8f0;
             padding-bottom: 5px;
         }
+
         .company-name {
             font-size: 15px;
             font-weight: 700;
             color: #0f172a;
             margin-bottom: 4px;
         }
+
         .address-text {
             color: #475569;
             font-size: 13px;
@@ -101,9 +115,10 @@
         /* DETAILS TABLE */
         .details-table {
             width: 100%;
-            margin-bottom: 40px;
+            margin-bottom: 20px;
             border-collapse: collapse;
         }
+
         .details-table th {
             background-color: #f1f5f9;
             color: #475569;
@@ -111,26 +126,35 @@
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            padding: 12px 15px;
+            padding: 5px 10px;
             text-align: left;
-            border-bottom: 2px solid #e2e8f0;
+            border-bottom: 1px solid #e2e8f0;
         }
+
         .details-table td {
-            padding: 15px;
+            padding: 5px;
             border-bottom: 1px solid #f1f5f9;
             color: #334155;
         }
+
         .details-table tr:last-child td {
             border-bottom: none;
         }
-        .text-right { text-align: right; }
-        .text-center { text-align: center; }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .text-center {
+            text-align: center;
+        }
 
         .item-name {
             font-weight: 600;
             color: #1e293b;
             display: block;
         }
+
         .item-variant {
             font-size: 11px;
             color: #64748b;
@@ -143,36 +167,46 @@
             margin-top: 20px;
             page-break-inside: avoid;
         }
+
         .totals-table {
             width: 50%;
             margin-left: auto;
             border-collapse: collapse;
         }
+
         .totals-table td {
             padding: 8px 15px;
             text-align: right;
         }
+
         .totals-label {
             color: #64748b;
             font-size: 13px;
         }
+
         .totals-value {
             color: #1e293b;
             font-weight: 600;
         }
+
         .grand-total-row td {
-            padding-top: 15px;
-            padding-bottom: 15px;
-            border-top: 2px solid rgb(236, 140, 0); /* Primary color line */
-            border-bottom: 2px solid rgb(236, 140, 0); /* Primary color line */
-            background-color: rgba(236, 140, 0, 0.1); /* Light green bg */
+            padding-top: 10px;
+            padding-bottom: 10px;
+            border-top: 2px solid rgb(236, 140, 0);
+            /* Primary color line */
+            border-bottom: 2px solid rgb(236, 140, 0);
+            /* Primary color line */
+            background-color: rgba(236, 140, 0, 0.1);
+            /* Light green bg */
         }
+
         .grand-total-label {
             color: rgb(236, 140, 0);
             font-weight: 700;
             font-size: 14px;
             text-transform: uppercase;
         }
+
         .grand-total-value {
             color: rgb(236, 140, 0);
             font-weight: 800;
@@ -189,9 +223,29 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
-        .badge-paid { background-color: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
-        .badge-pending { background-color: #ffedd5; color: #9a3412; border: 1px solid #fed7aa; }
-        .badge-cancelled { background-color: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; }
+
+        .badge-paid {
+            background-color: #dcfce7;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+
+        .badge-pending {
+            background-color: #ffedd5;
+            color: #9a3412;
+            border: 1px solid #fed7aa;
+        }
+
+        .badge-cancelled {
+            background-color: #f1f5f9;
+            color: #64748b;
+            border: 1px solid #e2e8f0;
+        }
+
+        .official {
+            width: 100%;
+            margin-top: 10px;
+        }
 
         /* FOOTER */
         .footer {
@@ -209,9 +263,12 @@
         }
 
         /* HELPER */
-        .mb-1 { margin-bottom: 5px; }
+        .mb-1 {
+            margin-bottom: 5px;
+        }
     </style>
 </head>
+
 <body>
     <div class="sidebar"></div>
 
@@ -230,19 +287,32 @@
                     <div class="invoice-ref">#{{ str_pad($order->id, 6, '0', STR_PAD_LEFT) }}</div>
                     <div style="text-align: right; margin-top: 10px;">
                         @php
-                            $statusClass = match($order->status) {
+                            $statusClass = match ($order->status) {
                                 'completed', 'delivered', 'shipped' => 'badge-paid',
                                 'cancelled' => 'badge-cancelled',
                                 default => 'badge-pending'
                             };
-                            $statusLabel = match($order->status) {
+                            $statusLabel = match ($order->status) {
                                 'completed' => 'PAYÉE',
                                 'delivered' => 'LIVRÉE',
+                                'out_for_delivery' => 'EN COURS DE LIVRAISON',
                                 'shipped' => 'EXPÉDIÉE',
                                 'cancelled' => 'ANNULÉE',
+                                'returned' => 'RETOURNÉE',
+                                'recipient_absent' => 'DESTINATAIRE ABSENT',
+                                'wrong_address' => 'ADRESSE INCORRECTE',
+                                'delivery_issue' => 'PROBLEME DE LIVRAISON',
+                                'at_hub' => 'ARRIVÉ AU CENTRE DE DISTRIBUTION',
+                                'in_transit' => 'EN TRANSIT',
+                                'awaiting_pickup' => 'EN ATTENTE DE RAMASSAGE',
+                                'packing' => 'EN PRÉPARATION',
+                                'processing' => 'EN TRAITEMENT',
+                                'picked_up' => 'PRIS EN CHARGE PAR LE TRANSPORTEUR',
+                                'pending' => 'EN ATTENTE DE PAIEMENT',
                                 default => 'EN ATTENTE'
                             };
                         @endphp
+
                         <span class="badge {{ $statusClass }}">
                             {{ $statusLabel }}
                         </span>
@@ -278,7 +348,8 @@
                         </div>
                         <div style="margin-top: 15px;">
                             <span style="color:#94a3b8; font-size:11px;">Date de facturation:</span><br>
-                            <span style="color:#334155; font-weight:600;">{{ $order->created_at->format('d/m/Y') }}</span>
+                            <span
+                                style="color:#334155; font-weight:600;">{{ $order->created_at->format('d/m/Y') }}</span>
                         </div>
                     </td>
                 </tr>
@@ -311,7 +382,8 @@
                         </td>
                         <td class="text-right">{{ number_format($item->price, 0, ',', ' ') }} FCFA</td>
                         <td class="text-center">{{ $item->quantity }}</td>
-                        <td class="text-right" style="font-weight: 600;">{{ number_format($item->price * $item->quantity, 0, ',', ' ') }} FCFA</td>
+                        <td class="text-right" style="font-weight: 600;">
+                            {{ number_format($item->price * $item->quantity, 0, ',', ' ') }} FCFA</td>
                     </tr>
                 @endforeach
             </tbody>
@@ -321,7 +393,9 @@
             <table class="totals-table">
                 <tr>
                     <td class="totals-label">Sous-total</td>
-                    <td class="totals-value">{{ number_format($order->items->sum(fn($i) => $i->price * $i->quantity), 0, ',', ' ') }} FCFA</td>
+                    <td class="totals-value">
+                        {{ number_format($order->items->sum(fn($i) => $i->price * $i->quantity), 0, ',', ' ') }} FCFA
+                    </td>
                 </tr>
                 <tr>
                     <td class="totals-label">Frais de livraison</td>
@@ -330,14 +404,25 @@
                         {{ $shipping > 0 ? number_format($shipping, 0, ',', ' ') . ' FCFA' : 'Gratuit' }}
                     </td>
                 </tr>
-                <tr><td colspan="2" style="height: 10px;"></td></tr>
+                <tr>
+                    <td colspan="2" style="height: 10px;"></td>
+                </tr>
 
                 <tr class="grand-total-row">
                     <td class="grand-total-label">Total à payer</td>
-                    <td class="grand-total-value">{{ number_format($order->total, 0, ',', ' ') }} <small style="font-size: 12px; font-weight: normal;">FCFA</small></td>
+                    <td class="grand-total-value">{{ number_format($order->total, 0, ',', ' ') }} <small
+                            style="font-size: 12px; font-weight: normal;">FCFA</small></td>
                 </tr>
             </table>
         </div>
+        <table class="official">
+            <tr>
+                <td class="text-right">
+                    <div><img src="{{ $company['cachet'] }}" alt="MontViewFarm" width="130" /></div>
+                    <div><img src="{{ $company['sign'] }}" alt="MontViewFarm" width="150" /></div>
+                </td>
+            </tr>
+        </table>
     </div>
 
     <div class="footer">
@@ -345,4 +430,5 @@
         Pour toute question concernant cette facture, merci de nous contacter à {{ $company['email'] }}
     </div>
 </body>
+
 </html>
