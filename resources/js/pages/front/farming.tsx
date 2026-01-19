@@ -182,7 +182,7 @@ export default function Farming() {
                         {/* Grande image gauche */}
                         <div className="md:col-span-2 md:row-span-2 rounded-2xl overflow-hidden bg-stone-200 relative group cursor-pointer">
                             <img
-                                src="/images/infrastructure.jpg"
+                                src="/images/moderne.jpg"
                                 alt="Vue d'ensemble des bâtiments"
                                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                             />

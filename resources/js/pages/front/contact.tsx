@@ -1,7 +1,7 @@
 import AppLayout from "@/layouts/app-layout";
 import { Head, Link, useForm, usePage } from "@inertiajs/react";
 import { motion, Variants } from "framer-motion";
-import { Mail, MapPin, Phone, Send, MessageSquare, User, Loader2 } from "lucide-react";
+import { Mail, MapPin, Phone, Send, MessageSquare, User, Loader2, Store } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -137,7 +137,6 @@ export default function Contact() {
                                         </div>
                                         <div>
                                             <h3 className="text-lg font-semibold text-stone-900">Téléphone</h3>
-                                            <p className="text-stone-600 mt-1">Tous les jours, 8h à 18h</p>
                                             <a href={`tel:${settings.phone}`} className="text-primary font-medium hover:underline mt-1 block">
                                                 {settings.phone}
                                             </a>
@@ -170,6 +169,17 @@ export default function Contact() {
                                             </p>
                                         </div>
                                     </div>)}
+                                <div className="flex gap-4 group">
+                                    <div className="flex-none w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors duration-300">
+                                        <Store className="w-6 h-6" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-lg font-semibold text-stone-900">Boutique</h3>
+                                        <p className="text-stone-600 mt-1">
+                                            Marché central Bangangté
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
                         </motion.div>
 

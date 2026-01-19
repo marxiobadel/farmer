@@ -1,3 +1,5 @@
+import { SharedData } from "@/types";
+import { usePage } from "@inertiajs/react";
 import { GoogleMap as GoogleMapAPI, LoadScript, Marker, InfoWindow } from "@react-google-maps/api";
 import { useState } from "react";
 
@@ -7,11 +9,13 @@ const containerStyle = {
 };
 
 const center = {
-    lat: 7.161238144894072,
-    lng: 12.4968113908501
+    lat: 5.161007,
+    lng: 10.496287
 };
 
 export default function GoogleMap() {
+    const { name }  = usePage<SharedData>().props;
+
     const [showInfo, setShowInfo] = useState(true);
 
     return (
@@ -40,7 +44,7 @@ export default function GoogleMap() {
                             fontWeight: 700,
                             color: '#2c3e50'
                         }}>
-                            MontView Farm
+                            {name}
                         </h3>
 
                         <div style={{
@@ -75,7 +79,7 @@ export default function GoogleMap() {
                                 transition: 'background 0.3s'
                             }}
                         >
-                            Get Directions
+                            Itinéraire
                         </a>
                     </div>
                 </InfoWindow>

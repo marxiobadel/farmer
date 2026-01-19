@@ -82,12 +82,17 @@ class ProfileController extends Controller
                 'phone' => $settings->phone,
                 'email' => $settings->email,
                 'logo' => public_path('images/logo_with_bg.png'),
+                'sign' => public_path('images/sign.png'),
+                'cachet' => public_path('images/white-logo.jpg'),
             ],
         ];
 
         $pdf = Pdf::loadView('pdf.invoice', $data);
 
-        return $pdf->download('facture-'.$order->id.'.pdf');
+        return response()->json([
+            'filename' => 'facture-' . $order->id . '.pdf',
+            'file' => base64_encode($pdf->output())
+        ]);
     }
 
     public function edit(Request $request)
@@ -138,7 +143,7 @@ class ProfileController extends Controller
 
         return Inertia::render('front/profile/addresses', [
             'addresses' => AddressResource::collection($request->user()->addresses),
-            'countries' => fn () => CountryResource::collection($countries),
+            'countries' => fn() => CountryResource::collection($countries),
         ]);
     }
 
@@ -230,7 +235,7 @@ class ProfileController extends Controller
 
         $shippingAddress = Address::findOrFail($data['shipping_address_id']);
 
-        $billingAddress = ! empty($data['billing_address_id'])
+        $billingAddress = !empty($data['billing_address_id'])
             ? Address::findOrFail($data['billing_address_id'])
             : $shippingAddress;
 
@@ -299,7 +304,7 @@ class ProfileController extends Controller
 
             return response()->json([
                 'status' => 'error',
-                'message' => 'Erreur lors de la création de la commande : '.$e->getMessage(),
+                'message' => 'Erreur lors de la création de la commande : ' . $e->getMessage(),
             ]);
         }
     }

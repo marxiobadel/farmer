@@ -620,7 +620,7 @@ export default function CheckoutCreate({ cart, zones, countries, user_addresses,
                                                 <div className="bg-green-100 p-2.5 rounded-lg text-green-700 mr-4 border border-green-200 shrink-0">
                                                     <Coins className="h-6 w-6" />
                                                 </div>
-                                                <div className="flex-1"><div className="font-bold text-stone-900">Paiement à la livraison</div><div className="text-xs text-stone-500">Payez en espèces à la réception</div></div>
+                                                <div className="flex-1"><div className="font-bold text-stone-900">Paiement en espèce</div><div className="text-xs text-stone-500">Payez en espèces à la réception</div></div>
                                                 {form.data.payment_method === "cash" && <Check className="h-5 w-5 text-green-600" />}
                                             </Label>
                                         </div>

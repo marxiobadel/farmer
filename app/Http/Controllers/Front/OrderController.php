@@ -9,6 +9,7 @@ use App\Http\Resources\CountryResource;
 use App\Http\Resources\OrderResource;
 use App\Http\Resources\ProductResource;
 use App\Http\Resources\ZoneResource;
+use App\Mail\OrderCreated;
 use App\Models\Country;
 use App\Models\Order;
 use App\Models\Product;
@@ -21,6 +22,7 @@ use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 
 class OrderController extends Controller
 {
@@ -161,6 +163,11 @@ class OrderController extends Controller
 
             // Ici, vous pourriez déclencher un Event pour envoyer l'email de confirmation
             // Event::dispatch(new OrderCreated($order));
+            rescue(
+                fn () => Mail::to($user->email)->sendNow(new OrderCreated($order)),
+                null,
+                false
+            );
 
             return response()->json($response);
         } catch (Exception $e) {

@@ -1,34 +1,28 @@
-import { Head, Link, usePage } from "@inertiajs/react";
+import { Head, Link } from "@inertiajs/react";
 import AppLayout from "@/layouts/app-layout";
 import { useCurrencyFormatter } from "@/hooks/use-currency";
-import { Order, SharedData, Address } from "@/types";
+import { Order, Address } from "@/types";
 import ProfileLayout from "@/layouts/profile/layout";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import {
-    ChevronLeft,
-    MapPin,
-    CreditCard,
-    Truck,
-    Download,
-    PackageCheck,
-    CalendarClock
-} from "lucide-react";
-import { cn, getPaymentStatusColor } from "@/lib/utils";
+import { ChevronLeft, MapPin, CreditCard, Truck, Download, PackageCheck, CalendarClock } from "lucide-react";
+import { getPaymentStatusColor } from "@/lib/utils";
 import profile from "@/routes/profile";
 import StatusBadge from "@/components/ecommerce/status-badge";
 import { contact } from "@/routes";
-import admin from "@/routes/admin";
+import axiosInstance from "@/bootstrap";
+import { useState } from "react";
 
 interface ShowProps {
     order: Order;
 }
 
 export default function Show({ order }: ShowProps) {
-    const { auth } = usePage<SharedData>().props;
     const formatCurrency = useCurrencyFormatter();
+
+    const [processing, setProcessing] = useState<boolean>(false);
 
     // Vérification du type d'adresse (peut être un objet Address ou un tableau/record selon votre structure)
     const shippingAddress = order.shipping_address as Address;
@@ -42,6 +36,44 @@ export default function Show({ order }: ShowProps) {
             cancelled: "bg-red-100 text-red-800",
         };
         return colors[status] || "bg-stone-100 text-stone-800";
+    };
+
+    const exportInvoice = async () => {
+        try {
+            setProcessing(true);
+
+            const response = await axiosInstance.get(
+                profile.orders.invoice(order.id).url
+            );
+
+            const { file, filename } = response.data;
+
+            // Decode Base64
+            const byteCharacters = atob(file);
+            const byteNumbers = new Array(byteCharacters.length);
+
+            for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], { type: 'application/pdf' });
+
+            const url = window.URL.createObjectURL(blob);
+
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setProcessing(false);
+        }
     };
 
     return (
@@ -87,13 +119,11 @@ export default function Show({ order }: ShowProps) {
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    asChild
+                                    onClick={exportInvoice}
+                                    disabled={processing}
                                 >
-                                    {/* Utilisez un lien direct pour forcer le téléchargement sans passer par Inertia */}
-                                    <a href={admin.orders.invoice(order.id).url} target="_blank" rel="noopener noreferrer">
-                                        <Download className="h-4 w-4 mr-2" />
-                                        Facture
-                                    </a>
+                                    <Download className="h-4 w-4 mr-2" />
+                                    Facture
                                 </Button>
                             </div>
                         </div>
