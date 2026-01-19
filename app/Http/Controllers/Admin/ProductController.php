@@ -388,13 +388,11 @@ class ProductController extends Controller
 
                     // Gestion des Mouvements de Stock
                     // On compare la quantité cible ($quantity restaurée ou saisie) avec 0 (nouveau record)
+
                     if ($quantity > 0) {
                         // Pour éviter de fausser l'historique (créer un mouvement "+10" alors que le stock existait déjà),
                         // on pourrait vérifier si c'est une restauration.
                         // Mais pour simplifier et assurer la cohérence du champ 'quantity' final :
-
-                        // 1. On met à jour la quantité réelle sur le modèle
-                        $variant->update(['quantity' => $quantity]);
 
                         // 2. On crée un log.
                         // Si c'est une restauration exacte, techniquement ce n'est pas un mouvement physique,
@@ -419,7 +417,6 @@ class ProductController extends Controller
                 $diff = $targetQty - $currentQty;
 
                 if ($diff !== 0) {
-                    $product->update(['quantity' => $targetQty]); // Mise à jour explicite nécessaire ici aussi
                     StockMovement::create([
                         'product_id' => $product->id,
                         'user_id' => auth()->id(),

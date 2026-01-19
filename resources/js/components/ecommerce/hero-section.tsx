@@ -121,7 +121,7 @@ export const HeroSection = () => {
                                 <p className="text-3xl font-bold text-primary">
                                     <NumberTicker value={50} className="text-primary" />k+
                                 </p>
-                                <p className="text-sm font-medium text-stone-600">Œufs / mois</p>
+                                <p className="text-sm font-medium text-stone-600">Œufs / semaine</p>
                             </motion.div>
                         </div>
                     </motion.div>

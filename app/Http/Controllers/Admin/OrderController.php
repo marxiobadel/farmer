@@ -47,7 +47,7 @@ class OrderController extends Controller
             $query->where(function ($q) use ($search) {
                 $searchColumns = ['firstname', 'lastname', 'email'];
                 $q->where('id', '=', $search)
-                    ->orWhereHas('user', fn ($u) => $u->whereAny($searchColumns, 'like', "%$search%"))
+                    ->orWhereHas('user', fn($u) => $u->whereAny($searchColumns, 'like', "%$search%"))
                     ->orWhere('status', 'like', "%$search%");
             });
         }
@@ -127,7 +127,7 @@ class OrderController extends Controller
 
         $shippingAddress = Address::findOrFail($data['shipping_address_id']);
 
-        $billingAddress = ! empty($data['billing_address_id'])
+        $billingAddress = !empty($data['billing_address_id'])
             ? Address::findOrFail($data['billing_address_id'])
             : $shippingAddress;
 
@@ -186,7 +186,7 @@ class OrderController extends Controller
 
             $order->payments()->create([
                 'user_id' => $data['user_id'],
-                'reference' => 'PAY-'.strtoupper(Str::random(12)),
+                'reference' => 'PAY-' . strtoupper(Str::random(12)),
                 'transaction_id' => null, // Will be filled by payment gateway callback if online
                 'method' => $data['method'],
                 'provider' => $this->getProviderForMethod($data['method']), // helper to determine provider
@@ -213,7 +213,7 @@ class OrderController extends Controller
 
             return redirect()
                 ->route('admin.orders.create', $request->safe()->only(['cart_id']))
-                ->with('error', 'Erreur lors de la création de la commande: '.$e->getMessage());
+                ->with('error', 'Erreur lors de la création de la commande: ' . $e->getMessage());
         }
     }
 
@@ -229,7 +229,33 @@ class OrderController extends Controller
             return back()->with('info', 'La commande a déjà ce statut.');
         }
 
-        $order->update(['status' => $newStatus]);
+        DB::transaction(function () use ($order, $newStatus) {
+
+            $previousStatus = $order->status;
+
+            $order->update(['status' => $newStatus]);
+
+            /**
+             * 🔁 RESTOCK SI ANNULATION
+             */
+            if ($newStatus === 'cancelled' && $previousStatus !== 'cancelled') {
+
+                $order->load('items');
+
+                foreach ($order->items as $item) {
+                    StockMovement::create([
+                        'product_id' => $item->product_id,
+                        'variant_id' => $item->variant_id,
+                        'user_id' => auth()->id(),
+                        'quantity' => $item->quantity, // ✅ RETOUR AU STOCK
+                        'type' => 'return',
+                        'reference_type' => Order::class,
+                        'reference_id' => $order->id,
+                        'note' => "Annulation commande #{$order->id}",
+                    ]);
+                }
+            }
+        });
 
         $emailCacheKey = "order_{$order->id}_status_{$newStatus}_sent";
 
@@ -246,7 +272,7 @@ class OrderController extends Controller
     {
         $user = $order->user;
 
-        if (! $user) {
+        if (!$user) {
             return;
         }
 
@@ -282,7 +308,7 @@ class OrderController extends Controller
 
         $pdf = Pdf::loadView('pdf.invoice', $data);
 
-        return $pdf->download('facture-'.$order->id.'.pdf');
+        return $pdf->download('facture-' . $order->id . '.pdf');
     }
 
     public function destroy(Request $request)
@@ -296,7 +322,7 @@ class OrderController extends Controller
 
             return redirect()->back()->with('success', 'Commande(s) supprimé(s) avec succès.');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Erreur : '.$e->getMessage());
+            return redirect()->back()->with('error', 'Erreur : ' . $e->getMessage());
         }
     }
 
