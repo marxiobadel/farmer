@@ -233,6 +233,10 @@ class OrderController extends Controller
 
             $previousStatus = $order->status;
 
+            if ($previousStatus === 'delivered' && $newStatus === 'cancelled') {
+                throw new \Exception("Impossible d'annuler une commande livrée.");
+            }
+
             $order->update(['status' => $newStatus]);
 
             /**
