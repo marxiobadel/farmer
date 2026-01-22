@@ -8,6 +8,7 @@ use App\Http\Resources\CategoryResource;
 use App\Http\Resources\ProductResource;
 use App\Models\Attribute;
 use App\Models\AttributeOption;
+use App\Models\CartItem;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductVariant;
@@ -252,191 +253,192 @@ class ProductController extends Controller
                 $product->update(['default_image_id' => $data['default_image']]);
             }
 
-            // ---------------------------------------------------------
-            // POINT 2 : SAUVEGARDE DES DONNÉES AVANT SUPPRESSION
-            // ---------------------------------------------------------
-            $preservedMedia = [];
-            $preservedVariants = []; // Tableau pour stocker prix, qté, sku
+            // MODIFICATION: Vérification si le produit est dans un panier
+            $isInCart = CartItem::where('product_id', '=', $product->id)->exists();
 
-            $product->load('variants.optionValues');
+            if (! $isInCart) {
+                // ---------------------------------------------------------
+                // POINT 2 : SAUVEGARDE DES DONNÉES AVANT SUPPRESSION
+                // ---------------------------------------------------------
+                $preservedMedia = [];
+                $preservedVariants = []; // Tableau pour stocker prix, qté, sku
 
-            foreach ($product->variants as $variant) {
-                // Construction de la clé unique (Nom de la variante)
-                $variantName = $variant->optionValues
-                    ->map(fn ($opt) => $opt->name)
-                    ->join(' / ');
+                $product->load('variants.optionValues');
 
-                // A. Sauvegarde du Média (existant)
-                $mediaItem = $variant->getFirstMedia('image');
-                if ($mediaItem) {
-                    $mediaItem->update([
-                        'model_type' => 'App\Models\TempMedia',
-                        'model_id' => 0,
-                    ]);
-                    $preservedMedia[$variantName] = $mediaItem;
+                foreach ($product->variants as $variant) {
+                    // Construction de la clé unique (Nom de la variante)
+                    $variantName = $variant->optionValues
+                        ->map(fn ($opt) => $opt->name)
+                        ->join(' / ');
+
+                    // A. Sauvegarde du Média (existant)
+                    $mediaItem = $variant->getFirstMedia('image');
+                    if ($mediaItem) {
+                        $mediaItem->update([
+                            'model_type' => 'App\Models\TempMedia',
+                            'model_id' => 0,
+                        ]);
+                        $preservedMedia[$variantName] = $mediaItem;
+                    }
+
+                    // B. Sauvegarde des Données (NOUVEAU)
+                    $preservedVariants[$variantName] = [
+                        'price' => $variant->price,
+                        'quantity' => $variant->quantity,
+                        'sku' => $variant->sku,
+                    ];
                 }
 
-                // B. Sauvegarde des Données (NOUVEAU)
-                $preservedVariants[$variantName] = [
-                    'price' => $variant->price,
-                    'quantity' => $variant->quantity,
-                    'sku' => $variant->sku,
-                ];
-            }
+                // 4. Suppression destructive (Attributs & Variantes)
+                $attributes = $product->attributes;
+                $product->attributes()->detach();
+                AttributeOption::whereIn('attribute_id', $attributes->pluck('id'))->delete();
+                Attribute::whereIn('id', $attributes->pluck('id'))->delete();
 
-            // 4. Suppression destructive (Attributs & Variantes)
-            $attributes = $product->attributes;
-            $product->attributes()->detach();
-            AttributeOption::whereIn('attribute_id', $attributes->pluck('id'))->delete();
-            Attribute::whereIn('id', $attributes->pluck('id'))->delete();
+                foreach ($product->variants as $variant) {
+                    $variant->options()->delete();
+                }
+                $product->variants()->delete();
 
-            foreach ($product->variants as $variant) {
-                $variant->options()->delete();
-            }
-            $product->variants()->delete();
+                // 5. Recréation des Attributs
+                $attributeMap = [];
+                $optionMap = [];
 
-            // 5. Recréation des Attributs
-            $attributeMap = [];
-            $optionMap = [];
-
-            if (! empty($data['attributes'])) {
-                foreach ($data['attributes'] as $attributeData) {
-                    $attribute = Attribute::create([
-                        'name' => $attributeData['name'],
-                        'type' => 'radio',
-                    ]);
-                    $product->attributes()->attach($attribute->id);
-                    $attributeMap[$attributeData['name']] = $attribute->id;
-
-                    foreach ($attributeData['options'] as $optionData) {
-                        $option = AttributeOption::create([
-                            'attribute_id' => $attribute->id,
-                            'name' => $optionData['name'],
+                if (! empty($data['attributes'])) {
+                    foreach ($data['attributes'] as $attributeData) {
+                        $attribute = Attribute::create([
+                            'name' => $attributeData['name'],
+                            'type' => 'radio',
                         ]);
-                        $optionMap[$attribute->id][$optionData['name']] = $option->id;
+                        $product->attributes()->attach($attribute->id);
+                        $attributeMap[$attributeData['name']] = $attribute->id;
+
+                        foreach ($attributeData['options'] as $optionData) {
+                            $option = AttributeOption::create([
+                                'attribute_id' => $attribute->id,
+                                'name' => $optionData['name'],
+                            ]);
+                            $optionMap[$attribute->id][$optionData['name']] = $option->id;
+                        }
                     }
                 }
-            }
 
-            // 6. Recréation des Variantes avec RESTAURATION
-            if (! empty($data['variants'])) {
-                foreach ($data['variants'] as $variantData) {
+                // 6. Recréation des Variantes avec RESTAURATION
+                if (! empty($data['variants'])) {
+                    foreach ($data['variants'] as $variantData) {
 
-                    // Initialisation des valeurs par défaut venant du formulaire
-                    $price = $variantData['price'];
-                    $quantity = (int) $variantData['quantity'];
-                    $sku = uniqid('SKU-');
-                    $variantName = $variantData['name'];
+                        // Initialisation des valeurs par défaut venant du formulaire
+                        $price = $variantData['price'];
+                        $quantity = (int) $variantData['quantity'];
+                        $sku = uniqid('SKU-');
+                        $variantName = $variantData['name'];
 
-                    // TENTATIVE DE RESTAURATION
-                    if (isset($preservedVariants[$variantName])) {
-                        $oldData = $preservedVariants[$variantName];
+                        // TENTATIVE DE RESTAURATION
+                        if (isset($preservedVariants[$variantName])) {
+                            $oldData = $preservedVariants[$variantName];
 
-                        // Restauration du SKU pour garder la traçabilité si possible
-                        $sku = $oldData['sku'];
+                            // Restauration du SKU pour garder la traçabilité si possible
+                            $sku = $oldData['sku'];
 
-                        // Si le frontend renvoie 0 (bug potentiel ou champ vide) alors qu'on avait du stock, on restaure
-                        // Note: Vous pouvez ajuster cette condition selon si vous voulez forcer la restauration ou non
-                        if ($quantity === 0 && $oldData['quantity'] > 0) {
-                            $quantity = $oldData['quantity'];
+                            // Si le frontend renvoie 0 (bug potentiel ou champ vide) alors qu'on avait du stock, on restaure
+                            // Note: Vous pouvez ajuster cette condition selon si vous voulez forcer la restauration ou non
+                            if ($quantity === 0 && $oldData['quantity'] > 0) {
+                                $quantity = $oldData['quantity'];
+                            }
+
+                            // Optionnel : Restauration du prix si 0 ou vide
+                            if ((float) $price === 0.0 && (float) $oldData['price'] > 0.0) {
+                                $price = $oldData['price'];
+                            }
                         }
 
-                        // Optionnel : Restauration du prix si 0 ou vide
-                        if ((float) $price === 0.0 && (float) $oldData['price'] > 0.0) {
-                            $price = $oldData['price'];
-                        }
-                    }
-
-                    $variant = $product->variants()->create([
-                        'sku' => $sku,
-                        'price' => $price,
-                        'quantity' => 0, // On initialise à 0 pour gérer le mouvement de stock juste après
-                        'is_default' => (bool) $variantData['is_default'],
-                    ]);
-
-                    // Gestion des Images (inchangée)
-                    if (isset($variantData['image']) && $variantData['image'] instanceof UploadedFile) {
-                        $variant->addMedia($variantData['image'])->toMediaCollection('image');
-                    } elseif (isset($preservedMedia[$variantName])) {
-                        $oldMedia = $preservedMedia[$variantName];
-                        $oldMedia->update([
-                            'model_type' => ProductVariant::class,
-                            'model_id' => $variant->id,
+                        $variant = $product->variants()->create([
+                            'sku' => $sku,
+                            'price' => $price,
+                            'quantity' => 0, // On initialise à 0 pour gérer le mouvement de stock juste après
+                            'is_default' => (bool) $variantData['is_default'],
                         ]);
-                    }
 
-                    // Liaison des Options
-                    $parts = explode(' / ', $variantName);
-                    $attrIndex = 0;
-                    foreach ($data['attributes'] as $attr) {
-                        if (! isset($attributeMap[$attr['name']])) {
-                            continue;
-                        }
-
-                        $attrId = $attributeMap[$attr['name']];
-                        $optionName = $parts[$attrIndex] ?? '';
-
-                        if (isset($optionMap[$attrId][$optionName])) {
-                            $optionId = $optionMap[$attrId][$optionName];
-                            $variant->options()->create([
-                                'attribute_id' => $attrId,
-                                'attribute_option_id' => $optionId,
+                        // Gestion des Images (inchangée)
+                        if (isset($variantData['image']) && $variantData['image'] instanceof UploadedFile) {
+                            $variant->addMedia($variantData['image'])->toMediaCollection('image');
+                        } elseif (isset($preservedMedia[$variantName])) {
+                            $oldMedia = $preservedMedia[$variantName];
+                            $oldMedia->update([
+                                'model_type' => ProductVariant::class,
+                                'model_id' => $variant->id,
                             ]);
                         }
-                        $attrIndex++;
+
+                        // Liaison des Options
+                        $parts = explode(' / ', $variantName);
+                        $attrIndex = 0;
+                        foreach ($data['attributes'] as $attr) {
+                            if (! isset($attributeMap[$attr['name']])) {
+                                continue;
+                            }
+
+                            $attrId = $attributeMap[$attr['name']];
+                            $optionName = $parts[$attrIndex] ?? '';
+
+                            if (isset($optionMap[$attrId][$optionName])) {
+                                $optionId = $optionMap[$attrId][$optionName];
+                                $variant->options()->create([
+                                    'attribute_id' => $attrId,
+                                    'attribute_option_id' => $optionId,
+                                ]);
+                            }
+                            $attrIndex++;
+                        }
+
+                        // Gestion des Mouvements de Stock
+                        if ($quantity > 0) {
+                            StockMovement::create([
+                                'variant_id' => $variant->id,
+                                'product_id' => $product->id,
+                                'user_id' => auth()->id(),
+                                'quantity' => $quantity,
+                                'type' => 'adjustment',
+                                'note' => isset($preservedVariants[$variantName])
+                                    ? 'Restauration suite mise à jour produit'
+                                    : 'Stock initial (Mise à jour)',
+                            ]);
+                        }
                     }
+                    $product->update(['quantity' => $product->variants()->sum('quantity')]);
+                } else {
+                    // Logique pour produit sans variante
+                    $currentQty = $product->quantity;
+                    $targetQty = (int) ($data['quantity'] ?? 0);
+                    $diff = $targetQty - $currentQty;
 
-                    // Gestion des Mouvements de Stock
-                    // On compare la quantité cible ($quantity restaurée ou saisie) avec 0 (nouveau record)
-
-                    if ($quantity > 0) {
-                        // Pour éviter de fausser l'historique (créer un mouvement "+10" alors que le stock existait déjà),
-                        // on pourrait vérifier si c'est une restauration.
-                        // Mais pour simplifier et assurer la cohérence du champ 'quantity' final :
-
-                        // 2. On crée un log.
-                        // Si c'est une restauration exacte, techniquement ce n'est pas un mouvement physique,
-                        // mais comme on a supprimé l'ancien record, c'est une "Correction administrative".
+                    if ($diff !== 0) {
                         StockMovement::create([
-                            'variant_id' => $variant->id,
                             'product_id' => $product->id,
                             'user_id' => auth()->id(),
-                            'quantity' => $quantity,
-                            'type' => 'adjustment', // ou 'restoration' si vous créez ce type
-                            'note' => isset($preservedVariants[$variantName])
-                                ? 'Restauration suite mise à jour produit'
-                                : 'Stock initial (Mise à jour)',
+                            'quantity' => $diff,
+                            'type' => 'adjustment',
+                            'note' => 'Mise à jour manuelle fiche produit',
                         ]);
                     }
                 }
-                $product->update(['quantity' => $product->variants()->sum('quantity')]);
-            } else {
-                // Logique pour produit sans variante (inchangée)
-                $currentQty = $product->quantity;
-                $targetQty = (int) ($data['quantity'] ?? 0);
-                $diff = $targetQty - $currentQty;
 
-                if ($diff !== 0) {
-                    StockMovement::create([
-                        'product_id' => $product->id,
-                        'user_id' => auth()->id(),
-                        'quantity' => $diff,
-                        'type' => 'adjustment',
-                        'note' => 'Mise à jour manuelle fiche produit',
-                    ]);
-                }
-            }
-
-            // Nettoyage des médias orphelins
-            if (! empty($preservedMedia)) {
-                foreach ($preservedMedia as $media) {
-                    if ($media->fresh()->model_id === 0) {
-                        $media->delete();
+                // Nettoyage des médias orphelins
+                if (! empty($preservedMedia)) {
+                    foreach ($preservedMedia as $media) {
+                        if ($media->fresh()->model_id === 0) {
+                            $media->delete();
+                        }
                     }
                 }
-            }
+            } // Fin de la condition if (! $isInCart)
 
             DB::commit();
+
+            // Si le produit était dans un panier, on pourrait vouloir avertir l'utilisateur que les variantes n'ont pas changé
+            if ($isInCart) {
+                return to_route('admin.products.index')->with('warning', 'Les informations de base ont été mises à jour, mais les variantes et attributs ont été verrouillés car ce produit est présent dans des paniers clients.');
+            }
 
             return to_route('admin.products.index');
         } catch (\Exception $e) {

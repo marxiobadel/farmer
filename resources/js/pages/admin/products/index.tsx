@@ -1,6 +1,6 @@
 import AppLayout from '@/layouts/app-layout';
-import { BreadcrumbItem, PaginationMeta, Product, Variant } from '@/types';
-import { Head, router } from '@inertiajs/react';
+import { BreadcrumbItem, PaginationMeta, Product, SharedData, Variant } from '@/types';
+import { Head, router, usePage } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 import { ColumnDef, getCoreRowModel, getSortedRowModel, useReactTable } from "@tanstack/react-table";
 import { Button } from '@/components/ui/button';
@@ -40,6 +40,7 @@ interface PageProps {
 }
 
 export default function Index({ products, filters }: PageProps) {
+    const { flash } = usePage<SharedData>().props;
     const { on, clearLast } = useEventBus();
 
     const formatPrice = useCurrencyFormatter();
@@ -257,6 +258,18 @@ export default function Index({ products, filters }: PageProps) {
             clearLast?.('product.saved');
         }
     }, [on]);
+
+    useEffect(() => {
+        if (flash.success) {
+            toast.success(flash.success);
+        }
+        if (flash.error) {
+            toast.error(flash.error);
+        }
+        if (flash.warning) {
+            toast.warning(flash.warning);
+        }
+    }, [flash]);
 
     return (
         <AppLayout breadcrumbs={isMobile ? [] : breadcrumbs}>

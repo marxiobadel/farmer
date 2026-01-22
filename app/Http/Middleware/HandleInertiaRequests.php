@@ -53,7 +53,7 @@ class HandleInertiaRequests extends Middleware
                 'user' => $request->user() ? new AuthUserResource($request->user()) : null,
             ],
             'isAdminSection' => $request->is('admin*'),
-            'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            'sidebarOpen' => !$request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'defaultCurrency' => Number::defaultCurrency(),
             'settings' => [
                 'address' => $settings->address,
@@ -70,10 +70,15 @@ class HandleInertiaRequests extends Middleware
                 'taxpayer_number' => $settings->taxpayer_number,
                 'show_price' => $settings->show_price,
             ],
+            'flash' => [
+                'success' => fn() => $request->session()->get('success'),
+                'error' => fn() => $request->session()->get('error'),
+                'warning' => fn() => $request->session()->get('warning'),
+            ],
         ];
 
         // AJOUT : Injecter le panier uniquement si on n'est PAS sur une page admin
-        if (! $request->is('admin*')) {
+        if (!$request->is('admin*')) {
             // Récupère le panier via le service
             $cart = app(CartService::class)->getCart();
 

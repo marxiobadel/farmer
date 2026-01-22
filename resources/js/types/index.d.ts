@@ -43,6 +43,11 @@ export interface SharedData {
         taxpayer_number: string;
         show_price: boolean;
     };
+    flash: {
+        success: string | null;
+        error: string | null;
+        warning: string | null;
+    };
     cart?: Cart;
     defaultCurrency: string;
     [key: string]: unknown;
