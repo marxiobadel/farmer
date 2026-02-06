@@ -30,6 +30,7 @@ class CategoryRequest extends FormRequest
                     ->ignore($this->category?->id),
             ],
             'parent_id' => ['nullable', 'exists:categories,id'],
+            'position' => ['nullable', 'integer', 'min:0'],
             'status' => ['required', 'boolean'],
             'image' => ['nullable', 'image'],
         ];

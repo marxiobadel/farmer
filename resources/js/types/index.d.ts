@@ -134,6 +134,7 @@ export interface Category {
     cover_url: string;
     status: boolean;
     products_count: number;
+    position: number | string;
     products: Product[];
     parent_id: number | null;
     parent: Category; // For nested categories

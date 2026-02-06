@@ -131,6 +131,11 @@ export default function Index({ categories, listCategories, filters }: PageProps
             cell: ({ row }) => row.original.products_count,
         },
         {
+            accessorKey: "position",
+            header: 'Position',
+            cell: ({ row }) => row.original.position,
+        },
+        {
             accessorKey: 'status',
             header: "Statut",
             cell: ({ row }) => {

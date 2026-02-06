@@ -18,6 +18,7 @@ class Category extends Model implements HasMedia
         'name',
         'slug',
         'type',
+        'position',
         'status',
     ];
 

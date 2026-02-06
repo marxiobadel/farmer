@@ -28,6 +28,7 @@ type FormData = {
     status: boolean;
     image: File | null;
     parent_id: number | null;
+    position: string | number;
     _method?: string;
 };
 
@@ -37,6 +38,7 @@ export default function CategoryForm({ open, onClose, category, submitUrl, metho
         status: true,
         image: null,
         parent_id: null,
+        position: '0'
     });
 
     // Important: whenever `category` changes (open for edit), populate the form
@@ -47,6 +49,7 @@ export default function CategoryForm({ open, onClose, category, submitUrl, metho
                 status: !!category.status,
                 image: null, // don't auto-set File objects, only previews via cover_url
                 parent_id: category.parent_id ?? null,
+                position: category.position ?? '0'
             });
         } else {
             form.reset("name", "status", "image", "parent_id");
@@ -190,6 +193,19 @@ export default function CategoryForm({ open, onClose, category, submitUrl, metho
                         </Popover>
 
                         {form.errors.parent_id && <p className="mt-1 text-xs text-red-600">{form.errors.parent_id}</p>}
+                    </div>
+
+                    <div>
+                        <Label htmlFor="position" className="font-medium text-sm">Position</Label>
+                        <Input
+                            id="position"
+                            type="number"
+                            value={String(form.data.position)}
+                            onChange={(e) => form.setData("position", e.target.value)}
+                            onFocus={() => form.clearErrors("position")}
+                            className={cn("mt-1", inputClassNames())}
+                        />
+                        {form.errors.position && <p className="mt-1 text-xs text-red-600">{form.errors.position}</p>}
                     </div>
 
                     {/* Image */}

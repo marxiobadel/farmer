@@ -23,9 +23,9 @@ class IndexController extends Controller
             60 * 60 * 24,
             fn () => Category::forProduct()
                 ->active()
-                ->orderBy('name')
+                ->orderByDesc('position')
                 ->get()
-                ->map(function ($category) {
+                ->map(function (Category $category) {
                     // On charge les produits seulement si le cache est vide
                     $products = $category->products()
                         ->published()
