@@ -23,23 +23,23 @@ $status_labels = [
 
 Bonjour {{ $order->user->firstname }} {{ $order->user->lastname }},
 
-Nous accusons réception de votre commande **#{{ str_pad($order->id, 5, '0', STR_PAD_LEFT) }}**.
+Nous accusons réception de votre commande **<a href="{{ route("profile.orders.show", [$order->id]) }}">#{{ str_pad($order->id, 5, '0', STR_PAD_LEFT) }}</a>**.
 
 <x-mail::panel>
 Si vous avez déjà effectué un paiement, celui-ci sera traité automatiquement dans les plus brefs délais
 conformément à nos conditions générales de vente.
-</x-mail::panel>
+</x-mail::panel><br/>
 
 ## Détails de la commande
 
-**Numéro :** #{{ str_pad($order->id, 5, '0', STR_PAD_LEFT) }}
-**Date :** {{ $order->created_at->format('d/m/Y') }}
+**Numéro :** #{{ str_pad($order->id, 5, '0', STR_PAD_LEFT) }}<br/>
+**Date :** {{ $order->created_at->format('d/m/Y') }}<br/>
 **Statut :** {{ $status_labels[$order->status] ?? 'EN ATTENTE' }}
 
-### Produits commandés :
+## Produits commandés :
 
 <x-mail::table>
-| Produit | Quantité | Prix unitaire | Total |
+| Produit | Qté | Prix U | Total |
 |---------|----------|---------------|-------|
 @foreach($order->items as $item)
 @php
@@ -50,9 +50,11 @@ conformément à nos conditions générales de vente.
 @endforeach
 </x-mail::table>
 
-**Sous-total :** {{ number_format($order->items->sum(fn($i) => $i->price * $i->quantity), 0, ',', ' ') }} FCFA
-**Frais de livraison :** {{ $order->total - $order->items->sum(fn($i) => $i->price * $i->quantity) > 0 ? number_format($order->total - $order->items->sum(fn($i) => $i->price * $i->quantity), 0, ',', ' ') . ' FCFA' : 'Gratuit' }}
+**Sous-total :** {{ number_format($order->items->sum(fn($i) => $i->price * $i->quantity), 0, ',', ' ') }} FCFA<br/>
+**Frais de livraison :** {{ $order->total - $order->items->sum(fn($i) => $i->price * $i->quantity) > 0 ? number_format($order->total - $order->items->sum(fn($i) => $i->price * $i->quantity), 0, ',', ' ') . ' FCFA' : 'Gratuit' }}<br/>
 **Total :** **{{ number_format($order->total, 0, ',', ' ') }} FCFA**
+
+Pour voir le statut de votre commande, **<a href="{{ route("profile.orders.show", [$order->id]) }}">cliquez ici</a>**.
 
 <x-mail::button :url="url('/contact')">
 Contacter le support
