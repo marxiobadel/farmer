@@ -92,6 +92,7 @@ class ProductController extends Controller
             $product = Product::create([
                 'name' => $data['name'],
                 'base_price' => $data['price'] ?? 0,
+                'compare_at_price' => $data['compare_at_price'] ?? null,
                 'quantity' => 0,
                 'origin' => $data['origin'] ?? null,
                 'short_description' => $data['meta_description'] ?? null,
@@ -145,6 +146,7 @@ class ProductController extends Controller
                     $variant = $product->variants()->create([
                         'sku' => uniqid('SKU-'),
                         'price' => $variantData['price'],
+                        'compare_at_price' => $variantData['compare_at_price'] ?? null,
                         'quantity' => 0,
                         'is_default' => (bool) $variantData['is_default'],
                     ]);
@@ -217,6 +219,7 @@ class ProductController extends Controller
             $product->update([
                 'name' => $data['name'],
                 'base_price' => $data['price'] ?? 0,
+                'compare_at_price' => $data['compare_at_price'] ?? null,
                 'origin' => $data['origin'] ?? null,
                 'short_description' => $data['meta_description'] ?? null,
                 'description' => $data['description'] ?? null,
@@ -284,6 +287,7 @@ class ProductController extends Controller
                     // B. Sauvegarde des Données (NOUVEAU)
                     $preservedVariants[$variantName] = [
                         'price' => $variant->price,
+                        'compare_at_price' => $variant->compare_at_price,
                         'quantity' => $variant->quantity,
                         'sku' => $variant->sku,
                     ];
@@ -329,6 +333,7 @@ class ProductController extends Controller
 
                         // Initialisation des valeurs par défaut venant du formulaire
                         $price = $variantData['price'];
+                        $compareAtPrice = $variantData['compare_at_price'] ?? null;
                         $quantity = (int) $variantData['quantity'];
                         $sku = uniqid('SKU-');
                         $variantName = $variantData['name'];
@@ -355,6 +360,7 @@ class ProductController extends Controller
                         $variant = $product->variants()->create([
                             'sku' => $sku,
                             'price' => $price,
+                            'compare_at_price' => $compareAtPrice,
                             'quantity' => 0, // On initialise à 0 pour gérer le mouvement de stock juste après
                             'is_default' => (bool) $variantData['is_default'],
                         ]);

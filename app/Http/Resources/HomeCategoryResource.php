@@ -33,6 +33,7 @@ class HomeCategoryResource extends JsonResource
                     'slug' => $product->slug,
                     'is_favorited' => $user ? $user->hasFavorited($product) : false,
                     'base_price' => $product->base_price,
+                    'compare_at_price' => $product->compare_at_price,
                     'origin' => $product->origin,
                     'quantity' => $product->quantity,
                     'default_image' => $product->default_image_id
@@ -43,6 +44,7 @@ class HomeCategoryResource extends JsonResource
                             'id' => $variant->id,
                             'sku' => $variant->sku,
                             'price' => $variant->price,
+                            'compare_at_price' => $variant->compare_at_price,
                             'quantity' => $variant->quantity,
                             'is_default' => $variant->is_default,
                             'image' => $variant->getFirstMediaUrl('image'),

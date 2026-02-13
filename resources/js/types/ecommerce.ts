@@ -5,6 +5,7 @@ export interface Product {
     name: string;
     category: string; // Changé en string pour plus de souplesse
     price: number;
+    compare_at_price: number | null;
     currency: string;
     origin: string;
     image: string;

@@ -27,6 +27,7 @@ class ProductResource extends JsonResource
             'name' => $this->name,
             'slug' => $this->slug,
             'base_price' => $this->base_price,
+            'compare_at_price' => $this->compare_at_price,
             'origin' => $this->origin,
             'quantity' => $this->quantity,
             'weight' => $this->weight,
@@ -78,6 +79,7 @@ class ProductResource extends JsonResource
                         'id' => $variant->id,
                         'sku' => $variant->sku,
                         'price' => $variant->price,
+                        'compare_at_price' => $variant->compare_at_price,
                         'quantity' => $variant->quantity,
                         'is_default' => $variant->is_default,
 

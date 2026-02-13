@@ -126,6 +126,7 @@ export const getPaymentStatusColor = (status: string) => {
 
 export const adaptProductToCard = (product: Product) => {
     let price = product.base_price;
+    let compare_at_price = product.compare_at_price;
     let variantName: string | null = null;
     let image = product.default_image;
     let availableQty = product.quantity;
@@ -135,6 +136,7 @@ export const adaptProductToCard = (product: Product) => {
             product.variants.find(v => v.is_default) || product.variants[0];
 
         price = Number(variant.price);
+        compare_at_price = variant.compare_at_price;
         image = variant.image || image;
         availableQty = variant.quantity;
 
@@ -153,6 +155,7 @@ export const adaptProductToCard = (product: Product) => {
             : product.categories?.[0]?.name) ?? 'Boutique',
         variant_name: variantName,
         price,
+        compare_at_price,
         currency: 'FCFA',
         origin: product.origin || 'Ferme Locale',
         image:

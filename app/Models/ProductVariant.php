@@ -17,6 +17,7 @@ class ProductVariant extends Model implements HasMedia
         'quantity',
         'is_default',
         'price',
+        'compare_at_price',
     ];
 
     public function product()

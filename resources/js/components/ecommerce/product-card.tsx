@@ -18,15 +18,20 @@ export const ProductCard = ({ product }: ProductCardProps) => {
     const { auth, settings } = usePage<SharedData>().props;
 
     const [adding, setAdding] = useState(false);
-
     const [isFavorited, setIsFavorited] = useState(product.is_favorited ?? false);
 
     const defaultVariant = product.variants.find(v => v.is_default) || product.variants[0];
     const stockQuantity = defaultVariant ? defaultVariant.quantity : (product.availableQty || 0);
     const isOutOfStock = stockQuantity <= 0;
 
+    // --- NOUVEAU : Calcul de la remise ---
+    const hasDiscount = product.compare_at_price && product.compare_at_price > product.price;
+    const discountPercentage = hasDiscount
+        ? Math.round(((product.compare_at_price! - product.price) / product.compare_at_price!) * 100)
+        : 0;
+
     const toggleFavorite = (e: React.MouseEvent) => {
-        e.preventDefault(); // Empêche le clic de se propager si la carte devient cliquable
+        e.preventDefault();
         e.stopPropagation();
 
         const newState = !isFavorited;
@@ -39,31 +44,18 @@ export const ProductCard = ({ product }: ProductCardProps) => {
                 preserveState: true,
                 showProgress: false,
                 async: true,
-                onBefore: () => {
-                    setIsFavorited(newState);
-                },
+                onBefore: () => setIsFavorited(newState),
                 onSuccess: () => {
                     if (auth.user) {
                         toast.success("Succès", {
-                            description: newState
-                                ? "Ce produit est ajouté dans vos favoris."
-                                : "Ce produit est retiré de vos favoris.",
+                            description: newState ? "Ajouté aux favoris." : "Retiré des favoris.",
                         });
                     } else {
-                        toast.warning("Avertissement", {
-                            description: "Vous devez être connecté pour réaliser une telle action.",
-                        });
+                        toast.warning("Connexion requise", { description: "Vous devez être connecté." });
                     }
                 },
-                onError: (err) => {
-                    console.error("Erreur favoris:", err);
-                    toast.error("Une erreur est survenue.");
-                },
-                onFinish: () => {
-                    if (!auth.user) {
-                        setIsFavorited(!newState);
-                    }
-                }
+                onError: () => toast.error("Une erreur est survenue."),
+                onFinish: () => { if (!auth.user) setIsFavorited(!newState); }
             }
         );
     };
@@ -84,16 +76,11 @@ export const ProductCard = ({ product }: ProductCardProps) => {
                 toast.success(
                     <div className="flex flex-col gap-1">
                         <span className="font-bold">Ajouté au panier !</span>
-                        <span className="text-xs text-stone-500">
-                            1x {product.name} ({defaultVariant ? 'Variante sélectionnée' : 'Standard'})
-                        </span>
+                        <span className="text-xs text-stone-500">1x {product.name}</span>
                     </div>
                 );
             },
-            onError: (error: any) => {
-                console.error("Erreur lors de l'ajout au panier :", error);
-                toast.error("Impossible d'ajouter le produit au panier. Veuillez réessayer.");
-            }
+            onError: () => toast.error("Erreur lors de l'ajout au panier.")
         });
     };
 
@@ -107,28 +94,28 @@ export const ProductCard = ({ product }: ProductCardProps) => {
             viewport={{ once: true, margin: "-50px" }}
             variants={{
                 hidden: { opacity: 0, y: 20 },
-                visible: {
-                    opacity: 1,
-                    y: 0,
-                    // Optimisation 3 : Une courbe "easeOut" est plus naturelle pour l'œil humain
-                    transition: { duration: 0.5, ease: "easeOut" }
-                }
+                visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } }
             }}
         >
             {/* --- Zone Image --- */}
             <div className="relative aspect-[16/9] w-full overflow-hidden bg-stone-100">
-                <div className="h-full w-full">
-                    <img
-                        src={product.image}
-                        alt={product.name}
-                        className="h-full w-full object-cover object-center"
-                        loading="lazy"
-                    />
-                </div>
+                <img
+                    src={product.image}
+                    alt={product.name}
+                    className="h-full w-full object-cover object-center"
+                    loading="lazy"
+                />
 
-                {/* Overlay Haut (Badges + Wishlist) */}
+                {/* Overlay Haut */}
                 <div className="absolute inset-x-0 top-0 flex justify-between p-3 z-10">
                     <div className="flex flex-col gap-1.5">
+                        {/* BADGE REMISE (NOUVEAU) */}
+                        {hasDiscount && (
+                            <Badge className="w-fit border-none bg-red-600 px-2.5 py-1 text-xs font-bold text-white shadow-sm">
+                                -{discountPercentage}%
+                            </Badge>
+                        )}
+
                         {product.badge && (
                             <Badge className="w-fit border-none bg-primary/90 px-2.5 py-1 text-xs font-bold text-white shadow-sm backdrop-blur-md">
                                 {product.badge}
@@ -142,26 +129,20 @@ export const ProductCard = ({ product }: ProductCardProps) => {
                     </div>
                     <button
                         onClick={toggleFavorite}
-                        className={`group/heart flex h-9 w-9 items-center justify-center rounded-full bg-white/80 backdrop-blur-md transition-all hover:bg-white hover:scale-110 active:scale-95 ${isFavorited ? 'text-red-500' : 'text-stone-400 hover:text-red-500'
-                            }`}
-                        aria-label={isFavorited ? "Retirer des favoris" : "Ajouter aux favoris"}
+                        className={`group/heart flex h-9 w-9 items-center justify-center rounded-full bg-white/80 backdrop-blur-md transition-all hover:bg-white hover:scale-110 active:scale-95 ${isFavorited ? 'text-red-500' : 'text-stone-400 hover:text-red-500'}`}
                     >
-                        <Heart
-                            className={`h-5 w-5 transition-transform ${isFavorited ? "fill-current" : "group-hover/heart:fill-current"
-                                }`}
-                        />
+                        <Heart className={`h-5 w-5 transition-transform ${isFavorited ? "fill-current" : "group-hover/heart:fill-current"}`} />
                     </button>
                 </div>
 
-                {/* Quick Add Button (Slide Up Interaction via Variants) */}
+                {/* Quick Add Button */}
                 {product.isAvailable && settings.show_price && (
                     <motion.div
                         className="absolute inset-x-0 bottom-0 p-4 z-20"
-                        // L'animation est pilotée par le "whileHover" du parent
                         variants={{
-                            hidden: { y: "100%", opacity: 0 }, // État par défaut (caché)
-                            visible: { y: "100%", opacity: 0 }, // Reste caché lors de l'apparition de la carte
-                            hover: { y: 0, opacity: 1 }         // Apparaît au survol
+                            hidden: { y: "100%", opacity: 0 },
+                            visible: { y: "100%", opacity: 0 },
+                            hover: { y: 0, opacity: 1 }
                         }}
                         transition={{ type: "spring", stiffness: 300, damping: 25 }}
                     >
@@ -180,7 +161,6 @@ export const ProductCard = ({ product }: ProductCardProps) => {
             {/* --- Zone Contenu --- */}
             <div className="flex flex-1 flex-col p-5">
                 <div className="flex-1 space-y-2">
-                    {/* Méta-données */}
                     <div className="flex items-center justify-between text-xs font-medium text-stone-500">
                         <span className="uppercase tracking-wider text-primary/80 font-bold">
                             {product.category}
@@ -191,9 +171,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
                         </div>
                     </div>
 
-                    {/* Titre */}
                     <h3 className="text-lg font-bold text-stone-800 leading-snug group-hover:text-primary transition-colors line-clamp-2">
-                        {/* z-0 sur le lien pour ne pas bloquer le clic du bouton Ajout Rapide (z-20) */}
                         <Link href={products.show(product.slug)} className="focus:outline-none">
                             <span className="absolute inset-0 z-0" aria-hidden="true" />
                             {product.name}
@@ -206,25 +184,35 @@ export const ProductCard = ({ product }: ProductCardProps) => {
                     </h3>
                 </div>
 
-                {/* Prix et Action Mobile */}
+                {/* --- NOUVEAU : PRIX AVEC REMISE --- */}
                 {settings.show_price && (
-                    <div className="mt-5 flex items-end justify-end border-t border-stone-100 pt-4">
-                        <div>
+                    <div className="mt-5 flex items-end justify-between border-t border-stone-100 pt-4">
+                        <div className="flex flex-col">
                             <p className="text-[10px] uppercase font-semibold text-stone-400 tracking-wide mb-0.5">Prix TTC</p>
-                            <div className="flex items-baseline gap-1">
-                                <span className="text-2xl font-extrabold text-stone-900 tracking-tight">
-                                    {product.price.toLocaleString("fr-FR")}
-                                </span>
-                                <span className="text-sm font-bold text-stone-500">{product.currency}</span>
+
+                            <div className="flex items-baseline gap-2">
+                                <div className="flex items-baseline gap-1">
+                                    <span className={`text-2xl font-extrabold tracking-tight ${hasDiscount ? 'text-red-600' : 'text-stone-900'}`}>
+                                        {product.price.toLocaleString("fr-FR")}
+                                    </span>
+                                    <span className={`text-sm font-bold ${hasDiscount ? 'text-red-600/80' : 'text-stone-500'}`}>
+                                        {product.currency}
+                                    </span>
+                                </div>
+
+                                {hasDiscount && (
+                                    <span className="text-sm text-stone-400 line-through decoration-stone-400/50 decoration-1">
+                                        {product.compare_at_price?.toLocaleString("fr-FR")}
+                                    </span>
+                                )}
                             </div>
                         </div>
 
-                        {/* Fallback Icon pour Mobile (visible uniquement si pas de hover souris) */}
-                        <div
-                            className="z-10 lg:hidden flex h-10 w-10 items-center justify-center rounded-full bg-stone-100 text-stone-900">
+                        <div className="z-10 lg:hidden flex h-10 w-10 items-center justify-center rounded-full bg-stone-100 text-stone-900">
                             <ShoppingBasket className="h-5 w-5" />
                         </div>
-                    </div>)}
+                    </div>
+                )}
             </div>
         </motion.div>
     );

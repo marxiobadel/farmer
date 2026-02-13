@@ -8,7 +8,7 @@ import { adaptProductToCard, cn } from '@/lib/utils';
 import { Product } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { AlertCircle, Check, Heart, Minus, Plus, Share2, ShieldCheck, ShoppingBasket, Truck } from 'lucide-react';
+import { AlertCircle, Check, Minus, Plus, Share2, ShieldCheck, ShoppingBasket, Truck } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import products from '@/routes/products';
@@ -79,6 +79,19 @@ export default function ProductShow({ product, related }: PageProps) {
 
     // Données calculées
     const displayPrice = currentVariant ? Number(currentVariant.price) : Number(product.base_price);
+
+    const displayComparePrice = currentVariant
+        // @ts-ignore (Assurez-vous que compare_at_price existe dans vos types Product et Variant)
+        ? (Number(currentVariant.compare_at_price) > 0 ? Number(currentVariant.compare_at_price) : null)
+        // @ts-ignore
+        : (Number(product.compare_at_price) > 0 ? Number(product.compare_at_price) : null);
+
+    const hasDiscount = displayComparePrice !== null && displayComparePrice > displayPrice;
+
+    const discountPercentage = hasDiscount && displayComparePrice
+        ? Math.round(((displayComparePrice - displayPrice) / displayComparePrice) * 100)
+        : 0;
+
     const stockQuantity = currentVariant ? currentVariant.quantity : product.quantity;
     const currentSku = currentVariant ? currentVariant.sku : `PROD-${product.id}`;
     const isOutOfStock = stockQuantity <= 0;
@@ -212,6 +225,11 @@ export default function ProductShow({ product, related }: PageProps) {
 
                                 {/* Badges Flottants */}
                                 <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
+                                    {hasDiscount && (
+                                        <Badge className="w-fit border-none bg-red-600 px-3 py-1.5 text-sm font-bold text-white shadow-sm">
+                                            -{discountPercentage}%
+                                        </Badge>
+                                    )}
                                     {isOutOfStock && <Badge variant="destructive">Rupture de stock</Badge>}
                                     {product.origin && (
                                         <Badge variant="secondary" className="bg-white/90 backdrop-blur text-stone-700 border-stone-200">
@@ -258,9 +276,25 @@ export default function ProductShow({ product, related }: PageProps) {
                                 </div>
 
                                 <div className="flex flex-wrap items-center gap-4 mt-2">
-                                    <span className="text-2xl font-bold text-primary">
-                                        {formatPrice(displayPrice)}
-                                    </span>
+                                    {hasDiscount && displayComparePrice ? (
+                                        <>
+                                            <div className="flex flex-col">
+                                                <span className="text-sm text-stone-400 line-through mb-[-4px]">
+                                                    {formatPrice(displayComparePrice)}
+                                                </span>
+                                                <span className="text-3xl font-bold text-red-600">
+                                                    {formatPrice(displayPrice)}
+                                                </span>
+                                            </div>
+                                            <Badge variant="outline" className="mb-1 border-red-200 text-red-600 bg-red-50">
+                                                Promo
+                                            </Badge>
+                                        </>
+                                    ) : (
+                                        <span className="text-2xl font-bold text-primary">
+                                            {formatPrice(displayPrice)}
+                                        </span>
+                                    )}
                                     {product.categories?.map(cat => (
                                         <Badge key={cat.id} variant="outline" className="text-stone-500 border-stone-300">
                                             {cat.name}

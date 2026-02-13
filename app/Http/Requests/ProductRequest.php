@@ -26,6 +26,7 @@ class ProductRequest extends FormRequest
 
             // Required only when NO variants exist
             'price' => ['nullable', 'required_without:variants', 'numeric', 'min:0'],
+            'compare_at_price' => ['nullable', 'numeric', 'gt:price'],
             'quantity' => ['nullable', 'required_without:variants', 'integer', 'min:0'],
 
             'weight' => ['nullable', 'numeric', 'min:0'],
@@ -85,6 +86,8 @@ class ProductRequest extends FormRequest
                 'min:0',
             ],
 
+            'variants.*.compare_at_price' => ['nullable', 'numeric', 'gt:variants.*.price'],
+
             'variants.*.quantity' => [
                 'required_with:variants',
                 'integer',
@@ -130,6 +133,8 @@ class ProductRequest extends FormRequest
             'variants.*.price.required_with' => 'Chaque variante doit avoir un prix.',
             'variants.*.quantity.required_with' => 'Chaque variante doit avoir une quantité.',
             'variants.*.image.image' => "L'image de la variante doit être une image valide.",
+            'compare_at_price.gt' => 'Le prix barré doit être supérieur au prix de vente.',
+            'variants.*.compare_at_price.gt' => 'Le prix barré de la variante doit être supérieur à son prix de vente.',
         ];
     }
 

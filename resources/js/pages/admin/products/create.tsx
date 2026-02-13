@@ -45,6 +45,7 @@ export interface AttributeInput {
 export interface VariantInput {
     name: string;
     price: string;
+    compare_at_price?: string;
     quantity: string;
     is_default: boolean;
     image?: File | string | null;
@@ -55,6 +56,7 @@ export interface ProductInput {
     description: string;
     meta_description?: string;
     price?: string;
+    compare_at_price?: string;
     origin: string;
     quantity: string;
     weight: string;
@@ -84,6 +86,7 @@ export default function Create({ categories }: PageProps) {
         description: "",
         meta_description: "",
         price: "",
+        compare_at_price: "",
         origin: "",
         quantity: "0",
         weight: "",
@@ -186,6 +189,7 @@ export default function Create({ categories }: PageProps) {
             return {
                 name: variantName,
                 price: existing?.price ?? form.getValues("price") ?? "",
+                compare_at_price: existing?.compare_at_price ?? form.getValues("compare_at_price") ?? "",
                 quantity: existing?.quantity ?? "0",
                 is_default: existing?.is_default ?? false,
                 image: existing?.image ?? null,
@@ -426,6 +430,7 @@ export default function Create({ categories }: PageProps) {
                                                         <TableHead className="w-[100px]">Image</TableHead>
                                                         <TableHead>Variante</TableHead>
                                                         <TableHead className="w-[150px]">Prix</TableHead>
+                                                        <TableHead className="w-[150px]">Prix Barré</TableHead>
                                                         <TableHead className="w-[150px]">Quantité</TableHead>
                                                     </TableRow>
                                                 </TableHeader>
@@ -564,6 +569,23 @@ export default function Create({ categories }: PageProps) {
                                                                 <FormFieldWrapper
                                                                     control={control}
                                                                     noLabel={true}
+                                                                    name={`variants.${index}.compare_at_price`}
+                                                                    placeholder="Optionnel"
+                                                                    onValueChange={(value) => {
+                                                                        const updatedVariants = [...data.variants];
+                                                                        updatedVariants[index] = {
+                                                                            ...updatedVariants[index],
+                                                                            compare_at_price: value,
+                                                                        };
+                                                                        setData("variants", updatedVariants);
+                                                                    }}
+                                                                    type="number"
+                                                                />
+                                                            </TableCell>
+                                                            <TableCell>
+                                                                <FormFieldWrapper
+                                                                    control={control}
+                                                                    noLabel={true}
                                                                     name={`variants.${index}.quantity`}
                                                                     onValueChange={value => {
                                                                         const updatedVariants = [...data.variants];
@@ -603,6 +625,15 @@ export default function Create({ categories }: PageProps) {
                                             onValueChange={(value) => setData("price", value)}
                                             onFocus={() => clearErrors('price')}
                                             error={errors.price}
+                                        />
+                                        <FormFieldWrapper
+                                            control={control}
+                                            name="compare_at_price"
+                                            label="Prix d'origine (Barré)"
+                                            type="number"
+                                            placeholder="Laisser vide si pas de remise"
+                                            onValueChange={(value) => setData("compare_at_price", value)}
+                                            error={errors.compare_at_price}
                                         />
                                         <FormFieldWrapper
                                             control={control}

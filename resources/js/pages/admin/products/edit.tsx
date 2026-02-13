@@ -47,6 +47,7 @@ export default function Edit({ product, categories }: EditProps) {
         description: product.description || "",
         meta_description: product.short_description || "",
         price: String(product.base_price ?? ""),
+        compare_at_price: String(product.compare_at_price ?? ""),
         origin: product.origin ?? "",
         quantity: String(product.quantity ?? "0"),
         weight: String(product.weight ?? ""),
@@ -62,7 +63,8 @@ export default function Edit({ product, categories }: EditProps) {
         })),
         variants: product.variants.map((v) => ({
             name: v.options.map((o) => o.option).join(" / "),
-            price: String(v.price),
+            price: String(v.price ?? ''),
+            compare_at_price: String(v.compare_at_price ?? ""),
             quantity: String(v.quantity),
             is_default: !!v.is_default,
             image: v.image,
@@ -135,7 +137,7 @@ export default function Edit({ product, categories }: EditProps) {
         setImageIds(ids);
     }, [imagePreviews]);
 
-   useEffect(() => {
+    useEffect(() => {
         const attributes = (watchedAttributes || []) as AttributeInput[];
 
         const validAttributes = attributes.filter(
@@ -181,6 +183,7 @@ export default function Edit({ product, categories }: EditProps) {
                 name: variantName,
                 // On récupère les valeurs existantes (trouvées par nom OU par index)
                 price: existing?.price ?? form.getValues("price") ?? "",
+                compare_at_price: existing?.compare_at_price ?? form.getValues("compare_at_price") ?? "",
                 quantity: existing?.quantity ?? "0",
                 is_default: existing?.is_default ?? false,
                 image: existing?.image ?? null,
@@ -436,6 +439,7 @@ export default function Edit({ product, categories }: EditProps) {
                                                         <TableHead className="w-[100px]">Image</TableHead>
                                                         <TableHead>Variante</TableHead>
                                                         <TableHead className="w-[150px]">Prix</TableHead>
+                                                        <TableHead className="w-[150px]">Prix Barré</TableHead>
                                                         <TableHead className="w-[150px]">Quantité</TableHead>
                                                     </TableRow>
                                                 </TableHeader>
@@ -574,6 +578,23 @@ export default function Edit({ product, categories }: EditProps) {
                                                                 <FormFieldWrapper
                                                                     control={control}
                                                                     noLabel={true}
+                                                                    name={`variants.${index}.compare_at_price`}
+                                                                    placeholder="Optionnel"
+                                                                    onValueChange={(value) => {
+                                                                        const updatedVariants = [...data.variants];
+                                                                        updatedVariants[index] = {
+                                                                            ...updatedVariants[index],
+                                                                            compare_at_price: value,
+                                                                        };
+                                                                        setData("variants", updatedVariants);
+                                                                    }}
+                                                                    type="number"
+                                                                />
+                                                            </TableCell>
+                                                            <TableCell>
+                                                                <FormFieldWrapper
+                                                                    control={control}
+                                                                    noLabel={true}
                                                                     name={`variants.${index}.quantity`}
                                                                     onValueChange={value => {
                                                                         const updatedVariants = [...data.variants];
@@ -612,6 +633,15 @@ export default function Edit({ product, categories }: EditProps) {
                                             onValueChange={(value) => setData("price", value)}
                                             onFocus={() => clearErrors('price')}
                                             error={errors.price}
+                                        />
+                                        <FormFieldWrapper
+                                            control={control}
+                                            name="compare_at_price"
+                                            label="Prix d'origine (Barré)"
+                                            type="number"
+                                            placeholder="Laisser vide si pas de remise"
+                                            onValueChange={(value) => setData("compare_at_price", value)}
+                                            error={errors.compare_at_price}
                                         />
                                         <FormFieldWrapper
                                             control={control}

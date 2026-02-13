@@ -171,6 +171,7 @@ export interface Variant {
     id: number;
     sku: string;
     price: number;
+    compare_at_price: number | null;
     quantity: number;
     is_default: boolean;
     image: string | null;
@@ -288,6 +289,7 @@ export interface Product {
 
     // Prices
     base_price: number;
+    compare_at_price: number | null;
     quantity: number;
 
     weight: number;
