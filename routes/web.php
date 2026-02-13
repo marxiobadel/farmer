@@ -2,6 +2,7 @@
 
 use App\Enums\CategoryType;
 use App\Http\Controllers\Admin\CarrierController;
+use App\Http\Controllers\Admin\CartController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\ContactController;
 use App\Http\Controllers\Admin\DashboardController;
@@ -113,6 +114,9 @@ Route::middleware(['auth'])->group(function () {
 
             Route::resource('products', ProductController::class)->except(['destroy', 'show']);
             Route::post('products/destroy', [ProductController::class, 'destroy'])->name('products.destroy');
+
+            Route::get('carts', [CartController::class, 'index'])->name('carts.index');
+            Route::post('carts/destroy', [CartController::class, 'destroy'])->name('carts.destroy');
 
             Route::prefix('inventory')->name('inventory.')->group(function () {
                 Route::get('movements', [StockMovementController::class, 'index'])->name('index');

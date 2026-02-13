@@ -15,6 +15,11 @@ const productNavItems: NavItem[] = [
         href: admin.categories.index({type: 'products'}).url,
         icon: null,
     },
+    {
+        title: 'Paniers',
+        href: admin.carts.index().url,
+        icon: null,
+    },
 ];
 
 export default function ProductsLayout({ children }: PropsWithChildren) {

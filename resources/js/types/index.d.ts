@@ -208,6 +208,7 @@ export interface CartItem {
 export interface Cart {
     id: number;
     user_id: number | null;
+    user: User | null;
     items: CartItem[];
     total_qty: number;
     subtotal: number;
