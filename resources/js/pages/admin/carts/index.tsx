@@ -183,7 +183,7 @@ export default function Index({ carts, filters }: PageProps) {
                             <div className='relative'>
                                 <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                 <Input
-                                    placeholder={isMobile ? "Rechercher..." : "Rechercher un utilisateur..."}
+                                    placeholder={isMobile ? "Rechercher..." : "Rechercher un panier..."}
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
                                     onKeyDown={(e) => e.key === "Enter" && applyFilters({ page: 1 })}
