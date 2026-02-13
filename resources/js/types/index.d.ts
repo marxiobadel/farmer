@@ -47,6 +47,7 @@ export interface SharedData {
         success: string | null;
         error: string | null;
         warning: string | null;
+        info: string | null;
     };
     cart?: Cart;
     defaultCurrency: string;

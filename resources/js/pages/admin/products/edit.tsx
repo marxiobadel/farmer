@@ -1,4 +1,3 @@
-import { useEventBus } from "@/context/event-bus-context";
 import { useIsMobile } from "@/hooks/use-mobile";
 import AppLayout from "@/layouts/app-layout";
 import { dashboard } from "@/routes";
@@ -42,7 +41,6 @@ interface EditProps {
 
 export default function Edit({ product, categories }: EditProps) {
     const isMobile = useIsMobile();
-    const { emit } = useEventBus();
 
     const initialInputs: ProductInput = {
         name: product.name,
@@ -235,7 +233,6 @@ export default function Edit({ product, categories }: EditProps) {
             preserveState: true,
             forceFormData: true,
             preserveScroll: 'errors',
-            onSuccess: () => emit("product.saved", "Produit modifié avec succès !"),
             onError: (errors) => {
                 if (errors.error) {
                     toast.error('Erreur !', { description: errors.error });

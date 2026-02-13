@@ -1,7 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
-import { BreadcrumbItem, PaginationMeta, Product, SharedData, Variant } from '@/types';
-import { Head, router, usePage } from '@inertiajs/react';
-import { useEffect, useMemo, useState } from 'react';
+import { BreadcrumbItem, PaginationMeta, Product } from '@/types';
+import { Head, router } from '@inertiajs/react';
+import { useMemo, useState } from 'react';
 import { ColumnDef, getCoreRowModel, getSortedRowModel, useReactTable } from "@tanstack/react-table";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,12 +14,12 @@ import { dateTimeFormatOptions } from '@/lib/utils';
 import ConfirmDeleteDialog from '@/components/confirm-delete-dialog';
 import DataTablePagination from '@/components/datatable-pagination';
 import DataTable from '@/components/datatable';
-import { useEventBus } from '@/context/event-bus-context';
 import { dashboard } from '@/routes';
 import admin from '@/routes/admin';
 import ProductsLayout from '@/layouts/products/layout';
 import { productStatus } from '@/data';
 import { useCurrencyFormatter } from '@/hooks/use-currency';
+import { useFlashNotifications } from '../../../hooks/use-flash-notification';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Tableau de bord', href: dashboard().url },
@@ -40,9 +40,6 @@ interface PageProps {
 }
 
 export default function Index({ products, filters }: PageProps) {
-    const { flash } = usePage<SharedData>().props;
-    const { on, clearLast } = useEventBus();
-
     const formatPrice = useCurrencyFormatter();
 
     const isMobile = useIsMobile();
@@ -244,32 +241,7 @@ export default function Index({ products, filters }: PageProps) {
         setRowSelection(newValue);
     };
 
-    useEffect(() => {
-        const offProductSaved = on('product.saved', (message) => {
-            toast.success(
-                <div className="flex flex-col">
-                    <span className="font-semibold text-foreground">Succès</span>
-                    <span className="text-sm text-muted-foreground">{message}</span>
-                </div>);
-        }, { replay: true, once: true });
-
-        return () => {
-            offProductSaved();
-            clearLast?.('product.saved');
-        }
-    }, [on]);
-
-    useEffect(() => {
-        if (flash.success) {
-            toast.success(flash.success);
-        }
-        if (flash.error) {
-            toast.error(flash.error);
-        }
-        if (flash.warning) {
-            toast.warning(flash.warning);
-        }
-    }, [flash]);
+    useFlashNotifications();
 
     return (
         <AppLayout breadcrumbs={isMobile ? [] : breadcrumbs}>
@@ -359,16 +331,6 @@ export default function Index({ products, filters }: PageProps) {
                         { ids },
                         {
                             preserveState: true,
-                            onSuccess: () => {
-                                toast.success(
-                                    <div className="flex flex-col">
-                                        <span className="font-semibold text-foreground">Succès</span>
-                                        <span className="text-sm text-muted-foreground">
-                                            Les produits sélectionnés ont été supprimés.
-                                        </span>
-                                    </div>
-                                );
-                            },
                             onError: (errors: any) => {
                                 const messages: string[] = [];
 

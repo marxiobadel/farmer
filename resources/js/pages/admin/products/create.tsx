@@ -1,4 +1,3 @@
-import { useEventBus } from "@/context/event-bus-context";
 import { useIsMobile } from "@/hooks/use-mobile";
 import AppLayout from "@/layouts/app-layout";
 import { dashboard } from "@/routes";
@@ -78,7 +77,6 @@ interface PageProps {
 }
 
 export default function Create({ categories }: PageProps) {
-    const { emit } = useEventBus();
     const isMobile = useIsMobile();
 
     const initialInputs: ProductInput = {
@@ -223,7 +221,6 @@ export default function Create({ categories }: PageProps) {
             preserveState: true,
             preserveScroll: 'errors',
             forceFormData: true,
-            onSuccess: () => emit('product.saved', `Produit ajouté avec succès !`, { persist: true }),
             onError: (errors) => {
                 if (errors.error) {
                     toast.error('Erreur !', { description: errors.error });

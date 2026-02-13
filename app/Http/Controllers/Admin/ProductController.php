@@ -198,7 +198,7 @@ class ProductController extends Controller
 
             DB::commit();
 
-            return to_route('admin.products.index');
+            return to_route('admin.products.index')->with('success', 'Produit ajouté avec succès');
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -440,7 +440,7 @@ class ProductController extends Controller
                 return to_route('admin.products.index')->with('warning', 'Les informations de base ont été mises à jour, mais les variantes et attributs ont été verrouillés car ce produit est présent dans des paniers clients.');
             }
 
-            return to_route('admin.products.index');
+            return to_route('admin.products.index')->with('success', 'Produit mis à jour avec succès.');
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -489,6 +489,7 @@ class ProductController extends Controller
                         }
                     }
 
+                    /** @var Product $product */
                     $product->tags()->detach();
 
                     $product->delete();
