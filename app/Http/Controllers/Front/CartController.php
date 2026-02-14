@@ -6,10 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Models\CartItem;
 use App\Services\CartService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class CartController extends Controller
 {
-    public function __construct(protected CartService $cartService) {}
+    public function __construct(protected CartService $cartService)
+    {
+    }
 
     public function index()
     {
@@ -54,6 +57,25 @@ class CartController extends Controller
 
         // 4. Retour (Inertia rechargera automatiquement les props)
         return back()->with('success', 'Panier mis à jour');
+    }
+
+    public function applyCoupon(Request $request)
+    {
+        $request->validate(['code' => 'required|string']);
+
+        try {
+            $this->cartService->applyCoupon($request->code);
+        } catch (ValidationException $e) {
+            return back()->withErrors($e->errors());
+        }
+
+        return back()->with('success', 'Code promo appliqué !');
+    }
+
+    public function removeCoupon()
+    {
+        $this->cartService->removeCoupon();
+        return back()->with('success', 'Code promo retiré.');
     }
 
     public function destroy(CartItem $cartItem)

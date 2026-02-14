@@ -16,7 +16,7 @@ export default function CheckoutButton() {
 
     // Vérification de sécurité
     const hasItems = cart && cart.total_qty > 0;
-    const cartTotal = cart?.subtotal || 0;
+    const cartTotal = cart?.total || 0;
 
     return (
         <Button

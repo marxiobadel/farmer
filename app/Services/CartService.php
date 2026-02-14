@@ -4,11 +4,13 @@ namespace App\Services;
 
 use App\Models\Cart;
 use App\Models\CartItem;
+use App\Models\Coupon;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class CartService
 {
@@ -19,6 +21,76 @@ class CartService
     public function __construct()
     {
         $this->cart = $this->resolveCart();
+    }
+
+    /**
+     * Appliquer un coupon au panier
+     */
+    public function applyCoupon(string $code): void
+    {
+        $coupon = Coupon::where('code', '=', $code)->first();
+
+        if (!$coupon || !$coupon->isValid()) {
+            throw ValidationException::withMessages([
+                'coupon' => 'Ce code promo est invalide ou expiré.'
+            ]);
+        }
+
+        // Vérification du montant minimum
+        $subtotal = $this->getSubtotal();
+        if ($coupon->min_order_amount && $subtotal < $coupon->min_order_amount) {
+            throw ValidationException::withMessages([
+                'coupon' => "Le montant minimum pour ce coupon est de {$coupon->min_order_amount}."
+            ]);
+        }
+
+        $this->cart->coupon_id = $coupon->id;
+        $this->cart->save();
+        $this->cart->load('coupon'); // Recharger la relation
+    }
+
+    /**
+     * Retirer le coupon
+     */
+    public function removeCoupon(): void
+    {
+        $this->cart->coupon_id = null;
+        $this->cart->save();
+    }
+
+    /**
+     * Calcule le sous-total (sans réduction)
+     */
+    public function getSubtotal(): float
+    {
+        return $this->cart->items->sum(fn ($item) => $item->price * $item->quantity);
+    }
+
+    /**
+     * Calcule le montant de la réduction
+     */
+    public function getDiscountAmount(): float
+    {
+        if (!$this->cart->coupon) {
+            return 0;
+        }
+
+        $subtotal = $this->getSubtotal();
+        $coupon = $this->cart->coupon;
+
+        // Revérifier la validité (au cas où le panier a changé)
+        if ($coupon->min_order_amount && $subtotal < $coupon->min_order_amount) {
+            $this->removeCoupon();
+            return 0;
+        }
+
+        if ($coupon->type === 'fixed') {
+            return min($coupon->value, $subtotal); // Ne pas dépasser le total
+        } elseif ($coupon->type === 'percent') {
+            return $subtotal * ($coupon->value / 100);
+        }
+
+        return 0;
     }
 
     /**
@@ -156,12 +228,16 @@ class CartService
 
     public function getCart(): Cart
     {
-        return $this->cart->load('items.product', 'items.variant');
+        // On charge aussi le coupon
+        return $this->cart->load('items.product', 'items.variant', 'coupon');
     }
 
+    /**
+     * (Override) Calcule le total final à payer
+     */
     public function getTotal(): float
     {
-        return $this->cart->items->sum(fn ($item) => $item->price * $item->quantity);
+        return max(0, $this->getSubtotal() - $this->getDiscountAmount());
     }
 
     public function clear(): void

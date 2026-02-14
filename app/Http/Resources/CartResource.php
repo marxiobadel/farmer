@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Services\CartService;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class CartResource extends JsonResource
@@ -17,6 +18,8 @@ class CartResource extends JsonResource
             return [];
         }
 
+        $cartService = app(CartService::class);
+
         return [
             'id' => $this->id,
             'user_id' => $this->user_id,
@@ -31,8 +34,11 @@ class CartResource extends JsonResource
                 ];
             }, null),
             'items' => CartItemResource::collection($this->items),
+            'coupon' => $this->whenLoaded('coupon', new CouponResource($this->coupon)),
             'total_qty' => $this->items->sum('quantity'),
-            'subtotal' => $this->items->sum(fn ($item) => $item->price * $item->quantity),
+            'subtotal' => $cartService->getSubtotal(), // Si vous ajoutez cette méthode helper
+            'discount_amount' => $cartService->getDiscountAmount(),
+            'total' => $cartService->getTotal(),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

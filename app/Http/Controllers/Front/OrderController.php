@@ -68,6 +68,39 @@ class OrderController extends Controller
             ]);
         }
 
+        // --- Début Logique Coupon ---
+        $cartSubtotal = $cart->items->sum(fn ($item) => $item->price * $item->quantity);
+        $discountAmount = 0;
+        $coupon = $cart->coupon;
+
+        if ($coupon) {
+            // Vérification de sécurité de dernière minute
+            if (!$coupon->isValid()) { // Méthode définie dans le modèle Coupon
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Le code promo appliqué n\'est plus valide ou a expiré.',
+                ]);
+            }
+
+            if ($coupon->min_order_amount && $cartSubtotal < $coupon->min_order_amount) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => "Le montant minimum pour ce code promo ({$coupon->min_order_amount}) n'est plus atteint.",
+                ]);
+            }
+
+            // Calcul du montant de la réduction
+            if ($coupon->type === 'fixed') {
+                $discountAmount = $coupon->value;
+            } elseif ($coupon->type === 'percent') {
+                $discountAmount = $cartSubtotal * ($coupon->value / 100);
+            }
+
+            // La réduction ne peut pas excéder le sous-total
+            $discountAmount = min($discountAmount, $cartSubtotal);
+        }
+        // --- Fin Logique Coupon ---
+
         $contactInfo = [
             'firstname' => $data['firstname'],
             'lastname' => $data['lastname'],
@@ -119,7 +152,9 @@ class OrderController extends Controller
             $totalQty
         );
 
-        $grandTotal = $cartMetrics['price'] + $shippingCost;
+        // --- Calcul du Grand Total avec Réduction ---
+        // (Sous-total - Réduction) + Frais de port
+        $grandTotal = max(0, ($cartSubtotal - $discountAmount) + $shippingCost);
 
         DB::beginTransaction();
 
@@ -129,6 +164,8 @@ class OrderController extends Controller
                 'carrier_id' => $data['carrier_id'],
                 'status' => 'pending',
                 'total' => $grandTotal,
+                'discount' => $discountAmount,
+                'coupon_code' => $coupon?->code,
                 'shipping_address' => $shippingSnapshot,
                 'invoice_address' => $billingSnapshot,
             ]);
@@ -152,6 +189,11 @@ class OrderController extends Controller
                     'reference_id' => $order->id,
                     'note' => "Commande client #{$order->id}",
                 ]);
+            }
+
+            // --- Incrémentation du compteur d'utilisation du coupon ---
+            if ($coupon) {
+                $coupon->increment('usage_count');
             }
 
             // C. Create Payment Record

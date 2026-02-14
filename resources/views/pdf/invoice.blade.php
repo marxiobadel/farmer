@@ -391,16 +391,35 @@
 
         <div class="totals-container">
             <table class="totals-table">
+                @php
+                    // Calculs
+                    $subtotal = $order->items->sum(fn($i) => $i->price * $i->quantity);
+                    $discount = $order->discount ?? 0;
+                    // Frais de port = Total - Sous-total + Remise
+                    $shipping = $order->total - $subtotal + $discount;
+                @endphp
+
                 <tr>
                     <td class="totals-label">Sous-total</td>
                     <td class="totals-value">
-                        {{ number_format($order->items->sum(fn($i) => $i->price * $i->quantity), 0, ',', ' ') }} FCFA
+                        {{ number_format($subtotal, 0, ',', ' ') }} FCFA
                     </td>
                 </tr>
+
+                @if($discount > 0)
+                <tr>
+                    <td class="totals-label" style="color: #166534;">
+                        Remise {{ $order->coupon_code ? '('.$order->coupon_code.')' : '' }}
+                    </td>
+                    <td class="totals-value" style="color: #166534;">
+                        - {{ number_format($discount, 0, ',', ' ') }} FCFA
+                    </td>
+                </tr>
+                @endif
+
                 <tr>
                     <td class="totals-label">Frais de livraison</td>
                     <td class="totals-value">
-                        @php $shipping = $order->total - $order->items->sum(fn($i) => $i->price * $i->quantity); @endphp
                         {{ $shipping > 0 ? number_format($shipping, 0, ',', ' ') . ' FCFA' : 'Gratuit' }}
                     </td>
                 </tr>

@@ -7,7 +7,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { ChevronLeft, MapPin, CreditCard, Truck, Download, PackageCheck, CalendarClock } from "lucide-react";
+import { ChevronLeft, MapPin, CreditCard, Truck, Download, PackageCheck, CalendarClock, Tag } from "lucide-react"; // Ajout de Tag
 import { getPaymentStatusColor } from "@/lib/utils";
 import profile from "@/routes/profile";
 import StatusBadge from "@/components/ecommerce/status-badge";
@@ -24,9 +24,19 @@ export default function Show({ order }: ShowProps) {
 
     const [processing, setProcessing] = useState<boolean>(false);
 
-    // Vérification du type d'adresse (peut être un objet Address ou un tableau/record selon votre structure)
+    // Vérification du type d'adresse
     const shippingAddress = order.shipping_address as Address;
     const invoiceAddress = order.invoice_address as Address;
+
+    // --- CALCULS ---
+    // 1. Total des produits
+    const itemsTotal = order.items.reduce((acc, item) => acc + (Number(item.price) * item.quantity), 0);
+
+    // 2. Remise
+    const discount = Number(order.discount || 0);
+
+    // 3. Frais de port : Total - (Produits - Remise)
+    const shippingCost = Number(order.total) - (itemsTotal - discount);
 
     const getStatusColor = (status: string) => {
         const colors: Record<string, string> = {
@@ -159,7 +169,6 @@ export default function Show({ order }: ShowProps) {
                                                             <h3 className="text-base font-medium text-stone-900">
                                                                 {item.product?.name || "Produit supprimé"}
                                                             </h3>
-                                                            {/* Affichage des variantes si elles existent */}
                                                             {item.variant && Array.isArray(item.variant) && item.variant.length > 0 && (
                                                                 <p className="mt-1 text-sm text-stone-500">
                                                                     {item.variant.map(v => `${v.attribute}: ${v.option}`).join(', ')}
@@ -171,7 +180,7 @@ export default function Show({ order }: ShowProps) {
                                                         </div>
                                                         <div className="text-right sm:text-right">
                                                             <p className="font-semibold text-stone-900">
-                                                                {formatCurrency(item.total)}
+                                                                {formatCurrency(item.total || (Number(item.price) * item.quantity))}
                                                             </p>
                                                         </div>
                                                     </div>
@@ -182,7 +191,7 @@ export default function Show({ order }: ShowProps) {
                                 </CardContent>
                             </Card>
 
-                            {/* Informations de paiement et livraison (Mobile/Tablette principalement) */}
+                            {/* Informations de paiement et livraison */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                                 <Card className="border-stone-200/60 shadow-none h-full">
                                     <CardHeader className="px-4 sm:px-6 py-2">
@@ -243,10 +252,20 @@ export default function Show({ order }: ShowProps) {
                                     <div className="flex justify-between text-sm">
                                         <span className="text-stone-500">Sous-total</span>
                                         <span className="font-medium text-stone-900">
-                                            {/* Calcul approximatif si pas dispo dans l'objet order direct */}
-                                            {formatCurrency(order.items.reduce((acc, item) => acc + item.total, 0))}
+                                            {formatCurrency(itemsTotal)}
                                         </span>
                                     </div>
+
+                                    {/* Affichage du coupon */}
+                                    {discount > 0 && (
+                                        <div className="flex justify-between text-sm text-green-600">
+                                            <span className="flex items-center gap-2">
+                                                <Tag className="h-4 w-4" />
+                                                Remise {order.coupon_code ? `(${order.coupon_code})` : ''}
+                                            </span>
+                                            <span className="font-medium">- {formatCurrency(discount)}</span>
+                                        </div>
+                                    )}
 
                                     <div className="flex justify-between text-sm">
                                         <div className="flex items-center gap-2 text-stone-500">
@@ -261,8 +280,7 @@ export default function Show({ order }: ShowProps) {
                                             )}
                                         </div>
                                         <span className="font-medium text-stone-900">
-                                            {/* Si frais de port séparés, sinon afficher inclus ou calcul */}
-                                            {formatCurrency(order.total - order.items.reduce((acc, item) => acc + item.total, 0))}
+                                            {shippingCost <= 0 ? "Offert" : formatCurrency(shippingCost)}
                                         </span>
                                     </div>
 

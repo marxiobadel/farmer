@@ -5,7 +5,7 @@ import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, Sid
 import { dashboard } from '@/routes';
 import type { NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { Boxes, FileQuestion, LayoutGrid, MessageCircle, ShoppingBag, User2, Star, Truck, Box, UserCheck } from 'lucide-react';
+import { Boxes, FileQuestion, LayoutGrid, MessageCircle, ShoppingBag, User2, Star, Truck, Box, UserCheck, TicketPercent } from 'lucide-react';
 import AppLogo from './app-logo';
 import admin from '@/routes/admin';
 
@@ -32,6 +32,11 @@ const catalogueNavItems: NavItem[] = [
         title: 'Commandes',
         href: admin.orders.index().url,
         icon: ShoppingBag,
+    },
+    {
+        title: 'Promotions',
+        href: admin.coupons.index().url, // Assurez-vous que Ziggy a bien la route
+        icon: TicketPercent,
     },
 ];
 

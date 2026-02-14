@@ -20,9 +20,14 @@ class Cart extends Model
         return $this->hasMany(CartItem::class);
     }
 
+    public function coupon()
+    {
+        return $this->belongsTo(Coupon::class);
+    }
+
     // Calcul du total du panier
     public function getTotalAttribute(): float
     {
-        return $this->items->sum(fn ($item) => $item->price * $item->quantity);
+        return $this->items->sum(fn($item) => $item->price * $item->quantity);
     }
 }

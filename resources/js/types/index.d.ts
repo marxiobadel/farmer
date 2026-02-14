@@ -212,7 +212,10 @@ export interface Cart {
     user: User | null;
     items: CartItem[];
     total_qty: number;
+    coupon: Coupon | null;
+    discount_amount: number;
     subtotal: number;
+    total: number;
     created_at: string;
     updated_at: string;
 }
@@ -238,6 +241,8 @@ export interface Order {
     carrier: Carrier;
     status: string;
     total: number;
+    discount: number;
+    coupon_code: string;
 
     items: OrderItem[];
     payments: Payment[];
@@ -426,6 +431,20 @@ export interface ProRequest {
     message: string;
     user: User;
     status: string;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface Coupon {
+    id: number;
+    code: string;
+    type: 'fixed' | 'percent';
+    value: number;
+    min_order_amount: number;
+    expires_at: string;
+    usage_limit: number | null;
+    usage_count: number;
+    is_active: boolean;
     created_at: string;
     updated_at: string;
 }

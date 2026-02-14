@@ -23,6 +23,8 @@ class OrderResource extends JsonResource
             'carrier_id' => $this->carrier_id,
             'status' => $this->status,
             'total' => $this->total,
+            'discount' => $this->discount,
+            'coupon_code' => $this->coupon_code,
             'items' => OrderItemResource::collection($this->items),
             'user' => $this->whenLoaded('user', function () {
                 return [

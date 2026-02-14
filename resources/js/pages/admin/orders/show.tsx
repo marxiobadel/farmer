@@ -17,6 +17,7 @@ import {
     Phone,
     Printer,
     Truck,
+    Tag, // Ajout de l'icône Tag
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -51,6 +52,17 @@ export default function Show({ order }: PageProps) {
     const { data, setData, patch, processing, reset } = useForm({
         status: order.status,
     });
+
+    // --- CALCULS ---
+    // 1. Total des articles
+    const itemsTotal = order.items.reduce((acc, i) => acc + (Number(i.price) * i.quantity), 0);
+
+    // 2. Remise
+    const discount = Number(order.discount || 0);
+
+    // 3. Frais de port : Total - (Produits - Remise)
+    // Si Total = Produits - Remise + Port => Port = Total - Produits + Remise
+    const shippingCost = Number(order.total) - itemsTotal + discount;
 
     const handleStatusUpdate = () => {
         patch(admin.orders.updateStatus(order.id).url, {
@@ -180,14 +192,26 @@ export default function Show({ order }: PageProps) {
 
                                 {/* Order Summary within the card */}
                                 <div className="p-4 bg-gray-50/50 border-t flex flex-col items-end space-y-2">
-                                    <div className="w-full sm:w-1/2 lg:w-1/3 space-y-2">
+                                    <div className="w-full sm:w-1/2 space-y-2">
                                         <div className="flex justify-between text-sm text-gray-600">
                                             <span>Sous-total</span>
-                                            <span>{formatCurrency(order.items.reduce((acc, i) => acc + (i.price * i.quantity), 0))}</span>
+                                            <span>{formatCurrency(itemsTotal)}</span>
                                         </div>
+
+                                        {/* Affichage du coupon */}
+                                        {discount > 0 && (
+                                            <div className="flex justify-between text-sm text-green-600">
+                                                <span className="flex items-center gap-2">
+                                                    <Tag className="h-4 w-4" />
+                                                    Remise {order.coupon_code ? `(${order.coupon_code})` : ''}
+                                                </span>
+                                                <span>- {formatCurrency(discount)}</span>
+                                            </div>
+                                        )}
+
                                         <div className="flex justify-between text-sm text-gray-600">
                                             <span>Livraison ({order.carrier?.name})</span>
-                                            <span>{formatCurrency(order.total - order.items.reduce((acc, i) => acc + (i.price * i.quantity), 0))}</span>
+                                            <span>{formatCurrency(Math.max(0, shippingCost))}</span>
                                         </div>
                                         <Separator />
                                         <div className="flex justify-between text-base font-bold text-gray-900 pt-2">

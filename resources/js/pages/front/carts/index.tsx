@@ -1,22 +1,30 @@
+import CheckoutButton from "@/components/ecommerce/checkout-button";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input"; // Import ajouté
 import { useCurrencyFormatter } from "@/hooks/use-currency";
+import { useFlashNotifications } from "@/hooks/use-flash-notification";
 import AppLayout from "@/layouts/app-layout";
+import { inputClassNames } from "@/lib/utils";
+import carts from "@/routes/carts";
+import routeProducts from '@/routes/products';
 import { SharedData } from "@/types";
 import { Head, Link, router, usePage } from "@inertiajs/react";
-import { Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
-import routeProducts from '@/routes/products';
-import carts from "@/routes/carts";
-import CheckoutButton from "@/components/ecommerce/checkout-button";
+import { Minus, Plus, ShoppingBag, Tag, Trash2, X } from "lucide-react"; // Icones ajoutées
+import { useState } from "react"; // Hook ajouté
+import { toast } from "sonner";
 
 export default function CartIndex() {
+    // On suppose que l'objet cart contient maintenant 'coupon', 'discount_amount' et 'total'
+    // grâce à la mise à jour du CartResource côté backend.
     const { cart } = usePage<SharedData>().props;
 
     const formatCurrency = useCurrencyFormatter();
+    const [couponCode, setCouponCode] = useState("");
+    const [loadingCoupon, setLoadingCoupon] = useState(false);
 
     const updateQuantity = (itemId: number, newQty: number) => {
         if (newQty < 1) return;
 
-        // Assurez-vous d'avoir une route définie pour la mise à jour
         router.patch(carts.items.update(itemId), { quantity: newQty }, {
             preserveScroll: true,
             only: ['cart']
@@ -24,14 +32,38 @@ export default function CartIndex() {
     };
 
     const removeItem = (itemId: number) => {
-        // Assurez-vous d'avoir une route définie pour la suppression
         router.delete(carts.items.destroy(itemId), {
             preserveScroll: true,
             only: ['cart']
         });
     };
 
+    const handleApplyCoupon = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!couponCode) return;
+
+        setLoadingCoupon(true);
+        router.post(carts.coupon.apply(), { code: couponCode }, {
+            preserveScroll: true,
+            onFinish: () => setLoadingCoupon(false),
+            onSuccess: () => setCouponCode(""),
+            onError: (error) => {
+                if (error.coupon) {
+                    toast.error('Erreur !', { description: error.coupon});
+                }
+            }
+        });
+    };
+
+    const handleRemoveCoupon = () => {
+        router.delete(carts.coupon.remove(), {
+            preserveScroll: true,
+        });
+    };
+
     const cartHasItems = cart && cart.items && cart.items.length > 0;
+
+    useFlashNotifications();
 
     return (
         <AppLayout layout="guest">
@@ -153,21 +185,82 @@ export default function CartIndex() {
                                     Récapitulatif
                                 </h2>
 
-                                <dl className="mt-6 space-y-4">
-                                    <div className="flex items-center justify-between">
-                                        <dt className="text-sm text-stone-600">Sous-total</dt>
-                                        <dd className="text-sm font-medium text-stone-900">{formatCurrency(cart.subtotal)}</dd>
-                                    </div>
-                                    <div className="flex items-center justify-between border-t border-stone-200 pt-4">
-                                        <dt className="text-base font-bold text-stone-900">Total</dt>
-                                        <dd className="text-base font-bold text-primary">
-                                            {formatCurrency(cart.subtotal)}
-                                        </dd>
-                                    </div>
+                                <div className="mt-6 space-y-4">
+                                    <dl className="space-y-4">
+                                        <div className="flex items-center justify-between">
+                                            <dt className="text-sm text-stone-600">Sous-total</dt>
+                                            <dd className="text-sm font-medium text-stone-900">{formatCurrency(cart.subtotal)}</dd>
+                                        </div>
+
+                                        {/* Section Coupon - Affichage dynamique */}
+                                        <div className="border-t border-b border-stone-200 py-4">
+                                            {cart.coupon ? (
+                                                <div className="flex items-center justify-between bg-green-50 p-3 rounded-md border border-green-200">
+                                                    <div className="flex items-center space-x-2 overflow-hidden">
+                                                        <Tag className="h-4 w-4 text-green-600 shrink-0" />
+                                                        <div className="flex flex-col">
+                                                            <span className="text-sm text-green-700 font-medium truncate" title={cart.coupon.code}>
+                                                                {cart.coupon.code}
+                                                            </span>
+                                                            <span className="text-xs text-green-600">
+                                                                Code appliqué
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    <button
+                                                        onClick={handleRemoveCoupon}
+                                                        className="ml-2 text-stone-400 hover:text-red-500 p-1 hover:bg-white rounded-full transition-colors"
+                                                        title="Retirer le code promo"
+                                                    >
+                                                        <X className="h-4 w-4" />
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <form onSubmit={handleApplyCoupon} className="flex gap-2">
+                                                    <Input
+                                                        placeholder="Code promo"
+                                                        value={couponCode}
+                                                        onChange={(e) => setCouponCode(e.target.value)}
+                                                        className={inputClassNames('bg-white')}
+                                                    />
+                                                    <Button
+                                                        type="submit"
+                                                        variant="outline"
+                                                        size="sm"
+                                                        disabled={loadingCoupon || !couponCode}
+                                                        className="shrink-0"
+                                                    >
+                                                        Appliquer
+                                                    </Button>
+                                                </form>
+                                            )}
+                                        </div>
+
+                                        {/* Affichage de la remise si elle existe */}
+                                        {cart.discount_amount > 0 && (
+                                            <div className="flex items-center justify-between text-green-700">
+                                                <dt className="text-sm flex items-center">
+                                                    Remise
+                                                </dt>
+                                                <dd className="text-sm font-medium">
+                                                    - {formatCurrency(cart.discount_amount)}
+                                                </dd>
+                                            </div>
+                                        )}
+
+                                        <div className="flex items-center justify-between border-t border-stone-200 pt-4">
+                                            <dt className="text-base font-bold text-stone-900">Total</dt>
+                                            <dd className="text-base font-bold text-primary">
+                                                {/* Utilisation de cart.total calculé par le backend */}
+                                                {formatCurrency(cart.total)}
+                                            </dd>
+                                        </div>
+                                    </dl>
+
                                     <p className="text-xs text-stone-500 italic mt-2">
                                         Les frais de livraison seront calculés à l'étape suivante.
                                     </p>
-                                </dl>
+                                </div>
 
                                 <div className="mt-6">
                                     <CheckoutButton />

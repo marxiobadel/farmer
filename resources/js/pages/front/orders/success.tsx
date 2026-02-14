@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useCurrencyFormatter } from "@/hooks/use-currency";
-import { Check, Home, Package, ShoppingBag, Truck, Calendar, ArrowRight } from "lucide-react";
+import { Check, Home, Package, ShoppingBag, Truck, Calendar, ArrowRight, Tag } from "lucide-react"; // Ajout de Tag
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Order, Address } from "@/types";
@@ -18,11 +18,18 @@ interface PageProps {
 export default function OrderSuccess({ order }: PageProps) {
     const formatCurrency = useCurrencyFormatter();
 
-    // Calcul des sous-totaux pour l'affichage
+    // 1. Calcul du sous-total des articles
     const itemsTotal = order.items.reduce((acc, item) => acc + (Number(item.price) * item.quantity), 0);
-    const shippingCost = Number(order.total) - itemsTotal;
 
-    // Helper pour typer l'adresse qui peut être un Record<string,any> ou Address
+    // 2. Récupération de la remise
+    const discount = Number(order.discount || 0);
+
+    // 3. Calcul des frais de port
+    // Formule Backend : Total = (Subtotal - Discount) + Shipping
+    // Donc : Shipping = Total - (Subtotal - Discount)
+    const shippingCost = Number(order.total) - (itemsTotal - discount);
+
+    // Helper pour typer l'adresse
     const shippingAddress = order.shipping_address as Address;
 
     return (
@@ -70,7 +77,6 @@ export default function OrderSuccess({ order }: PageProps) {
                                     <li key={item.id} className="flex p-4 sm:p-6 hover:bg-stone-50/30 transition-colors">
 
                                         <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-md border border-stone-200 bg-white">
-                                            {/* Fallback si product ou default_image est null */}
                                             <img
                                                 src={item.image || item.product?.default_image || `https://placehold.co/150?text=${item.product?.name || 'PR'}`}
                                                 alt={item.product?.name || 'Produit'}
@@ -87,7 +93,6 @@ export default function OrderSuccess({ order }: PageProps) {
                                                     </h3>
                                                     <p className="ml-4">{formatCurrency(item.total || (Number(item.price) * item.quantity))}</p>
                                                 </div>
-                                                {/* Affichage des variantes basé sur VariantOption[] */}
                                                 {item.variant && item.variant.length > 0 && (
                                                     <p className="mt-1 text-sm text-stone-500">
                                                         {item.variant.map(o => o.option).join(' / ')}
@@ -108,6 +113,18 @@ export default function OrderSuccess({ order }: PageProps) {
                                     <p>Sous-total</p>
                                     <p className="font-medium">{formatCurrency(itemsTotal)}</p>
                                 </div>
+
+                                {/* Affichage de la remise si elle existe */}
+                                {discount > 0 && (
+                                    <div className="flex justify-between text-sm text-green-600">
+                                        <p className="flex items-center gap-2">
+                                            <Tag className="h-4 w-4" />
+                                            Remise {order.coupon_code ? `(${order.coupon_code})` : ''}
+                                        </p>
+                                        <p className="font-medium">- {formatCurrency(discount)}</p>
+                                    </div>
+                                )}
+
                                 <div className="flex justify-between text-sm text-stone-600">
                                     <p className="flex items-center gap-2">
                                         <Truck className="h-4 w-4" />
@@ -152,7 +169,7 @@ export default function OrderSuccess({ order }: PageProps) {
                             </Card>
                         )}
 
-                        <Card className="shadow-none border-stone-200 bg-primary/5 border-primary/10">
+                        <Card className="shadow-none bg-primary/5 border-primary/10">
                             <CardHeader className="px-4 sm:px-6 py-2">
                                 <CardTitle className="text-base flex items-center gap-2 text-primary-900">
                                     <Truck className="h-5 w-5 text-primary" />

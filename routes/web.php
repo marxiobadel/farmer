@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\CarrierController;
 use App\Http\Controllers\Admin\CartController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\ContactController;
+use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\FaqController;
 use App\Http\Controllers\Admin\OrderController;
@@ -58,6 +59,8 @@ Route::prefix('carts')->name('carts.')
         Route::post('add', 'store')->name('store');
         Route::patch('items/{cartItem}', 'update')->name('items.update');
         Route::delete('items/{cartItem}', 'destroy')->name('items.destroy');
+        Route::post('coupon', 'applyCoupon')->name('coupon.apply');
+        Route::delete('coupon', 'removeCoupon')->name('coupon.remove');
     });
 
 Route::post('orange/notify', [WebhookController::class, 'orangeMoney'])->name('orange.notify');
@@ -137,6 +140,9 @@ Route::middleware(['auth'])->group(function () {
 
             Route::resource('testimonials', TestimonialController::class)->only(['index', 'store', 'update']);
             Route::post('testimonials/destroy', [TestimonialController::class, 'destroy'])->name('testimonials.destroy');
+
+            Route::resource('coupons', CouponController::class)->only(['index', 'store', 'update']);
+            Route::post('coupons/destroy', [CouponController::class, 'destroy'])->name('coupons.destroy');
 
             Route::resource('zones', ZoneController::class)->only(['index', 'store', 'update']);
             Route::post('zones/destroy', [ZoneController::class, 'destroy'])->name('zones.destroy');

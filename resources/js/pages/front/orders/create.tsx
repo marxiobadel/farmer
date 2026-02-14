@@ -9,7 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCurrencyFormatter } from "@/hooks/use-currency";
-import { Check, Loader2, MapPin, Truck, Wallet, AlertCircle, Box, Scale, Coins, Plus, Building, Home, ChevronsUpDown } from "lucide-react";
+import { Check, Loader2, MapPin, Truck, Wallet, AlertCircle, Box, Scale, Coins, Plus, Building, Home, ChevronsUpDown, Tag } from "lucide-react"; // Ajout de Tag
 import { calculateTotalQty, cn } from "@/lib/utils";
 import InputError from "@/components/input-error";
 import { toast } from "sonner";
@@ -36,7 +36,6 @@ export default function CheckoutCreate({ cart, zones, countries, user_addresses,
     // --- ETATS LOCAUX ---
 
     // Gestion "Nouvelle adresse vs Adresse existante"
-    // Si l'utilisateur a des adresses, on prend la par défaut, sinon 'new'
     const [selectedAddressId, setSelectedAddressId] = useState<string | 'new'>(
         user_addresses.length > 0
             ? String(user_addresses.find(a => a.is_default)?.id || user_addresses[0].id)
@@ -51,13 +50,10 @@ export default function CheckoutCreate({ cart, zones, countries, user_addresses,
         firstname: auth.user?.firstname || "",
         lastname: auth.user?.lastname || "",
         phone: auth.user?.phone || "",
-
-        // AJOUT : zone_id intégré au formulaire
         zone_id: "",
-
         shipping_address: {
             alias: "Maison",
-            address: "", // Rue / Quartier
+            address: "",
             state: "",
             postal_code: "",
             country_id: "" as string | null,
@@ -76,8 +72,6 @@ export default function CheckoutCreate({ cart, zones, countries, user_addresses,
     // --- LOGIQUE : Pré-remplissage au changement d'adresse ---
     useEffect(() => {
         if (selectedAddressId === 'new') {
-            // Cas : Nouvelle adresse
-            // On garde les infos de base de l'user connecte, mais on vide l'adresse
             if (user_addresses.length > 0) {
                 form.setData(data => ({
                     ...data,
@@ -85,16 +79,11 @@ export default function CheckoutCreate({ cart, zones, countries, user_addresses,
                     lastname: auth.user?.lastname || "",
                     phone: auth.user?.phone || "",
                     shipping_address: { alias: "Maison", address: "", state: "", postal_code: "", country_id: "" },
-                    // On ne reset pas forcément la zone ici pour laisser le choix à l'utilisateur,
-                    // ou on peut la reset si on veut forcer une nouvelle sélection :
-                    // zone_id: ""
                 }));
             }
         } else {
-            // Cas : Adresse existante sélectionnée
             const addr = user_addresses.find(a => String(a.id) === selectedAddressId);
             if (addr) {
-                // On essaie de retrouver la Zone correspondant au Pays de l'adresse
                 const matchingZone = zones.find(z => String(z.country_id) === String(addr.country_id));
 
                 form.setData(data => ({
@@ -102,7 +91,6 @@ export default function CheckoutCreate({ cart, zones, countries, user_addresses,
                     firstname: addr.firstname,
                     lastname: addr.lastname,
                     phone: addr.phone,
-                    // Si une zone correspond à l'adresse, on la sélectionne automatiquement
                     zone_id: matchingZone ? String(matchingZone.id) : data.zone_id,
                     shipping_address: {
                         alias: addr.alias || "Maison",
@@ -123,11 +111,7 @@ export default function CheckoutCreate({ cart, zones, countries, user_addresses,
 
         return cart.items.reduce((acc, item) => {
             const product = products.find(p => p.id === item.product_id);
-
-            // Calcul Volume (cm3)
-            const itemVolume = (
-                (product?.length || 0) * (product?.width || 0) * (product?.height || 0)
-            ) * item.quantity;
+            const itemVolume = ((product?.length || 0) * (product?.width || 0) * (product?.height || 0)) * item.quantity;
 
             return {
                 weight: acc.weight + ((product?.weight || 0) * item.quantity),
@@ -137,18 +121,18 @@ export default function CheckoutCreate({ cart, zones, countries, user_addresses,
         }, { weight: 0, price: 0, volume: 0 });
     }, [cart, products]);
 
-    // --- LOGIQUE : Zone Sélectionnée (Dérivée du formulaire) ---
+    // --- LOGIQUE : Zone Sélectionnée ---
     const selectedZone = useMemo(() => {
         if (!form.data.zone_id) return null;
         return zones.find(z => String(z.id) === String(form.data.zone_id)) || null;
     }, [form.data.zone_id, zones]);
 
-    // Sync Zone -> Form Country (Si c'est une nouvelle adresse)
+    // Sync Zone -> Form Country
     useEffect(() => {
         if (selectedZone && selectedZone.country_id && selectedAddressId === 'new') {
             form.setData(data => ({
                 ...data,
-                carrier_id: "", // Reset du transporteur car la zone a changé
+                carrier_id: "",
                 shipping_address: {
                     ...data.shipping_address,
                     country_id: String(selectedZone.country_id)
@@ -179,7 +163,6 @@ export default function CheckoutCreate({ cart, zones, countries, user_addresses,
 
         if (!carrierInfo) return 0;
 
-        // Règle 1: Gratuité
         if (carrierInfo.free_shipping_min && cartMetrics.price >= carrierInfo.free_shipping_min) {
             return 0;
         }
@@ -187,10 +170,8 @@ export default function CheckoutCreate({ cart, zones, countries, user_addresses,
         const basePrice = Number(carrierInfo.base_price || 0);
         const type = carrierInfo.pricing_type;
 
-        // Règle 2: Prix Fixe
         if (type === 'fixed') return basePrice;
 
-        // Règle 3: Tranches (Poids, Prix, Volume)
         let matchedRate: CarrierRate | undefined;
 
         if (type === 'weight') {
@@ -231,7 +212,6 @@ export default function CheckoutCreate({ cart, zones, countries, user_addresses,
             return;
         }
 
-        // Préparation des données pour l'envoi
         form.transform((data) => ({
             ...data,
             use_billing_address: useBillingAddress,
@@ -240,7 +220,6 @@ export default function CheckoutCreate({ cart, zones, countries, user_addresses,
 
         try {
             setProcessing(true);
-
             const response = await axiosInstance.post(orders.store().url, form.data);
 
             if (response.data.status === 'success') {
@@ -255,11 +234,9 @@ export default function CheckoutCreate({ cart, zones, countries, user_addresses,
             }
         } catch (error: any) {
             let message = 'Une erreur est survenue lors de la création de commande.';
-
             if (error.response && error.response.data) {
                 message = error.response.data.message;
             }
-
             toast.error(
                 <div className="flex flex-col">
                     <span className="font-semibold text-foreground">Erreur</span>
@@ -273,7 +250,9 @@ export default function CheckoutCreate({ cart, zones, countries, user_addresses,
         }
     };
 
-    const grandTotal = cartMetrics.price + shippingCost;
+    // --- CALCUL DU TOTAL FINAL AVEC COUPON ---
+    const discountAmount = cart.discount_amount || 0;
+    const grandTotal = Math.max(0, cartMetrics.price - discountAmount + shippingCost);
     const isNewAddress = selectedAddressId === 'new';
 
     return (
@@ -341,8 +320,7 @@ export default function CheckoutCreate({ cart, zones, countries, user_addresses,
                                         </div>
                                     )}
 
-                                    {/* FORMULAIRE (Affiché si Guest ou "Nouvelle Adresse" sélectionnée)
-                                        Si une adresse existante est sélectionnée, les champs sont remplis et désactivés visuellement */}
+                                    {/* FORMULAIRE */}
                                     <div className={cn("space-y-4 transition-opacity duration-300", !isNewAddress && "opacity-75 grayscale-[0.5] pointer-events-none")}>
 
                                         {/* Champs Identité */}
@@ -375,7 +353,6 @@ export default function CheckoutCreate({ cart, zones, countries, user_addresses,
                                                 />
                                                 <InputError message={form.errors.phone} />
                                             </div>
-                                            {/* Champ Alias (Visible seulement si création pour user connecté) */}
                                         </div>
 
                                         <div className="border-t border-dashed border-stone-200 my-4" />
@@ -384,7 +361,6 @@ export default function CheckoutCreate({ cart, zones, countries, user_addresses,
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div className="md:col-span-2">
                                                 <Label>Ville (Zone de livraison)</Label>
-                                                {/* Le choix de la zone est crucial : il détermine les transporteurs et le pays */}
                                                 <Select
                                                     value={form.data.zone_id}
                                                     onValueChange={(val) => {
@@ -420,7 +396,7 @@ export default function CheckoutCreate({ cart, zones, countries, user_addresses,
                                                             variant="outline"
                                                             role="combobox"
                                                             className="w-full justify-between"
-                                                            disabled={true} // Le pays est déterminé par la zone
+                                                            disabled={true}
                                                         >
                                                             {form.data.shipping_address.country_id
                                                                 ? (countries.find((c) => String(c.id) === form.data.shipping_address.country_id)?.name ?? "—")
@@ -428,33 +404,22 @@ export default function CheckoutCreate({ cart, zones, countries, user_addresses,
                                                             <ChevronsUpDown className="ml-2 h-4 w-4 opacity-50" />
                                                         </Button>
                                                     </PopoverTrigger>
-
                                                     <PopoverContent className="w-[300px] p-0">
                                                         <Command>
                                                             <CommandInput placeholder="Rechercher..." />
                                                             <CommandList>
                                                                 <CommandEmpty>Aucun pays trouvé.</CommandEmpty>
-
                                                                 <CommandGroup>
-                                                                    <CommandItem
-                                                                        value="0"
-                                                                        onSelect={() => form.setData('shipping_address', { ...form.data.shipping_address, country_id: null })}
-                                                                    >
-                                                                        <Check className={cn("mr-2 h-4 w-4", form.data.shipping_address.country_id === null ? "opacity-100" : "opacity-0")} />
-                                                                        Aucun
-                                                                    </CommandItem>
-
-                                                                    {countries
-                                                                        .map((country) => (
-                                                                            <CommandItem
-                                                                                key={country.id}
-                                                                                value={country.name}
-                                                                                onSelect={() => form.setData('shipping_address', { ...form.data.shipping_address, country_id: String(country.id) })}
-                                                                            >
-                                                                                <Check className={cn("mr-2 h-4 w-4", form.data.shipping_address.country_id === String(country.id) ? "opacity-100" : "opacity-0")} />
-                                                                                {country.name}
-                                                                            </CommandItem>
-                                                                        ))}
+                                                                    {countries.map((country) => (
+                                                                        <CommandItem
+                                                                            key={country.id}
+                                                                            value={country.name}
+                                                                            onSelect={() => form.setData('shipping_address', { ...form.data.shipping_address, country_id: String(country.id) })}
+                                                                        >
+                                                                            <Check className={cn("mr-2 h-4 w-4", form.data.shipping_address.country_id === String(country.id) ? "opacity-100" : "opacity-0")} />
+                                                                            {country.name}
+                                                                        </CommandItem>
+                                                                    ))}
                                                                 </CommandGroup>
                                                             </CommandList>
                                                         </Command>
@@ -464,7 +429,7 @@ export default function CheckoutCreate({ cart, zones, countries, user_addresses,
                                             </div>
                                         </div>
 
-                                        {/* Option Sauvegarde (User Auth & New Address) */}
+                                        {/* Option Sauvegarde */}
                                         {auth.user && isNewAddress && (
                                             <div className="flex items-center space-x-2 pt-2">
                                                 <Checkbox id="save_addr" checked={saveAddress} onCheckedChange={(c) => setSaveAddress(!!c)} />
@@ -559,7 +524,6 @@ export default function CheckoutCreate({ cart, zones, countries, user_addresses,
                                         value={form.data.payment_method}
                                         onValueChange={(val) => {
                                             form.setData('payment_method', val);
-                                            // Pré-remplir le numéro si OM/MTN et champ vide
                                             if ((val === 'orange_money' || val === 'mtn_money') && !form.data.payment_phone) {
                                                 form.setData(data => ({ ...data, payment_method: val, payment_phone: form.data.phone }));
                                             }
@@ -690,6 +654,17 @@ export default function CheckoutCreate({ cart, zones, countries, user_addresses,
                                                 <dt>Sous-total</dt>
                                                 <dd className="font-semibold">{formatCurrency(cartMetrics.price)}</dd>
                                             </div>
+
+                                            {/* AFFICHAGE DU COUPON */}
+                                            {discountAmount > 0 && (
+                                                <div className="flex justify-between text-green-600">
+                                                    <dt className="flex items-center gap-2">
+                                                        <Tag className="h-3.5 w-3.5" /> Remise {cart.coupon?.code ? `(${cart.coupon.code})` : ''}
+                                                    </dt>
+                                                    <dd className="font-medium">- {formatCurrency(discountAmount)}</dd>
+                                                </div>
+                                            )}
+
                                             <div className="flex justify-between text-stone-600">
                                                 <dt>Livraison</dt>
                                                 <dd className={cn(shippingCost === 0 && form.data.carrier_id ? "text-green-600 font-bold" : "font-medium")}>

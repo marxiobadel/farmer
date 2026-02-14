@@ -18,6 +18,12 @@ $status_labels = [
     'picked_up' => 'PRIS EN CHARGE PAR LE TRANSPORTEUR',
     'pending' => 'EN ATTENTE DE PAIEMENT',
 ];
+
+// Calculs préalables
+$subtotal = $order->items->sum(fn($i) => $i->price * $i->quantity);
+$discount = $order->discount ?? 0;
+// Frais de port = Total - (Sous-total - Remise)
+$shipping = $order->total - ($subtotal - $discount);
 @endphp
 # Confirmation de votre commande
 
@@ -50,9 +56,17 @@ conformément à nos conditions générales de vente.
 @endforeach
 </x-mail::table>
 
-**Sous-total :** {{ number_format($order->items->sum(fn($i) => $i->price * $i->quantity), 0, ',', ' ') }} FCFA<br/>
-**Frais de livraison :** {{ $order->total - $order->items->sum(fn($i) => $i->price * $i->quantity) > 0 ? number_format($order->total - $order->items->sum(fn($i) => $i->price * $i->quantity), 0, ',', ' ') . ' FCFA' : 'Gratuit' }}<br/>
-**Total :** **{{ number_format($order->total, 0, ',', ' ') }} FCFA**
+<div style="text-align: right;">
+<strong>Sous-total :</strong> {{ number_format($subtotal, 0, ',', ' ') }} FCFA<br/>
+
+@if($discount > 0)
+<strong>Remise {{ $order->coupon_code ? '('.$order->coupon_code.')' : '' }} :</strong> - {{ number_format($discount, 0, ',', ' ') }} FCFA<br/>
+@endif
+
+<strong>Frais de livraison :</strong> {{ $shipping > 0 ? number_format($shipping, 0, ',', ' ') . ' FCFA' : 'Gratuit' }}<br/>
+<br/>
+<strong>Total : {{ number_format($order->total, 0, ',', ' ') }} FCFA</strong>
+</div>
 
 Pour voir le statut de votre commande, **<a href="{{ route("profile.orders.show", [$order->id]) }}">cliquez ici</a>**.
 

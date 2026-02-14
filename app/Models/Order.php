@@ -13,6 +13,8 @@ class Order extends Model
         'carrier_id',
         'status',
         'total',
+        'coupon_code',
+        'discount',
         'shipping_address',
         'invoice_address',
     ];
