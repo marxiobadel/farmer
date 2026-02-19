@@ -2,12 +2,19 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, CheckCircle2, Star } from "lucide-react";
 import { motion } from "framer-motion";
 import { BlobBackground, HenIllustration } from "./illustrations";
-import { router } from "@inertiajs/react";
+import { router, usePage } from "@inertiajs/react";
 import pro from "@/routes/pro";
 import products from "@/routes/products";
 import { NumberTicker } from "../ui/number-ticker";
+import { SharedData } from "@/types";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { register } from "@/routes";
 
 export const HeroSection = () => {
+    const { auth } = usePage<SharedData>().props;
+
+    const isMobile = useIsMobile();
+
     return (
         <section className="relative w-full overflow-hidden bg-stone-50 pt-16 pb-20 sm:pt-20 sm:pb-24">
             {/* Background Decorations */}
@@ -30,14 +37,14 @@ export const HeroSection = () => {
                     >
                         <div className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-primary border border-primary/20 shadow-sm">
                             <span className="relative flex h-2.5 w-2.5">
-                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary"></span>
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary"></span>
                             </span>
                             Production fraîche du jour
                         </div>
 
                         <h1 className="text-5xl font-extrabold tracking-tight text-stone-900 sm:text-6xl lg:text-7xl leading-[1.1]">
-                            L'Excellence <br/>
+                            L'Excellence <br />
                             <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-amber-600">
                                 Avicole Locale
                             </span>
@@ -49,16 +56,32 @@ export const HeroSection = () => {
                         </p>
 
                         <div className="flex flex-col sm:flex-row gap-4 pt-2">
-                            <Button
-                                onClick={() => router.visit(products.index().url)}
-                                size="lg"
+                            {isMobile && !auth.user && <Button
+                                onClick={() => router.visit(register())}
+                                size={isMobile ? 'sm' : "lg"}
                                 className="bg-primary hover:bg-primary/90 text-white h-14 px-8 text-lg rounded-full shadow-lg shadow-primary/25 transition-all hover:scale-105">
-                                Voir nos produits
+                                Inscription
                                 <ArrowRight className="ml-2 h-5 w-5" />
-                            </Button>
+                            </Button>}
+                            {!isMobile ?
+                                <Button
+                                    onClick={() => router.visit(products.index().url)}
+                                    size="lg"
+                                    className="bg-primary hover:bg-primary/90 text-white h-14 px-8 text-lg rounded-full shadow-lg shadow-primary/25 transition-all hover:scale-105">
+                                    Voir nos produits
+                                    <ArrowRight className="ml-2 h-5 w-5" />
+                                </Button> :
+                                <Button
+                                    onClick={() => router.visit(products.index().url)}
+                                    size='sm'
+                                    variant="outline"
+                                    className="border-2 border-stone-200 text-stone-700 hover:border-primary hover:text-primary hover:bg-transparent h-14 px-8 text-lg rounded-full">
+                                    Voir nos produits
+                                    <ArrowRight className="ml-2 h-5 w-5" />
+                                </Button>}
                             <Button
                                 onClick={() => router.visit(pro.index().url)}
-                                size="lg"
+                                size={isMobile ? 'sm' : "lg"}
                                 variant="outline"
                                 className="border-2 border-stone-200 text-stone-700 hover:border-primary hover:text-primary hover:bg-transparent h-14 px-8 text-lg rounded-full">
                                 Devenir Partenaire
