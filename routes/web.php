@@ -115,6 +115,7 @@ Route::middleware(['auth'])->group(function () {
                 Route::post('categories/destroy', [CategoryController::class, 'destroy'])->name('categories.destroy');
             });
 
+            Route::get('products/download', [ProductController::class, 'downloadProducts'])->name('products.download');
             Route::resource('products', ProductController::class)->except(['destroy', 'show']);
             Route::post('products/destroy', [ProductController::class, 'destroy'])->name('products.destroy');
 

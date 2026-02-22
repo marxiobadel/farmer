@@ -13,6 +13,8 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\StockMovement;
+use App\Settings\GeneralSettings;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
@@ -79,6 +81,26 @@ class ProductController extends Controller
         return Inertia::render('admin/products/edit', [
             'product' => new ProductResource($product->load(['variants', 'attributes.options', 'categories'])),
             'categories' => CategoryResource::collection($categories),
+        ]);
+    }
+
+    public function downloadProducts(GeneralSettings $settings)
+    {
+        $products = Product::published()->with(['variants.options.attribute', 'variants.options.option'])->get();
+
+        $data = [
+            'products' => $products,
+            'company' => [
+                'name' => config('app.name'),
+                'logo' => public_path('images/logo_with_bg.png'),
+            ],
+        ];
+
+        $pdf = Pdf::loadView('pdf.products', $data);
+
+        return response()->json([
+            'filename' => 'MontviewFarm-products.pdf',
+            'file' => base64_encode($pdf->output())
         ]);
     }
 

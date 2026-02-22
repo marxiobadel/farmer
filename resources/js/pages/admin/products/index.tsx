@@ -20,6 +20,7 @@ import ProductsLayout from '@/layouts/products/layout';
 import { productStatus } from '@/data';
 import { useCurrencyFormatter } from '@/hooks/use-currency';
 import { useFlashNotifications } from '../../../hooks/use-flash-notification';
+import axiosInstance from '@/bootstrap';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Tableau de bord', href: dashboard().url },
@@ -50,6 +51,8 @@ export default function Index({ products, filters }: PageProps) {
     const [deleteProduct, setDeleteProduct] = useState<Product | null>(null);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
+
+    const [exporting, setExporting] = useState<boolean>(false);
 
     const toggleSort = (column: keyof Product) => {
         let dir: "asc" | "desc" | "" = "asc"
@@ -82,7 +85,7 @@ export default function Index({ products, filters }: PageProps) {
         }
     };
 
-    const handleExport = () => {
+    const handleCSVExport = () => {
         const headers = ['Nom', "Date de création"];
         const rows = products.data.map(u => [
             u.name,
@@ -96,6 +99,44 @@ export default function Index({ products, filters }: PageProps) {
         link.setAttribute("download", "products_export.csv");
         link.click();
     };
+
+    const handlePDFExport = async () => {
+        try {
+            setExporting(true);
+
+            const response = await axiosInstance.get(
+                admin.products.download().url
+            );
+
+            const { file, filename } = response.data;
+
+            // Decode Base64
+            const byteCharacters = atob(file);
+            const byteNumbers = new Array(byteCharacters.length);
+
+            for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], { type: 'application/pdf' });
+
+            const url = window.URL.createObjectURL(blob);
+
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setExporting(false);
+        }
+    }
 
     const columns = useMemo<ColumnDef<Product>[]>(() => [
         {
@@ -249,13 +290,21 @@ export default function Index({ products, filters }: PageProps) {
             <ProductsLayout>
                 <div className="space-y-6 md:mt-[-77px]">
                     {/* Header */}
-                    <div className="flex justify-end flex-wrap">
+                    <div className="flex justify-end flex-wrap gap-y-2">
                         <Button
                             variant="outline"
                             className="ml-2"
-                            onClick={handleExport}
+                            disabled={exporting}
+                            onClick={handlePDFExport}
                         >
-                            <Download className="h-4 w-4" /> Exporter les produits
+                            PDF
+                        </Button>
+                        <Button
+                            variant="outline"
+                            className="ml-2"
+                            onClick={handleCSVExport}
+                        >
+                            CSV
                         </Button>
                         <Button
                             className="ml-2"
