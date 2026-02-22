@@ -9,6 +9,7 @@ use App\Http\Resources\CountryResource;
 use App\Http\Resources\OrderResource;
 use App\Http\Resources\ProductResource;
 use App\Http\Resources\ZoneResource;
+use App\Mail\AdminOrderCreated;
 use App\Mail\OrderCreated;
 use App\Models\Country;
 use App\Models\Order;
@@ -18,6 +19,7 @@ use App\Models\Zone;
 use App\Services\CartService;
 use App\Services\MobileMoney;
 use App\Services\OrangeMoney;
+use App\Settings\GeneralSettings;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -54,7 +56,7 @@ class OrderController extends Controller
         ]);
     }
 
-    public function store(CheckoutRequest $request)
+    public function store(CheckoutRequest $request, GeneralSettings $settings)
     {
         $data = $request->validated();
         $user = Auth::user();
@@ -207,6 +209,12 @@ class OrderController extends Controller
             // Event::dispatch(new OrderCreated($order));
             rescue(
                 fn () => Mail::to($user->email)->sendNow(new OrderCreated($order)),
+                null,
+                false
+            );
+
+            rescue(
+                fn () => Mail::to($settings->email)->sendNow(new AdminOrderCreated($order)),
                 null,
                 false
             );
