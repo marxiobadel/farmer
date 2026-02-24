@@ -31,8 +31,8 @@ class OrderController extends Controller
     public function __construct(
         protected CartService $cartService,
         MobileMoney $mobileMoney,
-        OrangeMoney $orangeMoney)
-    {
+        OrangeMoney $orangeMoney
+    ) {
         parent::__construct($mobileMoney, $orangeMoney);
     }
 
@@ -41,7 +41,7 @@ class OrderController extends Controller
         $currentUser = Auth::user();
 
         $addresses = $currentUser ? $currentUser->addresses()->get() : [];
-        $zones = Zone::with(['rates.carrier' => fn ($q) => $q->where('is_active', '=', true)])->get();
+        $zones = Zone::with(['rates.carrier' => fn($q) => $q->where('is_active', '=', true)])->get();
         $products = Product::with('variants.options')->latest()->get();
 
         $countries = Cache::rememberForever('countries', function () {
@@ -71,38 +71,26 @@ class OrderController extends Controller
         }
 
         // --- Début Logique Coupon ---
-        $cartSubtotal = $cart->items->sum(fn ($item) => $item->price * $item->quantity);
+        $cartSubtotal = $cart->items->sum(fn($item) => $item->price * $item->quantity);
         $discountAmount = 0;
         $coupon = $cart->coupon;
 
         if ($coupon) {
-            // Vérification de sécurité de dernière minute
-            if (!$coupon->isValid()) { // Méthode définie dans le modèle Coupon
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Le code promo appliqué n\'est plus valide ou a expiré.',
-                ]);
+            if (!$coupon->isValid()) {
+                return response()->json(['status' => 'error', 'message' => 'Le code promo n\'est plus valide.']);
             }
-
             if ($coupon->min_order_amount && $cartSubtotal < $coupon->min_order_amount) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => "Le montant minimum pour ce code promo ({$coupon->min_order_amount}) n'est plus atteint.",
-                ]);
+                return response()->json(['status' => 'error', 'message' => "Le montant minimum pour ce code ({$coupon->min_order_amount}) n'est plus atteint."]);
             }
-
-            // Calcul du montant de la réduction
             if ($coupon->type === 'fixed') {
                 $discountAmount = $coupon->value;
             } elseif ($coupon->type === 'percent') {
                 $discountAmount = $cartSubtotal * ($coupon->value / 100);
             }
-
-            // La réduction ne peut pas excéder le sous-total
             $discountAmount = min($discountAmount, $cartSubtotal);
         }
-        // --- Fin Logique Coupon ---
 
+        // --- Préparation des adresses ---
         $contactInfo = [
             'firstname' => $data['firstname'],
             'lastname' => $data['lastname'],
@@ -111,7 +99,7 @@ class OrderController extends Controller
 
         $shippingSnapshot = array_merge($data['shipping_address'], $contactInfo);
 
-        if (! $data['use_billing_address']) {
+        if (!$data['use_billing_address']) {
             $billingSnapshot = [...$shippingSnapshot];
         } else {
             $billingArray = [
@@ -122,7 +110,6 @@ class OrderController extends Controller
                 'postal_code' => $data['shipping_address']['postal_code'],
                 'country_id' => $data['shipping_address']['country_id'],
             ];
-
             $billingSnapshot = array_merge($billingArray, $contactInfo);
         }
 
@@ -130,10 +117,9 @@ class OrderController extends Controller
             $user->addresses()->create($shippingSnapshot);
         }
 
+        // --- Calcul logistique ---
         $cartMetrics = $cart->items->reduce(function ($carry, $item) {
             $product = $item->product;
-
-            // Calculs basés sur les dimensions (cm) et poids (kg)
             $volume = (($product->length ?? 0) * ($product->width ?? 0) * ($product->height ?? 0)) * $item->quantity;
             $weight = ($product->weight ?? 0) * $item->quantity;
             $price = $item->price * $item->quantity;
@@ -146,25 +132,79 @@ class OrderController extends Controller
         }, ['weight' => 0, 'price' => 0, 'volume' => 0]);
 
         $totalQty = $this->calculateTotalQty($cart->items);
+        $shippingCost = $this->calculateShippingCost($data['carrier_id'], $this->getZoneIdFromRequest($request), $cartMetrics, $totalQty);
 
-        $shippingCost = $this->calculateShippingCost(
-            $data['carrier_id'],
-            $this->getZoneIdFromRequest($request),
-            $cartMetrics,
-            $totalQty
-        );
-
-        // --- Calcul du Grand Total avec Réduction ---
-        // (Sous-total - Réduction) + Frais de port
+        // --- Calcul du Grand Total ---
         $grandTotal = max(0, ($cartSubtotal - $discountAmount) + $shippingCost);
 
+        // =========================================================================
+        // 1. PHASE DE PAIEMENT (EN DEHORS DE LA TRANSACTION BDD)
+        // =========================================================================
+        $method = data_get($data, 'payment_method');
+        $paymentData = [];
+
+        if (in_array($method, ['orange_money', 'mtn_money'])) {
+            if ($grandTotal < 10) {
+                return response()->json(['status' => 'error', 'message' => 'Au moins 10 FCFA pour effectuer un paiement mobile.']);
+            }
+
+            try {
+                if ($method === 'orange_money') {
+                    $result = $this->orangeMoney->webPayment([
+                        'amount' => (string) $grandTotal,
+                        'subscriberMsisdn' => $data['payment_phone'],
+                    ]);
+
+                    $payToken = $result['data']['payToken'] ?? null;
+                    if (!$payToken)
+                        throw new Exception('Paiement OM non initié.');
+
+                    $paymentData['transaction_id'] = $payToken;
+                    $paymentStatus = $this->waitForTransaction(function () use ($payToken) {
+                        return $this->orangeMoney->checkTransactionStatus($payToken)['data']['status'] ?? 'pending';
+                    }, 20);
+
+                } elseif ($method === 'mtn_money') {
+                    $result = $this->mobileMoney->webPayment([
+                        'amount' => (string) $grandTotal,
+                        'subscriberMsisdn' => $data['payment_phone'],
+                    ]);
+
+                    $messageId = $result['MessageId'] ?? $result['parameters']['MessageId'] ?? null;
+                    if (!$messageId)
+                        throw new Exception('Paiement MoMo non initié.');
+
+                    $paymentData['transaction_id'] = $messageId;
+                    $paymentStatus = $this->waitForTransaction(function () use ($messageId) {
+                        return $this->mobileMoney->checkTransactionStatus($messageId)['status'] ?? 'pending';
+                    }, 20);
+                }
+
+                // Si l'utilisateur n'a pas validé sur son téléphone, on arrête TOUT.
+                if (!in_array($paymentStatus, ['successful', 'successfull'])) {
+                    $messages = [
+                        'cancelled' => 'Paiement annulé par l\'utilisateur.',
+                        'failed' => 'Le paiement a échoué. Veuillez vérifier votre solde.',
+                        'expired' => 'Le délai de validation a expiré.',
+                    ];
+                    return response()->json(['status' => 'error', 'message' => $messages[$paymentStatus] ?? 'Échec du paiement.']);
+                }
+
+            } catch (Exception $e) {
+                return response()->json(['status' => 'error', 'message' => 'Erreur de paiement : ' . $e->getMessage()]);
+            }
+        }
+
+        // =========================================================================
+        // 2. PHASE DE SAUVEGARDE (LE PAIEMENT A REUSSI !)
+        // =========================================================================
         DB::beginTransaction();
 
         try {
             $order = Order::create([
                 'user_id' => $user ? $user->id : null,
                 'carrier_id' => $data['carrier_id'],
-                'status' => 'pending',
+                'status' => $method === 'cash' ? 'pending' : 'completed', // Validée d'office si Mobile Money
                 'total' => $grandTotal,
                 'discount' => $discountAmount,
                 'coupon_code' => $coupon?->code,
@@ -180,12 +220,12 @@ class OrderController extends Controller
                     'price' => $item->price,
                 ]);
 
-                // Gestion du Stock (Décrémentation)
+                // Gestion du Stock
                 StockMovement::create([
                     'product_id' => $item->product_id,
                     'variant_id' => $item->variant_id,
                     'user_id' => $user ? $user->id : null,
-                    'quantity' => -($item->quantity), // Sortie de stock
+                    'quantity' => -($item->quantity),
                     'type' => 'sale',
                     'reference_type' => Order::class,
                     'reference_id' => $order->id,
@@ -193,40 +233,42 @@ class OrderController extends Controller
                 ]);
             }
 
-            // --- Incrémentation du compteur d'utilisation du coupon ---
             if ($coupon) {
                 $coupon->increment('usage_count');
             }
 
-            // C. Create Payment Record
-            $response = $this->payment($order, $data);
+            // Historiser le paiement en base de données
+            $order->payments()->create([
+                'user_id' => $user ? $user->id : null,
+                'reference' => 'PAY-' . strtoupper(\Illuminate\Support\Str::random(12)),
+                'transaction_id' => $paymentData['transaction_id'] ?? null,
+                'method' => $method,
+                'provider' => $this->getProviderForMethod($method),
+                'amount' => $grandTotal,
+                'currency' => \Illuminate\Support\Number::defaultCurrency(),
+                'status' => $method === 'cash' ? 'pending' : 'completed',
+                'paid_at' => $method === 'cash' ? null : now(),
+                'details' => isset($data['payment_phone']) ? ['phone' => $data['payment_phone']] : null,
+            ]);
 
             $this->cartService->clear();
-
             DB::commit();
 
-            // Ici, vous pourriez déclencher un Event pour envoyer l'email de confirmation
-            // Event::dispatch(new OrderCreated($order));
-            rescue(
-                fn () => Mail::to($user->email)->sendNow(new OrderCreated($order)),
-                null,
-                false
-            );
+            rescue(fn() => Mail::to($user->email)->sendNow(new OrderCreated($order)), null, false);
+            rescue(fn() => Mail::to($settings->email)->sendNow(new AdminOrderCreated($order)), null, false);
 
-            rescue(
-                fn () => Mail::to($settings->email)->sendNow(new AdminOrderCreated($order)),
-                null,
-                false
-            );
+            return response()->json([
+                'status' => 'success',
+                'order_id' => $order->id,
+                'message' => $method === 'cash' ? 'Votre commande est en attente de paiement.' : 'Paiement effectué avec succès. Commande validée.',
+            ]);
 
-            return response()->json($response);
         } catch (Exception $e) {
             DB::rollBack();
             report($e);
-
             return response()->json([
                 'status' => 'error',
-                'message' => 'Erreur lors de la création de la commande : '.$e->getMessage(),
+                'message' => 'Erreur lors de la création de la commande : ' . $e->getMessage(),
             ]);
         }
     }

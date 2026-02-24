@@ -2,17 +2,28 @@
 
 namespace App\Observers;
 
+use App\Models\Product;
+use App\Models\ProductVariant;
 use App\Models\StockMovement;
+use Exception;
 
 class StockMovementObserver
 {
     public function creating(StockMovement $movement): void
     {
-        // 1. Déterminer quel objet modifier (Variante ou Produit)
-        $target = $movement->variant_id ? $movement->variant : $movement->product;
+        // On récupère la classe du modèle cible
+        $targetClass = $movement->variant_id ? ProductVariant::class : Product::class;
+        $targetId = $movement->variant_id ?? $movement->product_id;
+
+        // On verrouille la ligne correspondante dans la BDD pour obtenir la VRAIE quantité actuelle
+        $target = $targetClass::where('id', $targetId)->lockForUpdate()->first();
 
         if ($target) {
-            // 2. Enregistrer l'état "Avant" et "Après" pour l'historique
+            // Optionnel mais recommandé : interdire un mouvement qui rendrait le stock négatif
+            if ($movement->quantity < 0 && $target->quantity < abs($movement->quantity)) {
+                throw new Exception("Opération impossible : stock insuffisant.");
+            }
+
             $movement->stock_before = $target->quantity;
             $movement->stock_after = $target->quantity + $movement->quantity;
         }
@@ -20,12 +31,10 @@ class StockMovementObserver
 
     public function created(StockMovement $movement): void
     {
-        // 3. Mettre à jour le stock réel sur la table Products ou Variants
-        $target = $movement->variant_id ? $movement->variant : $movement->product;
+        $targetClass = $movement->variant_id ? ProductVariant::class : Product::class;
+        $targetId = $movement->variant_id ?? $movement->product_id;
 
-        if ($target) {
-            // On incrémente (si quantity est positif) ou décrémente (si négatif)
-            $target->increment('quantity', $movement->quantity);
-        }
+        // On utilise la méthode atomique increment/decrement de Laravel
+        $targetClass::where('id', $targetId)->increment('quantity', $movement->quantity);
     }
 }
