@@ -5,7 +5,6 @@ import { useEffect, type ReactNode } from 'react';
 import { Toaster } from 'sonner';
 import { usePage } from '@inertiajs/react';
 import { handleSystemThemeChange, initializeTheme, mediaQuery } from '@/hooks/use-appearance';
-import WhatsAppButton from '@/components/ecommerce/whatsapp-button';
 
 interface AppLayoutProps {
     children: ReactNode;
@@ -29,7 +28,6 @@ export default ({ children, layout = 'app', breadcrumbs, ...props }: AppLayoutPr
     return (
         <AppLayoutTemplate breadcrumbs={breadcrumbs} {...props}>
             {children}
-            <WhatsAppButton />
             <Toaster position="top-right" duration={5000} />
         </AppLayoutTemplate>
     );
