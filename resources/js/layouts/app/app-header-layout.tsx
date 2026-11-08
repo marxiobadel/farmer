@@ -1,6 +1,7 @@
 import { Footer } from '@/components/ecommerce/footer';
 import { Header } from '@/components/ecommerce/header';
 import type { PropsWithChildren } from 'react';
+import WhatsAppButton from '@/components/ecommerce/whatsapp-button';
 
 export default function AppHeaderLayout({ children }: PropsWithChildren) {
     return (
@@ -10,6 +11,7 @@ export default function AppHeaderLayout({ children }: PropsWithChildren) {
                 {children}
             </main>
             <Footer />
+            <WhatsAppButton />
         </div>
     );
 }

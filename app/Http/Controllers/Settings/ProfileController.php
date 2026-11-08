@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\UpdateRequest;
+use App\Http\Resources\CouponResource;
+use App\Models\Coupon;
 use App\Settings\GeneralSettings;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
@@ -30,6 +32,22 @@ class ProfileController extends Controller
             'mustVerifyEmail' => $user instanceof MustVerifyEmail,
             'status' => $request->session()->get('status'),
         ];
+
+        if ($page === 'products') {
+            $props = array_merge($props, [
+                'coupons' => CouponResource::collection(Coupon::query()
+                    ->where('is_active', true)
+                    ->where(function ($query) {
+                        $query->whereNull('expires_at')
+                            ->orWhere('expires_at', '>', now());
+                    })
+                    ->where(function ($query) {
+                        $query->whereNull('usage_limit')
+                            ->orWhereColumn('usage_count', '<', 'usage_limit');
+                    })
+                    ->get()),
+            ]);
+        }
 
         if ($page === 'two-factor') {
             $props = array_merge($props, [
@@ -68,6 +86,7 @@ class ProfileController extends Controller
                 }
             } elseif ($page === 'products') {
                 $settings->show_price = $request->boolean('show_price');
+                $settings->promo_coupon_id = (string) ($request->input('promo_coupon_id') ?? '');
             }
 
             $settings->save();

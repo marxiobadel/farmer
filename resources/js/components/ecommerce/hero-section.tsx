@@ -1,7 +1,17 @@
+import { useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, CheckCircle2, Star } from "lucide-react";
-import { motion } from "framer-motion";
-import { BlobBackground, HenIllustration } from "./illustrations";
+import {
+    ArrowRight,
+    CheckCircle2,
+    Star,
+    ShieldCheck,
+    Truck,
+    Sparkles,
+    Wheat,
+    TrendingUp,
+    Clock
+} from "lucide-react";
+import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { router, usePage } from "@inertiajs/react";
 import pro from "@/routes/pro";
 import products from "@/routes/products";
@@ -9,145 +19,268 @@ import { NumberTicker } from "../ui/number-ticker";
 import { SharedData } from "@/types";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { register } from "@/routes";
+import { BackgroundGlow, Farm3DVisual } from "./hero-visuals";
+
+const africanAvatars = [
+    {
+        name: "Samuel - Gérant d'Hôtel",
+        url: "https://images.unsplash.com/photo-1506277886164-e25aa3f4ef7f?auto=format&fit=crop&w=120&h=120&q=80",
+    },
+    {
+        name: "Aïcha - Traiteur & Restauratrice",
+        url: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?auto=format&fit=crop&w=120&h=120&q=80",
+    },
+    {
+        name: "Nathalie - Chef Pâtissière",
+        url: "https://images.unsplash.com/photo-1589156280159-27698a70f29e?auto=format&fit=crop&w=120&h=120&q=80",
+    },
+    {
+        name: "Koffi - Maître Rôtisseur",
+        url: "https://images.unsplash.com/photo-1522529599102-193c0d76b5b6?auto=format&fit=crop&w=120&h=120&q=80",
+    },
+];
 
 export const HeroSection = () => {
     const { auth } = usePage<SharedData>().props;
-
     const isMobile = useIsMobile();
 
+    // Framer Motion 3D Tilt calculation
+    const cardRef = useRef<HTMLDivElement>(null);
+    const mouseX = useMotionValue(0);
+    const mouseY = useMotionValue(0);
+
+    const springConfig = { damping: 22, stiffness: 140 };
+    const rotateX = useSpring(useTransform(mouseY, [-0.5, 0.5], [10, -10]), springConfig);
+    const rotateY = useSpring(useTransform(mouseX, [-0.5, 0.5], [-10, 10]), springConfig);
+
+    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+        if (!cardRef.current || isMobile) return;
+        const rect = cardRef.current.getBoundingClientRect();
+        const x = (e.clientX - rect.left) / rect.width - 0.5;
+        const y = (e.clientY - rect.top) / rect.height - 0.5;
+        mouseX.set(x);
+        mouseY.set(y);
+    };
+
+    const handleMouseLeave = () => {
+        mouseX.set(0);
+        mouseY.set(0);
+    };
+
     return (
-        <section className="relative w-full overflow-hidden bg-stone-50 pt-16 pb-20 sm:pt-20 sm:pb-24">
-            {/* Background Decorations */}
-            <div className="absolute top-0 right-0 -z-10 opacity-30">
-                <BlobBackground className="w-[800px] h-[800px] text-primary/20 blur-3xl rotate-45 translate-x-1/3 -translate-y-1/3" />
-            </div>
-            <div className="absolute bottom-0 left-0 -z-10 opacity-30">
-                <BlobBackground className="w-[600px] h-[600px] text-amber-200/40 blur-3xl -translate-x-1/3 translate-y-1/3" />
-            </div>
+        <section className="relative w-full overflow-hidden bg-background pt-16 pb-16 sm:pt-24 sm:pb-24">
+            {/* Background radial glow */}
+            <BackgroundGlow />
 
-            <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-                <div className="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center">
+            <div className="container relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div className="grid items-center gap-12 lg:grid-cols-12 lg:gap-8">
 
-                    {/* Text Content */}
+                    {/* Left Column: Copy & CTAs */}
                     <motion.div
-                        initial={{ opacity: 0, x: -50 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.6 }}
-                        className="space-y-8"
+                        initial={{ opacity: 0, y: 25 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                        className="space-y-8 lg:col-span-7"
                     >
-                        <div className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-primary border border-primary/20 shadow-sm">
-                            <span className="relative flex h-2.5 w-2.5">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary"></span>
+                        {/* Live Indicator Pill */}
+                        <div className="inline-flex items-center gap-2.5 rounded-full border border-border bg-card/80 px-4 py-1.5 text-xs sm:text-sm font-semibold text-foreground shadow-sm backdrop-blur-md">
+                            <span className="relative flex h-2 w-2">
+                                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75" />
+                                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
                             </span>
-                            Production fraîche du jour
+                            {!isMobile && (
+                                <span className="flex items-center gap-1.5 text-muted-foreground">
+                                    <Clock className="h-3.5 w-3.5 text-primary" />
+                                    Production du jour :
+                                </span>
+                            )}
+                            <span className="font-bold text-primary">En stock & expédié sous 24h</span>
                         </div>
 
-                        <h1 className="text-5xl font-extrabold tracking-tight text-stone-900 sm:text-6xl lg:text-7xl leading-[1.1]">
+                        {/* Headline */}
+                        <h1 className="text-4xl font-extrabold tracking-tight text-foreground sm:text-6xl lg:text-[4.2rem] leading-[1.08]">
                             L'Excellence <br />
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-amber-600">
+                            <span className="relative inline-block bg-gradient-to-r from-primary via-primary/85 to-amber-600 bg-clip-text text-transparent">
                                 Avicole Locale
                             </span>
                         </h1>
 
-                        <p className="text-xl text-stone-600 max-w-xl leading-relaxed">
-                            Nous élevons des poules heureuses pour des œufs d'exception.
-                            Qualité sanitaire certifiée, alimentation 100% naturelle et traçabilité complète pour les professionnels et les familles.
+                        {/* Subtitle */}
+                        <p className="max-w-xl text-lg sm:text-xl leading-relaxed text-muted-foreground">
+                            Des poules élevées en plein air avec une alimentation 100% naturelle et sans OGM.
+                            Qualité certifiée, fraîcheur garantie et traçabilité transparente pour les professionnels et les particuliers.
                         </p>
 
-                        <div className="flex flex-col sm:flex-row gap-4 pt-2">
-                            {isMobile && !auth.user && <Button
-                                onClick={() => router.visit(register())}
-                                size={isMobile ? 'sm' : "lg"}
-                                className="bg-primary hover:bg-primary/90 text-white h-14 px-8 text-lg rounded-full shadow-lg shadow-primary/25 transition-all hover:scale-105">
-                                Inscription
-                                <ArrowRight className="ml-2 h-5 w-5" />
-                            </Button>}
-                            {!isMobile ?
+                        {/* CTA Buttons */}
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-2">
+                            {!auth?.user && isMobile ? (
+                                <Button
+                                    onClick={() => router.visit(register())}
+                                    size="lg"
+                                    className="group h-13 rounded-full bg-primary text-primary-foreground px-8 text-base font-semibold shadow-lg shadow-primary/20 transition-all hover:opacity-95 hover:scale-[1.02] active:scale-95"
+                                >
+                                    Inscription
+                                    <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+                                </Button>
+                            ) : (
                                 <Button
                                     onClick={() => router.visit(products.index().url)}
                                     size="lg"
-                                    className="bg-primary hover:bg-primary/90 text-white h-14 px-8 text-lg rounded-full shadow-lg shadow-primary/25 transition-all hover:scale-105">
+                                    className="group h-13 rounded-full bg-primary text-primary-foreground px-8 text-base font-semibold shadow-lg shadow-primary/20 transition-all hover:opacity-95 hover:scale-[1.02] active:scale-95"
+                                >
                                     Voir nos produits
-                                    <ArrowRight className="ml-2 h-5 w-5" />
-                                </Button> :
-                                <Button
-                                    onClick={() => router.visit(products.index().url)}
-                                    size='sm'
-                                    variant="outline"
-                                    className="border-2 border-stone-200 text-stone-700 hover:border-primary hover:text-primary hover:bg-transparent h-14 px-8 text-lg rounded-full">
-                                    Voir nos produits
-                                    <ArrowRight className="ml-2 h-5 w-5" />
-                                </Button>}
+                                    <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+                                </Button>
+                            )}
+
                             <Button
                                 onClick={() => router.visit(pro.index().url)}
-                                size={isMobile ? 'sm' : "lg"}
+                                size="lg"
                                 variant="outline"
-                                className="border-2 border-stone-200 text-stone-700 hover:border-primary hover:text-primary hover:bg-transparent h-14 px-8 text-lg rounded-full">
+                                className="h-13 rounded-full border-border bg-card/60 px-8 text-base font-semibold text-foreground backdrop-blur-sm transition-all hover:border-primary hover:text-primary hover:bg-accent/40 active:scale-95"
+                            >
                                 Devenir Partenaire
                             </Button>
                         </div>
 
-                        <div className="pt-6 flex flex-col sm:flex-row gap-6 text-sm font-medium text-stone-500">
-                            {['Livraison express 24h', 'Suivi vétérinaire', 'Prix producteur'].map((item, i) => (
+                        {/* Trust Points */}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4 border-t border-border">
+                            {[
+                                { icon: Truck, title: "Livraison 24h", desc: "Chaîne du froid respectée" },
+                                { icon: ShieldCheck, title: "Contrôle vétérinaire", desc: "Suivi sanitaire continu" },
+                                { icon: Wheat, title: "100% Naturel", desc: "Alimentation certifiée" },
+                            ].map((item, i) => (
                                 <motion.div
                                     key={i}
-                                    initial={{ opacity: 0, y: 10 }}
+                                    initial={{ opacity: 0, y: 12 }}
                                     animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.5 + (i * 0.1) }}
-                                    className="flex items-center gap-2"
+                                    transition={{ delay: 0.35 + i * 0.08 }}
+                                    className="flex items-center gap-3 rounded-xl bg-card/60 p-2.5 border border-border/70 backdrop-blur-xs"
                                 >
-                                    <div className="rounded-full bg-primary/10 p-1">
-                                        <CheckCircle2 className="h-4 w-4 text-primary" />
+                                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                                        <item.icon className="h-4.5 w-4.5" />
                                     </div>
-                                    <span>{item}</span>
+                                    <div>
+                                        <h4 className="text-xs font-bold text-foreground">{item.title}</h4>
+                                        <p className="text-[11px] text-muted-foreground">{item.desc}</p>
+                                    </div>
                                 </motion.div>
                             ))}
                         </div>
-                    </motion.div>
 
-                    {/* Visual Content */}
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 0.8, delay: 0.2 }}
-                        className="relative mx-auto w-full max-w-[500px] lg:max-w-none"
-                    >
-                        <div className="relative aspect-square">
-                            {/* Main Illustration */}
-                            <div className="absolute inset-0 z-10">
-                                <HenIllustration />
+                        {/* Social Proof Ratings */}
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 pt-2">
+                            {/* Avatar Stack with African portraits + Counter Chip */}
+                            <div className="flex -space-x-2.5 overflow-hidden p-0.5">
+                                {africanAvatars.map((person, idx) => (
+                                    <img
+                                        key={idx}
+                                        src={person.url}
+                                        alt={person.name}
+                                        title={person.name}
+                                        className="inline-block h-9 w-9 rounded-full ring-2 ring-background object-cover shadow-xs transition-transform duration-200 hover:scale-110 hover:z-10"
+                                    />
+                                ))}
+                                {/* +450 Badge Pill */}
+                                <div className="inline-flex h-9 min-w-9 items-center justify-center rounded-full bg-primary/10 px-2 text-[11px] font-black text-primary ring-2 ring-background backdrop-blur-xs">
+                                    +450
+                                </div>
                             </div>
 
-                            {/* Floating Stats Cards */}
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 1, duration: 0.5 }}
-                                className="absolute top-10 right-0 z-20 bg-white/90 backdrop-blur-md rounded-2xl p-4 shadow-xl border border-stone-100 max-w-[180px]"
-                            >
-                                <div className="flex items-center gap-2 mb-2">
-                                    <div className="p-2 bg-amber-100 rounded-lg text-amber-600">
-                                        <Star className="h-5 w-5 fill-current" />
+                            {/* Ratings & Local Trust Label */}
+                            <div className="space-y-0.5 text-left">
+                                <div className="flex items-center gap-1.5">
+                                    <div className="flex items-center text-amber-500">
+                                        {[...Array(5)].map((_, idx) => (
+                                            <Star key={idx} className="h-3.5 w-3.5 fill-current" />
+                                        ))}
                                     </div>
-                                    <span className="font-bold text-stone-900">Premium</span>
+                                    <span className="text-xs font-black text-foreground">4.9 / 5</span>
+                                    <span className="text-muted-foreground/40 text-xs">•</span>
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                                        <ShieldCheck className="h-3 w-3" />
+                                        Vérifié
+                                    </span>
                                 </div>
-                                <p className="text-xs text-stone-500">Calibre L & XL uniquement</p>
+
+                                <p className="text-xs font-medium text-muted-foreground leading-tight">
+                                    Recommandé par <span className="font-semibold text-foreground">+450 restaurants, hôtels & ménages</span>
+                                </p>
+                            </div>
+                        </div>
+
+                    </motion.div>
+
+                    {/* Right Column: 3D Interactive Card */}
+                    <div
+                        ref={cardRef}
+                        onMouseMove={handleMouseMove}
+                        onMouseLeave={handleMouseLeave}
+                        className="perspective-1000 lg:col-span-5 relative flex items-center justify-center"
+                    >
+                        <motion.div
+                            style={{
+                                rotateX: isMobile ? 0 : rotateX,
+                                rotateY: isMobile ? 0 : rotateY,
+                                transformStyle: "preserve-3d",
+                            }}
+                            className="relative w-full max-w-[480px] transition-transform duration-150 ease-out"
+                        >
+                            <Farm3DVisual />
+
+                            {/* Floating Badge 1: Production Counter */}
+                            <motion.div
+                                animate={{ y: [0, -7, 0] }}
+                                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                                style={{ transform: "translateZ(45px)" }}
+                                className="absolute -top-5 -left-5 z-30 rounded-2xl border border-border bg-card/90 p-4 shadow-md backdrop-blur-sm"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                                        <TrendingUp className="h-5 w-5" />
+                                    </div>
+                                    <div>
+                                        <div className="flex items-baseline gap-1">
+                                            <span className="text-2xl font-black text-foreground">
+                                                <NumberTicker value={50} />k+
+                                            </span>
+                                            <span className="text-xs font-semibold text-emerald-500">+18%</span>
+                                        </div>
+                                        <p className="text-xs font-medium text-muted-foreground">Œufs / semaine</p>
+                                    </div>
+                                </div>
                             </motion.div>
 
+                            {/* Floating Badge 2: Sanitary Certificate */}
                             <motion.div
-                                initial={{ opacity: 0, x: -20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                transition={{ delay: 1.2, duration: 0.5 }}
-                                className="absolute bottom-10 left-0 z-20 bg-white/90 backdrop-blur-md rounded-2xl p-4 shadow-xl border border-stone-100"
+                                animate={{ y: [0, 7, 0] }}
+                                transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 0.8 }}
+                                style={{ transform: "translateZ(55px)" }}
+                                className="absolute -bottom-5 -right-3 z-30 rounded-2xl border border-border bg-card/90 p-4 shadow-md backdrop-blur-sm max-w-[200px]"
                             >
-                                <p className="text-3xl font-bold text-primary">
-                                    <NumberTicker value={50} className="text-primary" />k+
+                                <div className="flex items-center gap-2 mb-1">
+                                    <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                                    <span className="text-xs font-bold text-foreground">Norme ISO 22000</span>
+                                </div>
+                                <p className="text-[11px] text-muted-foreground leading-snug">
+                                    Traçabilité intégrale gravée avec date de ponte.
                                 </p>
-                                <p className="text-sm font-medium text-stone-600">Œufs / semaine</p>
                             </motion.div>
-                        </div>
-                    </motion.div>
+
+                            {/* Floating Badge 3: Caliber */}
+                            <motion.div
+                                animate={{ scale: [1, 1.04, 1] }}
+                                transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
+                                style={{ transform: "translateZ(30px)" }}
+                                className="absolute top-1/2 -right-6 z-20 hidden sm:flex items-center gap-2 rounded-xl border border-primary/20 bg-card/85 px-3 py-2 shadow-md backdrop-blur-md"
+                            >
+                                <Sparkles className="h-4 w-4 text-primary" />
+                                <span className="text-xs font-bold text-foreground">Calibre L & XL</span>
+                            </motion.div>
+
+                        </motion.div>
+                    </div>
+
                 </div>
             </div>
         </section>

@@ -186,3 +186,45 @@ export const coefficients = [
     { label: "Multiplié par 1", value: "1" },
     { label: "Multiplié par la quantité", value: "quantity" }
 ];
+
+export const COUNTRY_DIAL_CODES = [
+    // Afrique Centrale & Ouest (Prioritaire)
+    { code: "CM", dial: "+237", flag: "🇨🇲", name: "Cameroun" },
+    { code: "CI", dial: "+225", flag: "🇨🇮", name: "Côte d'Ivoire" },
+    { code: "SN", dial: "+221", flag: "🇸🇳", name: "Sénégal" },
+    { code: "GA", dial: "+241", flag: "🇬🇦", name: "Gabon" },
+    { code: "CG", dial: "+242", flag: "🇨🇬", name: "Congo" },
+    { code: "CD", dial: "+243", flag: "🇨🇩", name: "RDC" },
+    { code: "GQ", dial: "+240", flag: "🇬🇶", name: "Guinée Équatoriale" },
+    { code: "TD", dial: "+235", flag: "🇹🇩", name: "Tchad" },
+    { code: "CF", dial: "+236", flag: "🇨🇫", name: "Centrafrique" },
+    { code: "NG", dial: "+234", flag: "🇳🇬", name: "Nigeria" },
+    { code: "GH", dial: "+233", flag: "🇬🇭", name: "Ghana" },
+    { code: "TG", dial: "+228", flag: "🇹🇬", name: "Togo" },
+    { code: "BJ", dial: "+229", flag: "🇧🇯", name: "Bénin" },
+    { code: "ML", dial: "+223", flag: "🇲🇱", name: "Mali" },
+    { code: "BF", dial: "+226", flag: "🇧🇫", name: "Burkina Faso" },
+    { code: "GN", dial: "+224", flag: "🇬🇳", name: "Guinée" },
+    { code: "NE", dial: "+227", flag: "🇳🇪", name: "Niger" },
+    { code: "RW", dial: "+250", flag: "🇷🇼", name: "Rwanda" },
+    { code: "MA", dial: "+212", flag: "🇲🇦", name: "Maroc" },
+    { code: "DZ", dial: "+213", flag: "🇩🇿", name: "Algérie" },
+    { code: "TN", dial: "+216", flag: "🇹🇳", name: "Tunisie" },
+    { code: "ZA", dial: "+27", flag: "🇿🇦", name: "Afrique du Sud" },
+
+    // Europe & Amérique (Diaspora & B2B)
+    { code: "FR", dial: "+33", flag: "🇫🇷", name: "France" },
+    { code: "BE", dial: "+32", flag: "🇧🇪", name: "Belgique" },
+    { code: "CH", dial: "+41", flag: "🇨🇭", name: "Suisse" },
+    { code: "CA", dial: "+1", flag: "🇨🇦", name: "Canada" },
+    { code: "US", dial: "+1", flag: "🇺🇸", name: "États-Unis" },
+    { code: "GB", dial: "+44", flag: "🇬🇧", name: "Royaume-Uni" },
+    { code: "DE", dial: "+49", flag: "🇩🇪", name: "Allemagne" },
+    { code: "IT", dial: "+39", flag: "🇮🇹", name: "Italie" },
+    { code: "ES", dial: "+34", flag: "🇪🇸", name: "Espagne" },
+    { code: "AE", dial: "+971", flag: "🇦🇪", name: "Émirats Arabes Unis" },
+    { code: "CN", dial: "+86", flag: "🇨🇳", name: "Chine" },
+    { code: "TR", dial: "+90", flag: "🇹🇷", name: "Turquie" },
+    { code: "IN", dial: "+91", flag: "🇮🇳", name: "Inde" },
+    { code: "BR", dial: "+55", flag: "🇧🇷", name: "Brésil" },
+];

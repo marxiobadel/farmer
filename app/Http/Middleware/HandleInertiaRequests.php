@@ -4,6 +4,8 @@ namespace App\Http\Middleware;
 
 use App\Http\Resources\AuthUserResource;
 use App\Http\Resources\CartResource; // Assurez-vous d'importer la Resource
+use App\Http\Resources\CouponResource;
+use App\Models\Coupon;
 use App\Services\CartService;        // Assurez-vous d'importer le Service
 use App\Settings\GeneralSettings;
 use Illuminate\Foundation\Inspiring;
@@ -69,6 +71,17 @@ class HandleInertiaRequests extends Middleware
                 'registration' => $settings->registration,
                 'taxpayer_number' => $settings->taxpayer_number,
                 'show_price' => $settings->show_price,
+                'promo_coupon' => new CouponResource(Coupon::wherekey($settings->promo_coupon_id)
+                    ->where('is_active', true)
+                    ->where(function ($query) {
+                        $query->whereNull('expires_at')
+                            ->orWhere('expires_at', '>', now());
+                    })
+                    ->where(function ($query) {
+                        $query->whereNull('usage_limit')
+                            ->orWhereColumn('usage_count', '<', 'usage_limit');
+                    })
+                    ->first()),
             ],
             'flash' => [
                 'success' => fn() => $request->session()->get('success'),

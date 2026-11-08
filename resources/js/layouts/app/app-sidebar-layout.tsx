@@ -4,7 +4,6 @@ import { AppSidebar } from '@/components/app-sidebar';
 import { AppSidebarHeader } from '@/components/app-sidebar-header';
 import { type BreadcrumbItem } from '@/types';
 import { type PropsWithChildren } from 'react';
-import WhatsAppButton from '@/components/ecommerce/whatsapp-button';
 
 export default function AppSidebarLayout({
     children,
@@ -16,7 +15,6 @@ export default function AppSidebarLayout({
             <AppContent variant="sidebar" className="overflow-x-hidden">
                 <AppSidebarHeader breadcrumbs={breadcrumbs} />
                 {children}
-                <WhatsAppButton />
             </AppContent>
         </AppShell>
     );

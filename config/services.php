@@ -99,4 +99,11 @@ return [
         ['uri' => 'legal', 'action' => 'legal', 'name' => 'legal'],
         ['uri' => 'cgv', 'action' => 'cgv', 'name' => 'cgv'],
     ],
+
+    'whatsapp' => [
+        'token' => env('WHATSAPP_TOKEN'),
+        'phone_number_id' => env('WHATSAPP_PHONE_NUMBER_ID', '441983379009394'),
+        'api_version' => env('WHATSAPP_API_VERSION', 'v25.0'),
+        'base_url' => env('WHATSAPP_BASE_URL', 'https://graph.facebook.com'),
+    ],
 ];

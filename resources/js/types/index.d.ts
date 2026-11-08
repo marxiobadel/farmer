@@ -42,6 +42,7 @@ export interface SharedData {
         registration: string;
         taxpayer_number: string;
         show_price: boolean;
+        promo_coupon: Coupon | null;
     };
     flash: {
         success: string | null;

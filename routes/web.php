@@ -39,6 +39,8 @@ foreach (config('services.frontend_routes') as $route) {
     Route::get($route['uri'], [IndexController::class, $route['action']])->name($route['name']);
 }
 
+Route::post('leads/discount', [IndexController::class, 'sendDiscountLead'])->name('leads.discount');
+
 Route::prefix('contact')
     ->controller(\App\Http\Controllers\Front\ContactController::class)
     ->group(function () {

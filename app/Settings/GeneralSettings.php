@@ -32,6 +32,8 @@ class GeneralSettings extends Settings
 
     public bool $show_price;
 
+    public string $promo_coupon_id;
+
     public static function group(): string
     {
         return 'general';
