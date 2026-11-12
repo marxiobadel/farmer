@@ -2,8 +2,12 @@ import { Footer } from '@/components/ecommerce/footer';
 import { Header } from '@/components/ecommerce/header';
 import type { PropsWithChildren } from 'react';
 import WhatsAppButton from '@/components/ecommerce/whatsapp-button';
+import { SharedData } from "@/types";
+import { usePage } from '@inertiajs/react';
 
 export default function AppHeaderLayout({ children }: PropsWithChildren) {
+    const { name } = usePage<SharedData>().props;
+
     return (
         <div className="min-h-screen bg-stone-50 font-sans text-stone-900 selection:bg-primary/20 selection:text-primary">
             <Header />
@@ -11,7 +15,7 @@ export default function AppHeaderLayout({ children }: PropsWithChildren) {
                 {children}
             </main>
             <Footer />
-            <WhatsAppButton />
+            <WhatsAppButton companyName={name} />
         </div>
     );
 }
